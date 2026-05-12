@@ -102,6 +102,16 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       );
       return;
     }
+    if (title.length > 50) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Title must be 50 characters or less ❤️'),
+          backgroundColor: AppColors.accentRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     // Begin progression pipeline
     setState(() {
@@ -401,13 +411,18 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
               // Title input
               TextField(
                 controller: _titleController,
+                maxLength: 50,
                 style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
                   labelText: 'Title your confession...',
                   hintText: 'e.g. A message to my first love...',
+                  counterStyle: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
 
               // Action buttons row
               Row(
