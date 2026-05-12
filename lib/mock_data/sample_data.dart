@@ -96,7 +96,6 @@ class SampleData {
       commentsCount: 38,
       isSaved: true,
       dateText: '2026-05-12', // Today
-      tags: ['Late Night', 'Regrets', 'Rainy Days'],
     ),
     Confession(
       id: 'conf_2',
@@ -112,7 +111,6 @@ class SampleData {
       commentsCount: 12,
       isSaved: false,
       dateText: '2026-05-12', // Today
-      tags: ['Memory', 'Unrequited', 'Sadness'],
     ),
     Confession(
       id: 'conf_3',
@@ -128,7 +126,6 @@ class SampleData {
       commentsCount: 84,
       isSaved: true,
       dateText: '2026-05-11', // Yesterday
-      tags: ['Unsaid', 'Confession', 'First Love'],
     ),
     Confession(
       id: 'conf_4',
@@ -144,7 +141,6 @@ class SampleData {
       commentsCount: 8,
       isSaved: false,
       dateText: '2026-05-11', // Yesterday
-      tags: ['Unsaid', 'Nostalgia'],
     ),
     Confession(
       id: 'conf_5',
@@ -160,7 +156,6 @@ class SampleData {
       commentsCount: 45,
       isSaved: false,
       dateText: '2026-05-09',
-      tags: ['Farewells', 'Memory', 'Late Night'],
     ),
     Confession(
       id: 'conf_current_user_1',
@@ -176,7 +171,6 @@ class SampleData {
       commentsCount: 3,
       isSaved: false,
       dateText: '2026-05-08',
-      tags: ['Dreams', 'Nocturnal'],
     )
   ];
 
@@ -307,7 +301,6 @@ class SampleData {
         commentsCount: 2 + index,
         isSaved: index % 7 == 0,
         dateText: '2026-05-12',
-        tags: ['Thoughts', 'Memory', 'Late Night'],
       );
     });
   }

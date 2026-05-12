@@ -35,14 +35,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     {'date': '2026-05-12', 'label': 'T', 'num': '12'}, // Today
   ];
 
-  final List<String> _popularTags = [
-    'Late Night',
-    'First Love',
-    'Regrets',
-    'Nostalgia',
-    'Unsaid',
-  ];
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -55,8 +47,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       final q = _searchQuery.toLowerCase();
       return SampleData.mockConfessions.where((c) {
         return c.title.toLowerCase().contains(q) ||
-            c.authorName.toLowerCase().contains(q) ||
-            c.tags.any((t) => t.toLowerCase().contains(q));
+            c.authorName.toLowerCase().contains(q);
       }).toList();
     } else {
       return SampleData.mockConfessions.where((c) => c.dateText == _selectedDate).toList();
@@ -80,13 +71,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  void _selectTag(String tag) {
-    setState(() {
-      _searchQuery = tag;
-      _searchController.text = tag;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,9 +92,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
               const SizedBox(height: 14),
 
               // Search Box
-              SearchField(
+               SearchField(
                 controller: _searchController,
-                hintText: 'Search confessions, tags, or usernames...',
+                hintText: 'Search confessions or usernames...',
                 onChanged: (val) {
                   setState(() {
                     _searchQuery = val;
@@ -123,39 +107,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 },
               ),
 
-              const SizedBox(height: 14),
-
-              // Poetic category tag bubbles
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _popularTags.map((tag) {
-                    final isSelected = _searchQuery.toLowerCase() == tag.toLowerCase();
-                    return GestureDetector(
-                      onTap: () => _selectTag(tag),
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.pureBlack : AppColors.cardBg,
-                          borderRadius: BorderRadius.circular(5.0),
-                          border: Border.all(color: AppColors.divider),
-                        ),
-                        child: Text(
-                          tag,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 12,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Conditional UI: If searching, show search results. Else, show elegant date filtering.
               if (_searchQuery.isNotEmpty) ...[

@@ -159,7 +159,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           commentsCount: 0,
           isSaved: false,
           dateText: '2026-05-12', // Today
-          tags: ['Unsaid', 'Voice Note', 'First Diary'],
         );
 
         SampleData.mockConfessions.insert(0, newConf); // Insert at the very top!

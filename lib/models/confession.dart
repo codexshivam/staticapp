@@ -11,8 +11,7 @@ class Confession {
   final int likesCount;
   final int commentsCount;
   final bool isSaved;
-  final String dateText; // formatted as 'YYYY-MM-DD' for search filtration
-  final List<String> tags;
+  final String dateText;
 
   const Confession({
     required this.id,
@@ -28,7 +27,6 @@ class Confession {
     required this.commentsCount,
     required this.isSaved,
     required this.dateText,
-    required this.tags,
   });
 
   Confession copyWith({
@@ -45,7 +43,6 @@ class Confession {
     int? commentsCount,
     bool? isSaved,
     String? dateText,
-    List<String>? tags,
   }) {
     return Confession(
       id: id ?? this.id,
@@ -61,7 +58,6 @@ class Confession {
       commentsCount: commentsCount ?? this.commentsCount,
       isSaved: isSaved ?? this.isSaved,
       dateText: dateText ?? this.dateText,
-      tags: tags ?? this.tags,
     );
   }
 }

@@ -202,21 +202,10 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Poetic category / Tag
+                            // Post Timestamp details
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                Text(
-                                  widget.confession.tags.isNotEmpty 
-                                      ? '#${widget.confession.tags[0].toLowerCase()}' 
-                                      : '#whisper',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.accentRed,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
                                 Text(
                                   widget.confession.timestamp,
                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
