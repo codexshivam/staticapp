@@ -65,7 +65,7 @@ class _SavedScreenState extends State<SavedScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Removed confession from bookmarks'),
+        content: Text('Removed confession from saved'),
         duration: Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.pureBlack,
@@ -214,15 +214,16 @@ class _SavedScreenState extends State<SavedScreen> {
 
                 // Premium Custom styled TabBar
                 TabBar(
-                  indicatorColor: AppColors.accentRed,
+                  indicatorColor: AppColors.pureBlack,
+                  dividerColor: Colors.transparent,
                   labelColor: AppColors.pureBlack,
                   unselectedLabelColor: AppColors.textSecondary,
                   labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
                   indicatorSize: TabBarIndicatorSize.label,
-                  indicatorWeight: 3.0,
+                  indicatorWeight: 2.0,
                   tabs: const [
-                    Tab(text: 'Bookmarks'),
+                    Tab(text: 'Saved'),
                     Tab(text: 'History'),
                   ],
                 ),
@@ -231,8 +232,8 @@ class _SavedScreenState extends State<SavedScreen> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      // Bookmarks Tab
-                      _buildBookmarksTab(),
+                      // Saved Tab
+                      _buildSavedTab(),
 
                       // Play History Tab
                       _buildHistoryTab(),
@@ -247,12 +248,12 @@ class _SavedScreenState extends State<SavedScreen> {
     );
   }
 
-  Widget _buildBookmarksTab() {
+  Widget _buildSavedTab() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SectionTitle(
-          title: 'Bookmarks',
+          title: 'Saved',
           subtitle: 'Confessions you bookmarked to listen to later',
         ),
         const SizedBox(height: 14),
