@@ -126,7 +126,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
-  // Filter confessions based on calendar date or search query
   List<Confession> get _filteredConfessions {
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
@@ -197,9 +196,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
               const SizedBox(height: 16),
 
-              // Conditional UI: If searching, show search results. Else, show elegant date filtering.
               if (_searchQuery.isNotEmpty) ...[
-                // SEARCH RESULTS FOR PEOPLE
                 if (_filteredUsers.isNotEmpty) ...[
                   const SectionTitle(title: 'Matching Users ❤️'),
                   const SizedBox(height: 12),
@@ -224,7 +221,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   const SizedBox(height: 20),
                 ],
 
-                // SEARCH RESULTS FOR AUDIO FILES
                 SectionTitle(
                   title: 'Matching Confessions ❤️',
                   subtitle: 'Confessions matching "${_searchQuery}"',
@@ -251,7 +247,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                       MediaQuery.of(context).size.width * 0.85,
                                   child: Column(
                                     mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                        MainAxisAlignment.start,
                                     children: chunk.map((conf) {
                                       return ConfessionCard(
                                         confession: conf,
@@ -391,7 +387,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                       MediaQuery.of(context).size.width * 0.85,
                                   child: Column(
                                     mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                        MainAxisAlignment.start,
                                     children: chunk.map((conf) {
                                       return ConfessionCard(
                                         confession: conf,
