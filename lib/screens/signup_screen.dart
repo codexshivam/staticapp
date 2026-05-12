@@ -17,7 +17,6 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _bioController = TextEditingController();
 
-  // Username validation state
   Timer? _debounceTimer;
   bool _isCheckingUsername = false;
   bool? _isUsernameAvailable;
@@ -43,7 +42,6 @@ class _SignupScreenState extends State<SignupScreen> {
   void _onUsernameChanged() {
     final text = _nameController.text.trim();
 
-    // Cancel previous debounce timers
     _debounceTimer?.cancel();
 
     if (text.isEmpty) {
@@ -64,18 +62,15 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    // Enter validating state
     setState(() {
       _isCheckingUsername = true;
       _isUsernameAvailable = null;
       _usernameErrorText = null;
     });
 
-    // Start 600ms debounce timer to simulate server validation
     _debounceTimer = Timer(const Duration(milliseconds: 600), () {
       if (!mounted) return;
 
-      // Preset list of taken usernames for demonstration
       const takenUsernames = {
         'dreamer',
         'admin',
@@ -99,7 +94,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter a username ❤️'),
+          content: Text('Please enter a username'),
           backgroundColor: AppColors.accentRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -121,7 +116,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (_isUsernameAvailable != true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please choose an available username ❤️'),
+          content: Text('Please choose an available username'),
           backgroundColor: AppColors.accentRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -129,7 +124,6 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    // Navigate straight to Shell on successful registration
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
@@ -228,7 +222,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
               const SizedBox(height: 35),
 
-              // Username input with dynamic database validation UI
               TextField(
                 controller: _nameController,
                 style: const TextStyle(fontSize: 14),
@@ -237,7 +230,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   hintText: 'e.g. dreamer',
                   suffixIcon: _buildUsernameSuffix(),
                   helperText: _isUsernameAvailable == true
-                      ? 'Username is available ❤️'
+                      ? 'Username is available.'
                       : null,
                   helperStyle: const TextStyle(
                     color: Colors.green,

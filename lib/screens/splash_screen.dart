@@ -17,7 +17,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Fade in text
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         setState(() {
@@ -27,7 +26,6 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     });
 
-    // Auto-navigate to Login Screen
     Timer(const Duration(milliseconds: 2800), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -76,7 +74,6 @@ class _SplashScreenState extends State<SplashScreen> {
                   'share and listen to the real voice confessions',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontStyle: FontStyle.italic,
                     color: AppColors.textSecondary,
                     fontSize: 13,
                     letterSpacing: 0.1,

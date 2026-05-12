@@ -185,24 +185,6 @@ class ConfessionCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            
-            // Right: Three-dot options menu (YouTube Music style)
-            IconButton(
-              icon: Icon(
-                Icons.more_vert,
-                color: AppColors.textSecondary.withOpacity(0.7),
-                size: 18,
-              ),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              onPressed: () {
-                // Instantly open details/comments on options tab as a clean secondary interaction
-                if (onTap != null) {
-                  onTap!();
-                }
-              },
-            ),
           ],
         ),
       ),

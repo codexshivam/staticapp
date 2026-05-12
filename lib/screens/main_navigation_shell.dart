@@ -25,7 +25,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     _currentIndex = widget.initialTab;
   }
 
-  // Lists of screens corresponding to bottom nav
   final List<Widget> _tabs = [
     const HomeScreen(),
     const ExploreScreen(),
@@ -61,32 +60,22 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      extendBody:
-          true, // Allows list body scroll paths to pass cleanly behind the transparent bar!
+      extendBody: true,
       body: IndexedStack(index: _currentIndex, children: _tabs),
 
-      // Custom Bottom App Bar (Frosted Glass Transparent layout)
       bottomNavigationBar: ClipRect(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.cardBg.withOpacity(
-                0.72,
-              ), // Premium semi-transparency
+              color: AppColors.cardBg.withOpacity(0.65),
               border: const Border(
-                top: BorderSide(
-                  color: Color(
-                    0x0F000000,
-                  ), // Ultra-faint top border for separation
-                  width: 0.5,
-                ),
+                top: BorderSide(color: Color(0x0F000000), width: 0.5),
               ),
             ),
             child: BottomAppBar(
               height: 64.0,
-              color: Colors
-                  .transparent, // Let Container color and blur pass through
+              color: Colors.transparent,
               elevation: 0,
               padding: EdgeInsets.zero,
               child: Row(
@@ -95,7 +84,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   _buildNavButton(Feather.grid, Feather.grid, 'Home', 0),
                   _buildNavButton(Feather.search, Feather.search, 'Explore', 1),
 
-                  // Clean, simple central Add/Record Trigger
                   _buildCreateButton(),
 
                   _buildNavButton(
@@ -114,7 +102,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 
-  // Simple Add/Record item (matches standard button spacing)
   Widget _buildCreateButton() {
     return Expanded(
       child: GestureDetector(
@@ -128,17 +115,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               color: AppColors.textSecondary,
               size: 26,
             ),
-            // const SizedBox(height: 3),
-            // Text(
-            //   'Add',
-            //   style: TextStyle(
-            //     fontFamily: 'Playfair Display',
-            //     fontSize: 10,
-            //     fontWeight: FontWeight.normal,
-            //     color: AppColors.textSecondary,
-            //     letterSpacing: 0.2,
-            //   ),
-            // ),
           ],
         ),
       ),
@@ -166,17 +142,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(isSelected ? filledIcon : outlineIcon, color: color, size: 24),
-            // const SizedBox(height: 3),
-            // Text(
-            //   label,
-            //   style: TextStyle(
-            //     fontFamily: 'Playfair Display',
-            //     fontSize: 10,
-            //     fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
-            //     color: color,
-            //     letterSpacing: 0.2,
-            //   ),
-            // ),
           ],
         ),
       ),

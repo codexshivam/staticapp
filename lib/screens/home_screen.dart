@@ -19,20 +19,16 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final PlaybackManager _pm = PlaybackManager();
 
-  // Scroll Controllers for pagination
   final ScrollController _mainScrollController = ScrollController();
   final ScrollController _horizontalScrollController = ScrollController();
   final ScrollController _followingScrollController = ScrollController();
 
-  // Lazy loaded lists
   List<Confession> _loaded24Hours = [];
   List<Confession> _loadedFollowing = [];
 
-  // Pagination pools
   late final List<Confession> _all24HoursPool;
   late final List<Confession> _allFollowingPool;
 
-  // Pagination bounds (initialized to 16 to populate exactly 4 complete columns of 4 rows each)
   int _limit24Hours = 16;
   int _limitFollowing = 16;
 
@@ -46,7 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    // Pre-populate mock databases of 60+ items each
     _all24HoursPool = SampleData.generateManyMockConfessions(
       60,
       forFollowing: false,
@@ -56,11 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
       forFollowing: true,
     );
 
-    // Initial chunk
     _loaded24Hours = _all24HoursPool.take(_limit24Hours).toList();
     _loadedFollowing = _allFollowingPool.take(_limitFollowing).toList();
 
-    // Bind scroll controllers to trigger loaders
     _mainScrollController.addListener(_onMainScroll);
     _horizontalScrollController.addListener(_onHorizontalScroll);
     _followingScrollController.addListener(_onFollowingScroll);
@@ -74,15 +67,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Detect bottom of page scroll (for vertical bounce container)
   void _onMainScroll() {
     if (_mainScrollController.position.pixels >=
-        _mainScrollController.position.maxScrollExtent - 150) {
-      // Main vertical scroll if needed
-    }
+        _mainScrollController.position.maxScrollExtent - 150) {}
   }
 
-  // Detect end of list scroll for horizontal New Confessions
   void _onHorizontalScroll() {
     if (_horizontalScrollController.position.pixels >=
         _horizontalScrollController.position.maxScrollExtent - 80) {
@@ -90,7 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Detect end of list scroll for horizontal Following grid
   void _onFollowingScroll() {
     if (_followingScrollController.position.pixels >=
         _followingScrollController.position.maxScrollExtent - 80) {
@@ -105,13 +93,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoadingMoreFollowing = true;
     });
 
-    // Simulate standard 600ms network delay
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
 
-      final nextLimit =
-          _limitFollowing +
-          8; // Load exactly 2 additional complete columns of 4 rows
+      final nextLimit = _limitFollowing + 8;
       final hasMore = nextLimit < _allFollowingPool.length;
       final newItems = _allFollowingPool.take(nextLimit).toList();
 
@@ -131,13 +116,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoadingMore24h = true;
     });
 
-    // Simulate standard 600ms network delay
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
 
-      final nextLimit =
-          _limit24Hours +
-          8; // Load exactly 2 additional complete columns of 4 rows
+      final nextLimit = _limit24Hours + 8;
       final hasMore = nextLimit < _all24HoursPool.length;
       final newItems = _all24HoursPool.take(nextLimit).toList();
 
@@ -191,10 +173,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        toolbarHeight: kToolbarHeight + 10,
         title: Text(
-          'Confessions',
+          ' thestatic',
           style: Theme.of(context).textTheme.displayLarge?.copyWith(
-            fontSize: 24,
+            fontSize: 26,
             fontWeight: FontWeight.bold,
             color: AppColors.pureBlack,
             letterSpacing: -0.2,
@@ -227,20 +210,17 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // SECTION 1: Currently Playing Active Player / Welcome Banner
             _buildActivePlayer(context, _pm),
 
             const SizedBox(height: 30),
 
-            // SECTION 2: Confessions in 24 Hours ❤️ (Horizontal Scroll)
             const SectionTitle(
               title: 'Recent Confessions ',
               subtitle: 'Confessions made in the last 24 hours',
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height:
-                  300, // Raised to 300px to perfectly prevent any RenderFlex bottom overflow!
+              height: 300,
               child: Builder(
                 builder: (context) {
                   final chunks = _chunkList(_loaded24Hours, 4);
@@ -275,8 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: chunk.map((conf) {
                             return ConfessionCard(
                               confession: conf,
-                              isHorizontal:
-                                  false, // Standard vertical list layout inside horizontal grid columns
+                              isHorizontal: false,
                               onTap: () => _openDetail(context, conf),
                             );
                           }).toList(),
@@ -290,7 +269,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 24),
 
-            // SECTION 3: From People You Follow ❤️ (Horizontal Scroll Grid)
             const SectionTitle(
               title: 'From People You Follow',
               subtitle: 'Confessions from people you follow',
@@ -299,8 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _loadedFollowing.isEmpty
                 ? _buildEmptyFollowingState(context)
                 : SizedBox(
-                    height:
-                        300, // Matching 300px height for complete layout consistency and overflow safety
+                    height: 300,
                     child: Builder(
                       builder: (context) {
                         final chunks = _chunkList(_loadedFollowing, 4);
@@ -351,7 +328,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 50),
 
-            // SECTION 4: Centered Footer Text
             Center(
               child: Column(
                 children: [
@@ -375,14 +351,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Active Top Player Card / Welcome Banner
   Widget _buildActivePlayer(BuildContext context, PlaybackManager pm) {
     return ListenableBuilder(
       listenable: pm,
       builder: (context, _) {
         final conf = pm.activeConfession;
 
-        // Display Welcome Message Hero if no track was loaded (New User)
         if (conf == null) {
           return _buildWelcomeBanner(context);
         }
@@ -408,7 +382,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header indicator
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -460,7 +433,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Confession Title & Author
                 Text(
                   conf.title,
                   maxLines: 1,
@@ -482,11 +454,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 16),
 
-                // Waveform Indicator (dynamic fills if playing)
                 _buildWaveform(conf.waveformData, progress, isPlaying),
                 const SizedBox(height: 12),
 
-                // Player timeline controls
                 Row(
                   children: [
                     GestureDetector(
@@ -510,7 +480,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Seek/Timeline bar
                           ClipRRect(
                             borderRadius: BorderRadius.circular(2.0),
                             child: SizedBox(
@@ -560,7 +529,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Welcome Banner empty state when activeConfession is null
   Widget _buildWelcomeBanner(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20.0),
@@ -602,7 +570,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Listen to untold feelings ❤️',
+            'Listen to untold feelings',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -624,7 +592,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Beautiful Following Feed Empty State Card
   Widget _buildEmptyFollowingState(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -665,7 +632,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Waveform drawing
   Widget _buildWaveform(List<double> data, double progress, bool isPlaying) {
     return SizedBox(
       height: 30,
