@@ -37,9 +37,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         opaque: false,
         pageBuilder: (context, animation, secondaryAnimation) => const CreateConfessionScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final begin = const Offset(0.0, 1.0);
-          final end = Offset.zero;
-          final curve = Curves.easeOutQuart;
+          const begin = Offset(0.0, 1.0);
+          const end = Offset.zero;
+          const curve = Curves.easeOutQuart;
           final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
           return SlideTransition(
             position: animation.drive(tween),
@@ -60,23 +60,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         children: _tabs,
       ),
       
-      // Floating Action Button in the center (Slightly raised, 5px rounded square)
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(top: 10.0),
-        child: FloatingActionButton(
-          onPressed: _navigateToCreate,
-          elevation: 4.0,
-          backgroundColor: AppColors.pureBlack,
-          foregroundColor: AppColors.cardBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(5.0), // Strict 5px
-          ),
-          child: const Icon(Icons.add, size: 24),
-        ),
-      ),
-
-      // Custom Bottom App Bar
+      // Custom Bottom App Bar (Clean, Symmetrical, flat layout)
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           boxShadow: [
@@ -92,22 +76,50 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           color: AppColors.cardBg,
           elevation: 0,
           padding: EdgeInsets.zero,
-          notchMargin: 8.0,
-          shape: const CircularNotchedRectangle(), // Allows the float button to nest beautifully
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // Left side tabs
               _buildNavButton(Icons.home_outlined, Icons.home, 'Home', 0),
               _buildNavButton(Icons.search, Icons.search, 'Explore', 1),
               
-              const SizedBox(width: 48), // Gap for central Floating Button
+              // Clean, simple central Add/Record Trigger
+              _buildCreateButton(),
               
-              // Right side tabs
               _buildNavButton(Icons.bookmark_outline, Icons.bookmark, 'Saved', 2),
               _buildNavButton(Icons.person_outline, Icons.person, 'Profile', 3),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // Simple Add/Record item (matches standard button spacing)
+  Widget _buildCreateButton() {
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _navigateToCreate,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.add_circle_outline_rounded,
+              color: AppColors.textSecondary,
+              size: 22,
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'Add',
+              style: TextStyle(
+                fontFamily: 'Playfair Display',
+                fontSize: 10,
+                fontWeight: FontWeight.normal,
+                color: AppColors.textSecondary,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import '../core/theme/app_colors.dart';
 import '../core/navigation/playback_manager.dart';
 import '../widgets/section_title.dart';
@@ -17,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final PlaybackManager _pm = PlaybackManager();
-  
+
   // Scroll Controllers for pagination
   final ScrollController _mainScrollController = ScrollController();
   final ScrollController _horizontalScrollController = ScrollController();
@@ -46,8 +47,14 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     // Pre-populate mock databases of 60+ items each
-    _all24HoursPool = SampleData.generateManyMockConfessions(60, forFollowing: false);
-    _allFollowingPool = SampleData.generateManyMockConfessions(60, forFollowing: true);
+    _all24HoursPool = SampleData.generateManyMockConfessions(
+      60,
+      forFollowing: false,
+    );
+    _allFollowingPool = SampleData.generateManyMockConfessions(
+      60,
+      forFollowing: true,
+    );
 
     // Initial chunk
     _loaded24Hours = _all24HoursPool.take(_limit24Hours).toList();
@@ -69,21 +76,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Detect bottom of page scroll (for vertical bounce container)
   void _onMainScroll() {
-    if (_mainScrollController.position.pixels >= _mainScrollController.position.maxScrollExtent - 150) {
+    if (_mainScrollController.position.pixels >=
+        _mainScrollController.position.maxScrollExtent - 150) {
       // Main vertical scroll if needed
     }
   }
 
   // Detect end of list scroll for horizontal New Confessions
   void _onHorizontalScroll() {
-    if (_horizontalScrollController.position.pixels >= _horizontalScrollController.position.maxScrollExtent - 80) {
+    if (_horizontalScrollController.position.pixels >=
+        _horizontalScrollController.position.maxScrollExtent - 80) {
       _lazyLoadMore24h();
     }
   }
 
   // Detect end of list scroll for horizontal Following grid
   void _onFollowingScroll() {
-    if (_followingScrollController.position.pixels >= _followingScrollController.position.maxScrollExtent - 80) {
+    if (_followingScrollController.position.pixels >=
+        _followingScrollController.position.maxScrollExtent - 80) {
       _lazyLoadMoreFollowing();
     }
   }
@@ -98,8 +108,10 @@ class _HomeScreenState extends State<HomeScreen> {
     // Simulate standard 600ms network delay
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
-      
-      final nextLimit = _limitFollowing + 8; // Load exactly 2 additional complete columns of 4 rows
+
+      final nextLimit =
+          _limitFollowing +
+          8; // Load exactly 2 additional complete columns of 4 rows
       final hasMore = nextLimit < _allFollowingPool.length;
       final newItems = _allFollowingPool.take(nextLimit).toList();
 
@@ -123,7 +135,9 @@ class _HomeScreenState extends State<HomeScreen> {
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
 
-      final nextLimit = _limit24Hours + 8; // Load exactly 2 additional complete columns of 4 rows
+      final nextLimit =
+          _limit24Hours +
+          8; // Load exactly 2 additional complete columns of 4 rows
       final hasMore = nextLimit < _all24HoursPool.length;
       final newItems = _all24HoursPool.take(nextLimit).toList();
 
@@ -139,13 +153,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void _openDetail(BuildContext context, Confession confession) {
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => 
+        pageBuilder: (context, animation, secondaryAnimation) =>
             ConfessionDetailScreen(confession: confession),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(0.0, 0.05);
           const end = Offset.zero;
           const curve = Curves.easeOutCubic;
-          final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          final tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
           return SlideTransition(
             position: animation.drive(tween),
             child: FadeTransition(opacity: animation, child: child),
@@ -159,7 +176,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<List<Confession>> _chunkList(List<Confession> list, int chunkSize) {
     List<List<Confession>> chunks = [];
     for (var i = 0; i < list.length; i += chunkSize) {
-      chunks.add(list.sublist(i, i + chunkSize > list.length ? list.length : i + chunkSize));
+      chunks.add(
+        list.sublist(
+          i,
+          i + chunkSize > list.length ? list.length : i + chunkSize,
+        ),
+      );
     }
     return chunks;
   }
@@ -183,7 +205,11 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.tune, color: AppColors.pureBlack, size: 20),
+            icon: const Icon(
+              Feather.menu,
+              color: AppColors.pureBlack,
+              size: 21.50,
+            ),
             tooltip: 'Settings',
             onPressed: () {
               Navigator.of(context).push(
@@ -203,17 +229,18 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // SECTION 1: Currently Playing Active Player / Welcome Banner
             _buildActivePlayer(context, _pm),
-            
-            const SizedBox(height: 24),
+
+            const SizedBox(height: 30),
 
             // SECTION 2: Confessions in 24 Hours ❤️ (Horizontal Scroll)
             const SectionTitle(
-              title: 'New Confessions ❤️',
-              subtitle: 'Confessions recorded in the last 24 hours',
+              title: 'Recent Confessions ',
+              subtitle: 'Confessions made in the last 24 hours',
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 300, // Raised to 300px to perfectly prevent any RenderFlex bottom overflow!
+              height:
+                  300, // Raised to 300px to perfectly prevent any RenderFlex bottom overflow!
               child: Builder(
                 builder: (context) {
                   final chunks = _chunkList(_loaded24Hours, 4);
@@ -222,7 +249,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     controller: _horizontalScrollController,
                     scrollDirection: Axis.horizontal,
                     itemCount: chunks.length + (_isLoadingMore24h ? 1 : 0),
-                    separatorBuilder: (context, index) => const SizedBox(width: 14),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 14),
                     itemBuilder: (context, index) {
                       if (index == chunks.length) {
                         return Container(
@@ -247,7 +275,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: chunk.map((conf) {
                             return ConfessionCard(
                               confession: conf,
-                              isHorizontal: false, // Standard vertical list layout inside horizontal grid columns
+                              isHorizontal:
+                                  false, // Standard vertical list layout inside horizontal grid columns
                               onTap: () => _openDetail(context, conf),
                             );
                           }).toList(),
@@ -259,18 +288,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
 
             // SECTION 3: From People You Follow ❤️ (Horizontal Scroll Grid)
             const SectionTitle(
-              title: 'Following Feed ❤️',
-              subtitle: 'Confessions from creators you follow',
+              title: 'From People You Follow',
+              subtitle: 'Confessions from people you follow',
             ),
             const SizedBox(height: 12),
             _loadedFollowing.isEmpty
                 ? _buildEmptyFollowingState(context)
                 : SizedBox(
-                    height: 300, // Matching 300px height for complete layout consistency and overflow safety
+                    height:
+                        300, // Matching 300px height for complete layout consistency and overflow safety
                     child: Builder(
                       builder: (context) {
                         final chunks = _chunkList(_loadedFollowing, 4);
@@ -278,8 +308,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         return ListView.separated(
                           controller: _followingScrollController,
                           scrollDirection: Axis.horizontal,
-                          itemCount: chunks.length + (_isLoadingMoreFollowing ? 1 : 0),
-                          separatorBuilder: (context, index) => const SizedBox(width: 14),
+                          itemCount:
+                              chunks.length + (_isLoadingMoreFollowing ? 1 : 0),
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(width: 14),
                           itemBuilder: (context, index) {
                             if (index == chunks.length) {
                               return Container(
@@ -300,7 +332,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             return SizedBox(
                               width: MediaQuery.of(context).size.width * 0.85,
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: chunk.map((conf) {
                                   return ConfessionCard(
                                     confession: conf,
@@ -316,31 +349,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-            const SizedBox(height: 36),
+            const SizedBox(height: 50),
 
             // SECTION 4: Centered Footer Text
             Center(
               child: Column(
                 children: [
                   Text(
-                    'Confessions ❤️',
+                    'We ❤️ Confessions and You!',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontStyle: FontStyle.italic,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary.withOpacity(0.8),
-                      fontSize: 13,
+                      fontSize: 17,
                       letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Thank you for sharing anonymously.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 10,
-                      color: AppColors.textSecondary.withOpacity(0.5),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
@@ -377,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0x3F000000),
                   blurRadius: 8,
                   offset: Offset(0, 4),
-                )
+                ),
               ],
             ),
             child: Column(
@@ -393,30 +418,36 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: 6,
                           height: 6,
                           decoration: BoxDecoration(
-                            color: isPlaying ? AppColors.accentRed : AppColors.textSecondary,
+                            color: isPlaying
+                                ? AppColors.accentRed
+                                : AppColors.textSecondary,
                             shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(width: 6),
                         Text(
                           isPlaying ? 'Now Playing...' : 'Last Played',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.background.withOpacity(0.7),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.8,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: AppColors.background.withOpacity(0.7),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.8,
+                              ),
                         ),
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: Text(
-                        'VIEW DETAILS ❤️',
+                        'VIEW DETAILS',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 8,
                           color: Colors.white,
@@ -427,90 +458,102 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-              const SizedBox(height: 16),
-              
-              // Confession Title & Author
-              Text(
-                conf.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'by ${conf.authorName} • ${conf.authorHandle}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.background.withOpacity(0.6),
-                  fontSize: 12,
-                ),
-              ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
-              
-              // Waveform Indicator (dynamic fills if playing)
-              _buildWaveform(conf.waveformData, progress, isPlaying),
-              const SizedBox(height: 12),
+                // Confession Title & Author
+                Text(
+                  conf.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'by ${conf.authorName} • ${conf.authorHandle}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.background.withOpacity(0.6),
+                    fontSize: 12,
+                  ),
+                ),
 
-              // Player timeline controls
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => pm.togglePlay(conf),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(5.0),
-                      ),
-                      child: Icon(
-                        isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: AppColors.pureBlack,
-                        size: 20,
+                const SizedBox(height: 16),
+
+                // Waveform Indicator (dynamic fills if playing)
+                _buildWaveform(conf.waveformData, progress, isPlaying),
+                const SizedBox(height: 12),
+
+                // Player timeline controls
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => pm.togglePlay(conf),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(5.0),
+                        ),
+                        child: Icon(
+                          isPlaying ? Icons.pause : Icons.play_arrow,
+                          color: AppColors.pureBlack,
+                          size: 20,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Seek/Timeline bar
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(2.0),
-                          child: SizedBox(
-                            height: 3,
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              backgroundColor: Colors.white.withOpacity(0.15),
-                              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Seek/Timeline bar
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(2.0),
+                            child: SizedBox(
+                              height: 3,
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                backgroundColor: Colors.white.withOpacity(0.15),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              pm.activeConfession?.id == conf.id ? pm.elapsedString : '0:00',
-                              style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              conf.durationString,
-                              style: const TextStyle(color: Colors.white38, fontSize: 10),
-                            ),
-                          ],
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                pm.activeConfession?.id == conf.id
+                                    ? pm.elapsedString
+                                    : '0:00',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                conf.durationString,
+                                style: const TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -529,7 +572,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Color(0x3F000000),
             blurRadius: 8,
             offset: Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -569,10 +612,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            "An anonymous space where people share their deepest thoughts, secrets, and messages. Tap any voice confession below to start listening.",
+            "A safe and non judgemental space where people share their deepest thoughts, secrets, and messages. Tap any voice confession below to start listening.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColors.background.withOpacity(0.65),
-              fontSize: 13,
+              fontSize: 12,
               height: 1.4,
             ),
           ),
@@ -637,9 +680,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: data[index] * 30,
               margin: const EdgeInsets.symmetric(horizontal: 1.0),
               decoration: BoxDecoration(
-                color: isFilled 
-                    ? Colors.white 
-                    : Colors.white.withOpacity(0.15),
+                color: isFilled ? Colors.white : Colors.white.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(1.0),
               ),
             ),
