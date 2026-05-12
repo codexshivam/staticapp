@@ -1,12 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/confession.dart';
+import '../../mock_data/sample_data.dart';
 
 class PlaybackManager extends ChangeNotifier {
   // Singleton Pattern
   static final PlaybackManager _instance = PlaybackManager._internal();
   factory PlaybackManager() => _instance;
-  PlaybackManager._internal();
+
+  final List<Confession> _history = [];
+
+  PlaybackManager._internal() {
+    // Pre-populate with mock confessions to demonstrate history features
+    _history.addAll(SampleData.mockConfessions);
+  }
 
   Confession? _activeConfession;
   bool _isPlaying = false;
@@ -31,6 +38,29 @@ class PlaybackManager extends ChangeNotifier {
     return '$minutes:$seconds';
   }
 
+  List<Confession> get history => _history;
+
+  void addToHistory(Confession confession) {
+    _history.removeWhere((c) => c.id == confession.id);
+    _history.insert(0, confession);
+    notifyListeners();
+  }
+
+  void removeFromHistory(String id) {
+    _history.removeWhere((c) => c.id == id);
+    notifyListeners();
+  }
+
+  void removeMultipleFromHistory(Set<String> ids) {
+    _history.removeWhere((c) => ids.contains(c.id));
+    notifyListeners();
+  }
+
+  void clearHistory() {
+    _history.clear();
+    notifyListeners();
+  }
+
   void play(Confession confession) {
     if (_activeConfession?.id != confession.id) {
       _activeConfession = confession;
@@ -38,7 +68,7 @@ class PlaybackManager extends ChangeNotifier {
     }
     _isPlaying = true;
     _startTimer();
-    notifyListeners();
+    addToHistory(confession);
   }
 
   void pause() {
@@ -67,10 +97,10 @@ class PlaybackManager extends ChangeNotifier {
         _stopTimer();
         return;
       }
-      
+
       final double step = 0.1 / _activeConfession!.durationSeconds;
       _progress += step;
-      
+
       if (_progress >= 1.0) {
         _progress = 0.0;
         _isPlaying = false;

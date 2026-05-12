@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
+import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/search_field.dart';
 import '../widgets/section_title.dart';
@@ -21,8 +22,6 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
-
-  // Date selection state (Default is '2026-05-12' - Today)
   String _selectedDate = '2026-05-12';
 
   @override
@@ -39,7 +38,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     super.dispose();
   }
 
-  // Chunk helper to match YouTube Music column structure from HomeScreen
   List<List<Confession>> _chunkList(List<Confession> list, int chunkSize) {
     List<List<Confession>> chunks = [];
     for (var i = 0; i < list.length; i += chunkSize) {
@@ -53,19 +51,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return chunks;
   }
 
-  // Format date to standard query string
   String _formatDateString(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  // Generate date strip list from May 10, 2026 to current date
   List<Map<String, String>> _generateCalendarDays() {
     final List<Map<String, String>> days = [];
     final start = DateTime(2026, 5, 10);
     final now = DateTime.now();
     final anchor = DateTime(2026, 5, 12);
 
-    // Set upper bound to today or our mock anchor, whichever is later
     final endDate = now.isAfter(anchor) ? now : anchor;
     final labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -84,7 +79,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return days;
   }
 
-  // Date selection picker dialog
   Future<void> _pickDate() async {
     final initialDate =
         DateTime.tryParse(_selectedDate) ?? DateTime(2026, 5, 12);
@@ -140,7 +134,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
-  // Filter users based on search query
   List<AppUser> get _filteredUsers {
     if (_searchQuery.isEmpty) return [];
     final q = _searchQuery.toLowerCase();
@@ -168,17 +161,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Premium Title
+              SizedBox(height: 10.0),
+
               Text(
                 'Explore',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  fontSize: 24,
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 14),
 
-              // Search Box
+              const SizedBox(height: 25),
+
               SearchField(
                 controller: _searchController,
                 hintText: 'Search confessions or usernames...',
@@ -194,11 +188,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 },
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
               if (_searchQuery.isNotEmpty) ...[
                 if (_filteredUsers.isNotEmpty) ...[
-                  const SectionTitle(title: 'Matching Users ❤️'),
+                  const SectionTitle(title: 'Matching Users'),
                   const SizedBox(height: 12),
                   ListView.builder(
                     shrinkWrap: true,
@@ -222,8 +216,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 ],
 
                 SectionTitle(
-                  title: 'Matching Confessions ❤️',
-                  subtitle: 'Confessions matching "${_searchQuery}"',
+                  title: 'Matching Confessions',
+                  subtitle: 'Confessions matching "$_searchQuery"',
                 ),
                 const SizedBox(height: 12),
                 _filteredConfessions.isEmpty
@@ -262,11 +256,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         ),
                       ),
               ] else ...[
+                const SizedBox(height: 8),
                 const SectionTitle(
                   title: 'Select Prefered Date',
-                  subtitle: 'Browse confessions from May 10 to current date',
+                  subtitle: 'Browse confessions made on specific date',
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
                 Container(
                   height: 72,
                   padding: const EdgeInsets.symmetric(
@@ -358,13 +353,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 26),
 
                 SectionTitle(
                   title: 'Confessions on Selected Date',
                   subtitle: 'Shared on ${_formatDateLabel(_selectedDate)}',
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 _filteredConfessions.isEmpty
                     ? _buildEmptyState('No confessions shared on this day.')
                     : SizedBox(

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/section_title.dart';
 import '../widgets/confession_card.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
+import '../core/navigation/playback_manager.dart';
 import 'confession_detail_screen.dart';
 
 class SavedScreen extends StatefulWidget {
@@ -15,11 +17,31 @@ class SavedScreen extends StatefulWidget {
 
 class _SavedScreenState extends State<SavedScreen> {
   late List<Confession> _savedConfessions;
+  final PlaybackManager _pm = PlaybackManager();
+
+  // Multi-select history state
+  bool _isSelectMode = false;
+  final Set<String> _selectedHistoryIds = {};
 
   @override
   void initState() {
     super.initState();
     _savedConfessions = SampleData.mockConfessions.where((c) => c.isSaved).toList();
+    _pm.addListener(_onPlaybackChange);
+  }
+
+  @override
+  void dispose() {
+    _pm.removeListener(_onPlaybackChange);
+    super.dispose();
+  }
+
+  void _onPlaybackChange() {
+    if (mounted) {
+      setState(() {
+        _savedConfessions = SampleData.mockConfessions.where((c) => c.isSaved).toList();
+      });
+    }
   }
 
   void _openDetail(Confession confession) {
@@ -43,7 +65,7 @@ class _SavedScreenState extends State<SavedScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Removed confession from bookmarks ❤️'),
+        content: Text('Removed confession from bookmarks'),
         duration: Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.pureBlack,
@@ -51,70 +73,485 @@ class _SavedScreenState extends State<SavedScreen> {
     );
   }
 
+  // Group history list by date text
+  Map<String, List<Confession>> _groupHistoryByDate(List<Confession> confessions) {
+    final Map<String, List<Confession>> grouped = {};
+    for (var c in confessions) {
+      final dateLabel = _formatDateLabel(c.dateText);
+      if (!grouped.containsKey(dateLabel)) {
+        grouped[dateLabel] = [];
+      }
+      grouped[dateLabel]!.add(c);
+    }
+    return grouped;
+  }
+
+  // Format date text into dynamic display label (Today, Yesterday, etc.)
+  String _formatDateLabel(String dateStr) {
+    final parsed = DateTime.tryParse(dateStr);
+    if (parsed == null) return dateStr;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(parsed.year, parsed.month, parsed.day);
+    final diffDays = today.difference(target).inDays;
+
+    if (diffDays == 0) {
+      return 'Today (${DateFormat('MMM d').format(parsed)})';
+    }
+    if (diffDays == 1) {
+      return 'Yesterday (${DateFormat('MMM d').format(parsed)})';
+    }
+
+    return DateFormat('MMM d').format(parsed);
+  }
+
+  void _deleteSelectedHistory() {
+    if (_selectedHistoryIds.isEmpty) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cardBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
+        title: const Text(
+          'Delete Selected',
+          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Are you sure you want to delete ${_selectedHistoryIds.length} selected recording(s) from your history?',
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          TextButton(
+            child: const Text('Delete', style: TextStyle(color: AppColors.accentRed, fontWeight: FontWeight.bold)),
+            onPressed: () {
+              _pm.removeMultipleFromHistory(_selectedHistoryIds);
+              setState(() {
+                _selectedHistoryIds.clear();
+                _isSelectMode = false;
+              });
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Selected history recordings deleted'),
+                  duration: Duration(seconds: 1),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: AppColors.pureBlack,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearAllHistory() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cardBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
+        title: const Text(
+          'Clear Listen History',
+          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Are you sure you want to clear your entire listen history? This action cannot be undone.',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          TextButton(
+            child: const Text('Clear All', style: TextStyle(color: AppColors.accentRed, fontWeight: FontWeight.bold)),
+            onPressed: () {
+              _pm.clearHistory();
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Listen history cleared'),
+                  duration: Duration(seconds: 1),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: AppColors.pureBlack,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header title
-              Text(
-                'Saved',
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 10.0),
+                Text(
+                  'Saved & History',
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 14),
+                const SizedBox(height: 25),
 
-              const SectionTitle(
-                title: 'Bookmarks ❤️',
-                subtitle: 'Confessions you saved',
-              ),
-              const SizedBox(height: 14),
+                // Premium Custom styled TabBar
+                TabBar(
+                  indicatorColor: AppColors.accentRed,
+                  labelColor: AppColors.pureBlack,
+                  unselectedLabelColor: AppColors.textSecondary,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+                  indicatorSize: TabBarIndicatorSize.label,
+                  indicatorWeight: 3.0,
+                  tabs: const [
+                    Tab(text: 'Bookmarks'),
+                    Tab(text: 'History'),
+                  ],
+                ),
+                const SizedBox(height: 20),
 
-              Expanded(
-                child: _savedConfessions.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        itemCount: _savedConfessions.length,
-                        itemBuilder: (context, index) {
-                          final conf = _savedConfessions[index];
-                          
-                          // Dismissible container to slide away to delete
-                          return Dismissible(
-                            key: Key(conf.id),
-                            direction: DismissDirection.endToStart,
-                            onDismissed: (dir) => _unsaveConfession(index, conf),
-                            background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
-                              margin: const EdgeInsets.only(bottom: 14),
-                              decoration: BoxDecoration(
-                                color: AppColors.accentRed.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: const Icon(
-                                Icons.delete_outline,
-                                color: AppColors.accentRed,
-                              ),
-                            ),
-                            child: ConfessionCard(
-                              confession: conf,
-                              onTap: () => _openDetail(conf),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      // Bookmarks Tab
+                      _buildBookmarksTab(),
+
+                      // Play History Tab
+                      _buildHistoryTab(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBookmarksTab() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionTitle(
+          title: 'Bookmarks',
+          subtitle: 'Confessions you bookmarked to listen to later',
+        ),
+        const SizedBox(height: 14),
+        Expanded(
+          child: _savedConfessions.isEmpty
+              ? _buildEmptyState()
+              : ListView.builder(
+                  itemCount: _savedConfessions.length,
+                  itemBuilder: (context, index) {
+                    final conf = _savedConfessions[index];
+                    return Dismissible(
+                      key: Key(conf.id),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (dir) => _unsaveConfession(index, conf),
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        margin: const EdgeInsets.only(bottom: 14),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentRed.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline,
+                          color: AppColors.accentRed,
+                        ),
+                      ),
+                      child: ConfessionCard(
+                        confession: conf,
+                        onTap: () => _openDetail(conf),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHistoryTab() {
+    final history = _pm.history;
+
+    if (history.isEmpty) {
+      return _buildHistoryEmptyState();
+    }
+
+    final grouped = _groupHistoryByDate(history);
+    final dateKeys = grouped.keys.toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHistoryHeaderControls(history),
+        const SizedBox(height: 12),
+        Expanded(
+          child: ListView.builder(
+            itemCount: dateKeys.length,
+            itemBuilder: (context, dateIndex) {
+              final dateLabel = dateKeys[dateIndex];
+              final confs = grouped[dateLabel]!;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Timeline Section Header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.accentRed,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          dateLabel,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                            fontSize: 12,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Stack of cards in this timeline section
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4.0),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          left: BorderSide(
+                            color: AppColors.divider,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      padding: const EdgeInsets.only(left: 12.0),
+                      child: Column(
+                        children: confs.map((conf) {
+                          final isSelected = _selectedHistoryIds.contains(conf.id);
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10.0),
+                            child: Dismissible(
+                              key: Key('history_${conf.id}'),
+                              direction: _isSelectMode ? DismissDirection.none : DismissDirection.endToStart,
+                              onDismissed: (dir) {
+                                _pm.removeFromHistory(conf.id);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Removed from listen history'),
+                                    duration: Duration(seconds: 1),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: AppColors.pureBlack,
+                                  ),
+                                );
+                              },
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accentRed.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: const Icon(
+                                  Icons.delete_outline,
+                                  color: AppColors.accentRed,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  if (_isSelectMode) ...[
+                                    IconButton(
+                                      icon: Icon(
+                                        isSelected
+                                            ? Icons.check_circle_rounded
+                                            : Icons.radio_button_unchecked_rounded,
+                                        color: isSelected
+                                            ? AppColors.accentRed
+                                            : AppColors.textSecondary,
+                                        size: 22,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          if (isSelected) {
+                                            _selectedHistoryIds.remove(conf.id);
+                                          } else {
+                                            _selectedHistoryIds.add(conf.id);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Expanded(
+                                    child: ConfessionCard(
+                                      confession: conf,
+                                      onTap: () {
+                                        if (_isSelectMode) {
+                                          setState(() {
+                                            if (isSelected) {
+                                              _selectedHistoryIds.remove(conf.id);
+                                            } else {
+                                              _selectedHistoryIds.add(conf.id);
+                                            }
+                                          });
+                                        } else {
+                                          _openDetail(conf);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHistoryHeaderControls(List<Confession> history) {
+    if (_isSelectMode) {
+      final allIds = history.map((c) => c.id).toList();
+      final isAllSelected = _selectedHistoryIds.length == history.length;
+
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.close_rounded, color: AppColors.textPrimary),
+                onPressed: () {
+                  setState(() {
+                    _isSelectMode = false;
+                    _selectedHistoryIds.clear();
+                  });
+                },
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${_selectedHistoryIds.length} selected',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(
+                  isAllSelected ? Icons.deselect_rounded : Icons.select_all_rounded,
+                  color: AppColors.textPrimary,
+                ),
+                tooltip: isAllSelected ? 'Deselect All' : 'Select All',
+                onPressed: () {
+                  setState(() {
+                    if (isAllSelected) {
+                      _selectedHistoryIds.clear();
+                    } else {
+                      _selectedHistoryIds.addAll(allIds);
+                    }
+                  });
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_forever_rounded, color: AppColors.accentRed),
+                tooltip: 'Delete Selected',
+                onPressed: _selectedHistoryIds.isEmpty ? null : _deleteSelectedHistory,
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Listen History',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Your recently played recordings',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.playlist_add_check_rounded, color: AppColors.textPrimary),
+              tooltip: 'Select Multiple',
+              onPressed: () {
+                setState(() {
+                  _isSelectMode = true;
+                  _selectedHistoryIds.clear();
+                });
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_outlined, color: AppColors.textPrimary),
+              tooltip: 'Clear History',
+              onPressed: _clearAllHistory,
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -132,7 +569,7 @@ class _SavedScreenState extends State<SavedScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Your saved confessions will appear here ❤️',
+              'Your saved confessions will appear here',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 14,
@@ -143,6 +580,44 @@ class _SavedScreenState extends State<SavedScreen> {
             const SizedBox(height: 6),
             Text(
               'Browse confessions and bookmark them to listen to them later.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 11,
+                color: AppColors.textSecondary.withOpacity(0.6),
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.history_rounded,
+              color: AppColors.textSecondary,
+              size: 40,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Your listen history is empty',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 14,
+                fontStyle: FontStyle.italic,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Confessions you play will be recorded in your history.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 11,

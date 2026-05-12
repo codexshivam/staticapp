@@ -17,7 +17,7 @@ class CreateConfessionScreen extends StatefulWidget {
 class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
   RecordState _state = RecordState.idle;
   final _titleController = TextEditingController();
-  
+
   // Timer & levels state for recording
   Timer? _recordTimer;
   int _secondsRecorded = 0;
@@ -161,7 +161,10 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           dateText: '2026-05-12', // Today
         );
 
-        SampleData.mockConfessions.insert(0, newConf); // Insert at the very top!
+        SampleData.mockConfessions.insert(
+          0,
+          newConf,
+        ); // Insert at the very top!
 
         setState(() {
           _publishProgress = 1.0;
@@ -207,7 +210,11 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
                         color: AppColors.cardBg,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.close, size: 16, color: AppColors.pureBlack),
+                      child: const Icon(
+                        Icons.close,
+                        size: 16,
+                        color: AppColors.pureBlack,
+                      ),
                     ),
                   ),
                 ],
@@ -228,7 +235,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
 
   Widget _buildCoreStateWidget(BuildContext context) {
     switch (_state) {
-      
       // 1. IDLE STATE
       case RecordState.idle:
         return Column(
@@ -242,7 +248,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              "Share what's on your mind. Record a voice confession anonymously.",
+              "Share what's on your mind. Record a voice confession.",
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColors.textSecondary,
@@ -265,14 +271,10 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
                       color: Color(0x3F000000),
                       blurRadius: 10,
                       spreadRadius: 2,
-                    )
+                    ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.mic,
-                  color: Colors.white,
-                  size: 32,
-                ),
+                child: const Icon(Icons.mic, color: Colors.white, size: 32),
               ),
             ),
             const SizedBox(height: 14),
@@ -286,7 +288,10 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
 
             const SizedBox(height: 40),
-            const Text('— OR —', style: TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+            const Text(
+              '— OR —',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+            ),
             const SizedBox(height: 30),
 
             // Import button
@@ -366,17 +371,17 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
                   color: AppColors.pureBlack,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.stop,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                child: const Icon(Icons.stop, color: Colors.white, size: 28),
               ),
             ),
             const SizedBox(height: 12),
             const Text(
               'TAP TO STOP',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.8,
+              ),
             ),
           ],
         );
@@ -403,7 +408,10 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
               const SizedBox(height: 4),
               Text(
                 'Duration: ${_formatDuration(_secondsRecorded)}',
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -440,7 +448,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         );
@@ -472,7 +480,9 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
                 child: LinearProgressIndicator(
                   value: _publishProgress,
                   backgroundColor: AppColors.divider,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.pureBlack),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.pureBlack,
+                  ),
                 ),
               ),
             ),
@@ -498,11 +508,11 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Your voice confession is now live anonymously.',
+              'Your voice confession is now live.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
             ),
           ],
         );
