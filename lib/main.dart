@@ -15,11 +15,7 @@ class ConfessionsApp extends StatelessWidget {
     return MaterialApp(
       title: 'Confessions',
       debugShowCheckedModeBanner: false,
-
-      // Load custom Material 3 typography theme
       theme: AppTheme.lightTheme,
-
-      // Starting gate: Splash Screen with fade entrance
       home: const SplashScreen(),
     );
   }

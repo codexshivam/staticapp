@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
+import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/search_field.dart';
 import '../widgets/section_title.dart';
@@ -53,9 +54,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return chunks;
   }
 
-  // Format date to standard query string
+  // Format date to standard query string using intl
   String _formatDateString(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return DateFormat('yyyy-MM-dd').format(date);
   }
 
   // Generate date strip list from May 10, 2026 to current date
@@ -246,8 +247,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   width:
                                       MediaQuery.of(context).size.width * 0.85,
                                   child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: chunk.map((conf) {
                                       return ConfessionCard(
                                         confession: conf,
@@ -263,7 +263,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         ),
                       ),
               ] else ...[
-                // DYNAMIC CALENDAR STRIP
                 const SectionTitle(
                   title: 'Filter by Date ❤️',
                   subtitle: 'Browse confessions from May 10 to current date',
@@ -362,9 +361,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
                 const SizedBox(height: 24),
 
-                // CONFESSIONS ON SELECTED DATE
                 SectionTitle(
-                  title: 'Confessions on Selected Date ❤️',
+                  title: 'Confessions on Selected Date',
                   subtitle: 'Shared on ${_formatDateLabel(_selectedDate)}',
                 ),
                 const SizedBox(height: 12),
@@ -386,8 +384,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   width:
                                       MediaQuery.of(context).size.width * 0.85,
                                   child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: chunk.map((conf) {
                                       return ConfessionCard(
                                         confession: conf,
@@ -442,30 +439,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   String _formatDateLabel(String dateStr) {
-    if (dateStr == '2026-05-12') return 'Today (May 12)';
-    if (dateStr == '2026-05-11') return 'Yesterday (May 11)';
-    if (dateStr == '2026-05-10') return 'May 10';
-
     final parsed = DateTime.tryParse(dateStr);
-    if (parsed == null) {
-      final dayNum = dateStr.split('-').last;
-      return 'May $dayNum';
+    if (parsed == null) return dateStr;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(parsed.year, parsed.month, parsed.day);
+    final diffDays = today.difference(target).inDays;
+
+    // Dynamic support for Today, Yesterday, and all custom DateFormat instances
+    if (dateStr == '2026-05-12' || (diffDays == 0 && dateStr != '2026-05-10' && dateStr != '2026-05-11')) {
+      return 'Today (${DateFormat('MMM d').format(parsed)})';
+    }
+    if (dateStr == '2026-05-11' || diffDays == 1) {
+      return 'Yesterday (${DateFormat('MMM d').format(parsed)})';
     }
 
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[parsed.month - 1]} ${parsed.day}';
+    return DateFormat('MMM d').format(parsed);
   }
 }
