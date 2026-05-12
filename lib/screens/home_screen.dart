@@ -578,7 +578,7 @@ class _HomeScreenState extends State<HomeScreen> {
               letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           Text(
             "A safe and non judgemental space where people share their deepest thoughts, secrets, and messages. Tap any voice confession below to start listening.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(

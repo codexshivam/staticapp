@@ -80,6 +80,11 @@ class SampleData {
     });
   }
 
+  static String _getRelativeDateStr(int daysBack) {
+    final date = DateTime.now().subtract(Duration(days: daysBack));
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
   // Pre-configured Mock Confessions
   static List<Confession> mockConfessions = [
     Confession(
@@ -95,7 +100,7 @@ class SampleData {
       likesCount: 542,
       commentsCount: 38,
       isSaved: true,
-      dateText: '2026-05-12', // Today
+      dateText: _getRelativeDateStr(0), // Today
     ),
     Confession(
       id: 'conf_2',
@@ -110,7 +115,7 @@ class SampleData {
       likesCount: 184,
       commentsCount: 12,
       isSaved: false,
-      dateText: '2026-05-12', // Today
+      dateText: _getRelativeDateStr(0), // Today
     ),
     Confession(
       id: 'conf_3',
@@ -125,7 +130,7 @@ class SampleData {
       likesCount: 1204,
       commentsCount: 84,
       isSaved: true,
-      dateText: '2026-05-11', // Yesterday
+      dateText: _getRelativeDateStr(1), // Yesterday
     ),
     Confession(
       id: 'conf_4',
@@ -140,7 +145,7 @@ class SampleData {
       likesCount: 96,
       commentsCount: 8,
       isSaved: false,
-      dateText: '2026-05-11', // Yesterday
+      dateText: _getRelativeDateStr(1), // Yesterday
     ),
     Confession(
       id: 'conf_5',
@@ -155,7 +160,7 @@ class SampleData {
       likesCount: 832,
       commentsCount: 45,
       isSaved: false,
-      dateText: '2026-05-09',
+      dateText: _getRelativeDateStr(3),
     ),
     Confession(
       id: 'conf_current_user_1',
@@ -170,7 +175,7 @@ class SampleData {
       likesCount: 34,
       commentsCount: 3,
       isSaved: false,
-      dateText: '2026-05-08',
+      dateText: _getRelativeDateStr(4),
     )
   ];
 
@@ -250,10 +255,9 @@ class SampleData {
     ]
   };
 
-  // Section getters for Home Screen
   static List<Confession> get last24HoursConfessions {
-    // Return confessions with dateText '2026-05-12' (Aria and Julian)
-    return mockConfessions.where((c) => c.dateText == '2026-05-12').toList();
+    // Return confessions with dateText matching today's relative date
+    return mockConfessions.where((c) => c.dateText == _getRelativeDateStr(0)).toList();
   }
 
   static List<Confession> get followingConfessions {
@@ -300,7 +304,7 @@ class SampleData {
         likesCount: 10 + index * 3,
         commentsCount: 2 + index,
         isSaved: index % 7 == 0,
-        dateText: '2026-05-12',
+        dateText: _getRelativeDateStr(0),
       );
     });
   }

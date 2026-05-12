@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
-import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/search_field.dart';
 import '../widgets/section_title.dart';
@@ -54,9 +53,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return chunks;
   }
 
-  // Format date to standard query string using intl
+  // Format date to standard query string
   String _formatDateString(DateTime date) {
-    return DateFormat('yyyy-MM-dd').format(date);
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   // Generate date strip list from May 10, 2026 to current date
@@ -264,7 +263,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       ),
               ] else ...[
                 const SectionTitle(
-                  title: 'Filter by Date ❤️',
+                  title: 'Select Prefered Date',
                   subtitle: 'Browse confessions from May 10 to current date',
                 ),
                 const SizedBox(height: 12),
@@ -447,11 +446,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final target = DateTime(parsed.year, parsed.month, parsed.day);
     final diffDays = today.difference(target).inDays;
 
-    // Dynamic support for Today, Yesterday, and all custom DateFormat instances
-    if (dateStr == '2026-05-12' || (diffDays == 0 && dateStr != '2026-05-10' && dateStr != '2026-05-11')) {
+    if (diffDays == 0) {
       return 'Today (${DateFormat('MMM d').format(parsed)})';
     }
-    if (dateStr == '2026-05-11' || diffDays == 1) {
+    if (diffDays == 1) {
       return 'Yesterday (${DateFormat('MMM d').format(parsed)})';
     }
 
