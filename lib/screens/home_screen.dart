@@ -365,51 +365,51 @@ class _HomeScreenState extends State<HomeScreen> {
         final isPlaying = pm.isPlaying;
         final progress = pm.progress;
 
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: AppColors.pureBlack,
-            borderRadius: BorderRadius.circular(5.0),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x3F000000),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              )
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header indicator
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: isPlaying ? AppColors.accentRed : AppColors.textSecondary,
-                          shape: BoxShape.circle,
+        return GestureDetector(
+          onTap: () => _openDetail(context, conf),
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: AppColors.pureBlack,
+              borderRadius: BorderRadius.circular(5.0),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x3F000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                )
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header indicator
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: isPlaying ? AppColors.accentRed : AppColors.textSecondary,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        isPlaying ? 'Now Playing...' : 'Last Played',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.background.withOpacity(0.7),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.8,
+                        const SizedBox(width: 6),
+                        Text(
+                          isPlaying ? 'Now Playing...' : 'Last Played',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.background.withOpacity(0.7),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.8,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  GestureDetector(
-                    onTap: () => _openDetail(context, conf),
-                    child: Container(
+                      ],
+                    ),
+                    Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.1),
@@ -425,9 +425,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               const SizedBox(height: 16),
               
               // Confession Title & Author
