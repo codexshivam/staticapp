@@ -34,16 +34,17 @@ class ConfessionCard extends StatelessWidget {
     );
   }
 
-  // Cover-Art Thumbnail Block with elegant initials
   Widget _buildCoverArt(BuildContext context, double size, bool isPlaying) {
-    final initial = confession.authorName.isNotEmpty ? confession.authorName[0].toUpperCase() : 'C';
-    
+    final initial = confession.authorName.isNotEmpty
+        ? confession.authorName[0].toUpperCase()
+        : 'C';
+
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: AppColors.pureBlack,
-        borderRadius: BorderRadius.circular(5.0), // strict 5px
+        borderRadius: BorderRadius.circular(5.0),
         boxShadow: const [
           BoxShadow(
             color: Color(0x1F000000),
@@ -54,17 +55,13 @@ class ConfessionCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF232526),
-            Color(0xFF414345),
-          ],
+          colors: [Color(0xFF232526), Color(0xFF414345)],
         ),
       ),
       alignment: Alignment.center,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Elegant Initials
           Text(
             initial,
             style: TextStyle(
@@ -74,7 +71,6 @@ class ConfessionCard extends StatelessWidget {
               color: Colors.white.withOpacity(0.85),
             ),
           ),
-          // Volume/Play Overlay if currently playing
           if (isPlaying)
             Container(
               decoration: BoxDecoration(
@@ -93,7 +89,6 @@ class ConfessionCard extends StatelessWidget {
     );
   }
 
-  // 1. YouTube Music Horizontal Square Card
   Widget _buildHorizontalCard(
     BuildContext context,
     bool isActive,
@@ -103,14 +98,12 @@ class ConfessionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 140, // standard cover art width
+        width: 140,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Square Cover Art
             _buildCoverArt(context, 140, isPlaying),
             const SizedBox(height: 8),
-            // Title
             Text(
               confession.title,
               maxLines: 1,
@@ -138,7 +131,6 @@ class ConfessionCard extends StatelessWidget {
     );
   }
 
-  // 2. YouTube Music Vertical List Tile
   Widget _buildVerticalCard(
     BuildContext context,
     bool isActive,
@@ -153,11 +145,9 @@ class ConfessionCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
         child: Row(
           children: [
-            // Left: Square Thumbnail Cover Art
             _buildCoverArt(context, 48, isPlaying),
             const SizedBox(width: 14),
-            
-            // Center: Metadata
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,7 +159,9 @@ class ConfessionCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: isActive ? AppColors.accentRed : AppColors.textPrimary,
+                      color: isActive
+                          ? AppColors.accentRed
+                          : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 3),
