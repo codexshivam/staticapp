@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/section_title.dart';
@@ -19,14 +20,15 @@ class _SavedScreenState extends State<SavedScreen> {
   late List<Confession> _savedConfessions;
   final PlaybackManager _pm = PlaybackManager();
 
-  // Multi-select history state
   bool _isSelectMode = false;
   final Set<String> _selectedHistoryIds = {};
 
   @override
   void initState() {
     super.initState();
-    _savedConfessions = SampleData.mockConfessions.where((c) => c.isSaved).toList();
+    _savedConfessions = SampleData.mockConfessions
+        .where((c) => c.isSaved)
+        .toList();
     _pm.addListener(_onPlaybackChange);
   }
 
@@ -39,7 +41,9 @@ class _SavedScreenState extends State<SavedScreen> {
   void _onPlaybackChange() {
     if (mounted) {
       setState(() {
-        _savedConfessions = SampleData.mockConfessions.where((c) => c.isSaved).toList();
+        _savedConfessions = SampleData.mockConfessions
+            .where((c) => c.isSaved)
+            .toList();
       });
     }
   }
@@ -55,11 +59,14 @@ class _SavedScreenState extends State<SavedScreen> {
   void _unsaveConfession(int index, Confession conf) {
     setState(() {
       _savedConfessions.removeAt(index);
-      
-      // Update global mock data reference too
-      final idxInGlobal = SampleData.mockConfessions.indexWhere((c) => c.id == conf.id);
+
+      final idxInGlobal = SampleData.mockConfessions.indexWhere(
+        (c) => c.id == conf.id,
+      );
       if (idxInGlobal != -1) {
-        SampleData.mockConfessions[idxInGlobal] = SampleData.mockConfessions[idxInGlobal].copyWith(isSaved: false);
+        SampleData.mockConfessions[idxInGlobal] = SampleData
+            .mockConfessions[idxInGlobal]
+            .copyWith(isSaved: false);
       }
     });
 
@@ -73,8 +80,9 @@ class _SavedScreenState extends State<SavedScreen> {
     );
   }
 
-  // Group history list by date text
-  Map<String, List<Confession>> _groupHistoryByDate(List<Confession> confessions) {
+  Map<String, List<Confession>> _groupHistoryByDate(
+    List<Confession> confessions,
+  ) {
     final Map<String, List<Confession>> grouped = {};
     for (var c in confessions) {
       final dateLabel = _formatDateLabel(c.dateText);
@@ -86,7 +94,6 @@ class _SavedScreenState extends State<SavedScreen> {
     return grouped;
   }
 
-  // Format date text into dynamic display label (Today, Yesterday, etc.)
   String _formatDateLabel(String dateStr) {
     final parsed = DateTime.tryParse(dateStr);
     if (parsed == null) return dateStr;
@@ -108,7 +115,7 @@ class _SavedScreenState extends State<SavedScreen> {
 
   void _deleteSelectedHistory() {
     if (_selectedHistoryIds.isEmpty) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -116,7 +123,10 @@ class _SavedScreenState extends State<SavedScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
         title: const Text(
           'Delete Selected',
-          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         content: Text(
           'Are you sure you want to delete ${_selectedHistoryIds.length} selected recording(s) from your history?',
@@ -124,11 +134,20 @@ class _SavedScreenState extends State<SavedScreen> {
         ),
         actions: [
           TextButton(
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
             onPressed: () => Navigator.of(context).pop(),
           ),
           TextButton(
-            child: const Text('Delete', style: TextStyle(color: AppColors.accentRed, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                color: AppColors.accentRed,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             onPressed: () {
               _pm.removeMultipleFromHistory(_selectedHistoryIds);
               setState(() {
@@ -159,7 +178,10 @@ class _SavedScreenState extends State<SavedScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
         title: const Text(
           'Clear Listen History',
-          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         content: const Text(
           'Are you sure you want to clear your entire listen history? This action cannot be undone.',
@@ -167,11 +189,20 @@ class _SavedScreenState extends State<SavedScreen> {
         ),
         actions: [
           TextButton(
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
             onPressed: () => Navigator.of(context).pop(),
           ),
           TextButton(
-            child: const Text('Clear All', style: TextStyle(color: AppColors.accentRed, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Clear All',
+              style: TextStyle(
+                color: AppColors.accentRed,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             onPressed: () {
               _pm.clearHistory();
               Navigator.of(context).pop();
@@ -198,34 +229,38 @@ class _SavedScreenState extends State<SavedScreen> {
         backgroundColor: AppColors.background,
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 10.0),
-                Text(
-                  'Saved & History',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TabBar(
+                    indicatorColor: AppColors.pureBlack,
+                    dividerColor: Colors.transparent,
+                    labelColor: AppColors.pureBlack,
+                    unselectedLabelColor: AppColors.textSecondary,
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontWeight: FontWeight.normal,
+                      fontSize: 15,
+                    ),
+                    isScrollable: false,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    indicatorWeight: 2.0,
+                    tabs: const [
+                      Tab(text: 'Saved Confessions'),
+                      Tab(text: 'History'),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 25),
-
-                // Premium Custom styled TabBar
-                TabBar(
-                  indicatorColor: AppColors.pureBlack,
-                  dividerColor: Colors.transparent,
-                  labelColor: AppColors.pureBlack,
-                  unselectedLabelColor: AppColors.textSecondary,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
-                  indicatorSize: TabBarIndicatorSize.label,
-                  indicatorWeight: 2.0,
-                  tabs: const [
-                    Tab(text: 'Saved'),
-                    Tab(text: 'History'),
-                  ],
                 ),
                 const SizedBox(height: 20),
 
@@ -252,11 +287,6 @@ class _SavedScreenState extends State<SavedScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionTitle(
-          title: 'Saved',
-          subtitle: 'Confessions you bookmarked to listen to later',
-        ),
-        const SizedBox(height: 14),
         Expanded(
           child: _savedConfessions.isEmpty
               ? _buildEmptyState()
@@ -334,12 +364,13 @@ class _SavedScreenState extends State<SavedScreen> {
                         const SizedBox(width: 10),
                         Text(
                           dateLabel,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                            fontSize: 12,
-                            letterSpacing: 0.5,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                                fontSize: 12,
+                                letterSpacing: 0.5,
+                              ),
                         ),
                       ],
                     ),
@@ -360,18 +391,24 @@ class _SavedScreenState extends State<SavedScreen> {
                       padding: const EdgeInsets.only(left: 12.0),
                       child: Column(
                         children: confs.map((conf) {
-                          final isSelected = _selectedHistoryIds.contains(conf.id);
+                          final isSelected = _selectedHistoryIds.contains(
+                            conf.id,
+                          );
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 10.0),
                             child: Dismissible(
                               key: Key('history_${conf.id}'),
-                              direction: _isSelectMode ? DismissDirection.none : DismissDirection.endToStart,
+                              direction: _isSelectMode
+                                  ? DismissDirection.none
+                                  : DismissDirection.endToStart,
                               onDismissed: (dir) {
                                 _pm.removeFromHistory(conf.id);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Removed from listen history'),
+                                    content: Text(
+                                      'Removed from listen history',
+                                    ),
                                     duration: Duration(seconds: 1),
                                     behavior: SnackBarBehavior.floating,
                                     backgroundColor: AppColors.pureBlack,
@@ -397,7 +434,8 @@ class _SavedScreenState extends State<SavedScreen> {
                                       icon: Icon(
                                         isSelected
                                             ? Icons.check_circle_rounded
-                                            : Icons.radio_button_unchecked_rounded,
+                                            : Icons
+                                                  .radio_button_unchecked_rounded,
                                         color: isSelected
                                             ? AppColors.accentRed
                                             : AppColors.textSecondary,
@@ -422,7 +460,9 @@ class _SavedScreenState extends State<SavedScreen> {
                                         if (_isSelectMode) {
                                           setState(() {
                                             if (isSelected) {
-                                              _selectedHistoryIds.remove(conf.id);
+                                              _selectedHistoryIds.remove(
+                                                conf.id,
+                                              );
                                             } else {
                                               _selectedHistoryIds.add(conf.id);
                                             }
@@ -461,7 +501,10 @@ class _SavedScreenState extends State<SavedScreen> {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.close_rounded, color: AppColors.textPrimary),
+                icon: const Icon(
+                  Icons.close_rounded,
+                  color: AppColors.textPrimary,
+                ),
                 onPressed: () {
                   setState(() {
                     _isSelectMode = false;
@@ -484,7 +527,9 @@ class _SavedScreenState extends State<SavedScreen> {
             children: [
               IconButton(
                 icon: Icon(
-                  isAllSelected ? Icons.deselect_rounded : Icons.select_all_rounded,
+                  isAllSelected
+                      ? Icons.deselect_rounded
+                      : Icons.select_all_rounded,
                   color: AppColors.textPrimary,
                 ),
                 tooltip: isAllSelected ? 'Deselect All' : 'Select All',
@@ -499,9 +544,14 @@ class _SavedScreenState extends State<SavedScreen> {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.delete_forever_rounded, color: AppColors.accentRed),
+                icon: const Icon(
+                  Icons.delete_forever_rounded,
+                  color: AppColors.accentRed,
+                ),
                 tooltip: 'Delete Selected',
-                onPressed: _selectedHistoryIds.isEmpty ? null : _deleteSelectedHistory,
+                onPressed: _selectedHistoryIds.isEmpty
+                    ? null
+                    : _deleteSelectedHistory,
               ),
             ],
           ),
@@ -536,7 +586,11 @@ class _SavedScreenState extends State<SavedScreen> {
         Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.playlist_add_check_rounded, color: AppColors.textPrimary),
+              icon: const Icon(
+                Feather.list,
+                color: AppColors.textPrimary,
+                size: 21.0,
+              ),
               tooltip: 'Select Multiple',
               onPressed: () {
                 setState(() {
@@ -546,7 +600,11 @@ class _SavedScreenState extends State<SavedScreen> {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.delete_sweep_outlined, color: AppColors.textPrimary),
+              icon: const Icon(
+                Feather.trash_2,
+                color: AppColors.textPrimary,
+                size: 21.0,
+              ),
               tooltip: 'Clear History',
               onPressed: _clearAllHistory,
             ),

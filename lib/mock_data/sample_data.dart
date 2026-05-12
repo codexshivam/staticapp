@@ -10,7 +10,7 @@ class SampleData {
     id: 'user_current',
     displayName: 'Shivam Yadav',
     handle: '@shivamyadav',
-    bio: 'Listening to anonymous stories and sharing my voice.',
+    bio: 'Listening to raw stories and sharing my voice.',
     followersCount: 148,
     followingCount: 92,
     confessionCount: 3,
@@ -38,7 +38,7 @@ class SampleData {
       id: 'author_2',
       displayName: 'Julian K',
       handle: '@julian_k',
-      bio: 'Just sharing anonymous stories from my life.',
+      bio: 'Just sharing real stories from my life.',
       followersCount: 412,
       followingCount: 180,
       confessionCount: 5,
@@ -49,7 +49,7 @@ class SampleData {
       id: 'author_3',
       displayName: 'Maya Patel',
       handle: '@maya_writes',
-      bio: 'Recording anonymous thoughts and stories. Hope you enjoy!',
+      bio: 'Recording expressive thoughts and stories. Hope you enjoy!',
       followersCount: 2310,
       followingCount: 890,
       confessionCount: 24,
@@ -60,7 +60,7 @@ class SampleData {
       id: 'author_4',
       displayName: 'Leo Sterling',
       handle: '@leo_s',
-      bio: 'Welcome to my anonymous page. Sharing stories here.',
+      bio: 'Welcome to my page. Sharing real stories here.',
       followersCount: 95,
       followingCount: 140,
       confessionCount: 2,
@@ -310,18 +310,14 @@ class SampleData {
   }
 
   // Dynamic user list representation (Followers / Following)
-  static List<AppUser> get followersList {
-    return [
-      mockUsers[0], // Aria
-      mockUsers[1], // Julian
-      mockUsers[3], // Leo
-    ];
-  }
+  static List<AppUser> followersList = [
+    mockUsers[0], // Aria
+    mockUsers[1], // Julian
+    mockUsers[3], // Leo
+  ];
 
-  static List<AppUser> get followingList {
-    return [
-      mockUsers[0], // Aria
-      mockUsers[2], // Maya
-    ];
-  }
+  static List<AppUser> followingList = [
+    mockUsers[0], // Aria
+    mockUsers[2], // Maya
+  ];
 }

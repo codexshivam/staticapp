@@ -275,7 +275,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
                   labelText: 'Short Bio',
-                  hintText: 'e.g. welcome to my anonymous confessions diary...',
+                  hintText: 'e.g. welcome to my voice confessions diary...',
                 ),
               ),
 

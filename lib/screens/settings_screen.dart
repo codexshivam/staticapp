@@ -180,11 +180,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: Text(title),
         content: SingleChildScrollView(
           child: Text(
-            'We value absolute anonymity and secure voice confessions above all else.\n\n'
+            'We value raw expression and secure voice confessions above all else.\n\n'
             '1. All voice records are dynamically processed using local secure parameters before streaming.\n'
-            '2. We never request your real name, identity markers, or social accounts.\n'
+            '2. We empower authentic expression through vocal depth, intonation, and creative messaging.\n'
             '3. Any transactional UPI configurations represent direct peer-to-peer relationships—we take exactly 0% commission.\n\n'
-            'Your voice confessions belong solely to you, kept fully anonymous.',
+            'Your voice confessions belong solely to you, helping you express freely.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
           ),
         ),

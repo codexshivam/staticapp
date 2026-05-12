@@ -29,4 +29,28 @@ class AppUser {
     }
     return displayName.substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
   }
+
+  AppUser copyWith({
+    String? id,
+    String? displayName,
+    String? handle,
+    String? bio,
+    int? followersCount,
+    int? followingCount,
+    int? confessionCount,
+    String? upiId,
+    List<String>? links,
+  }) {
+    return AppUser(
+      id: id ?? this.id,
+      displayName: displayName ?? this.displayName,
+      handle: handle ?? this.handle,
+      bio: bio ?? this.bio,
+      followersCount: followersCount ?? this.followersCount,
+      followingCount: followingCount ?? this.followingCount,
+      confessionCount: confessionCount ?? this.confessionCount,
+      upiId: upiId ?? this.upiId,
+      links: links ?? this.links,
+    );
+  }
 }
