@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final List<Confession> _allFollowingPool;
 
   // Pagination bounds
-  int _limit24Hours = 6;
+  int _limit24Hours = 16;
   int _limitFollowing = 6;
 
   bool _isLoadingMore24h = false;
@@ -113,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
 
-      final nextLimit = _limit24Hours + 4;
+      final nextLimit = _limit24Hours + 8;
       final hasMore = nextLimit < _all24HoursPool.length;
       final newItems = _all24HoursPool.take(nextLimit).toList();
 
@@ -124,6 +124,14 @@ class _HomeScreenState extends State<HomeScreen> {
         _hasMore24h = hasMore;
       });
     });
+  }
+
+  List<List<Confession>> _chunkList(List<Confession> list, int chunkSize) {
+    List<List<Confession>> chunks = [];
+    for (var i = 0; i < list.length; i += chunkSize) {
+      chunks.add(list.sublist(i, i + chunkSize > list.length ? list.length : i + chunkSize));
+    }
+    return chunks;
   }
 
   void _openDetail(BuildContext context, Confession confession) {
@@ -195,32 +203,47 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 185, // Optimized breathing room for YTM cover art
-              child: ListView.separated(
-                controller: _horizontalScrollController,
-                scrollDirection: Axis.horizontal,
-                itemCount: _loaded24Hours.length + (_isLoadingMore24h ? 1 : 0),
-                separatorBuilder: (context, index) => const SizedBox(width: 14),
-                itemBuilder: (context, index) {
-                  if (index == _loaded24Hours.length) {
-                    return Container(
-                      width: 80,
-                      alignment: Alignment.center,
-                      child: const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.pureBlack,
+              height: 270, // 4 items of ~60px height + gap spacing
+              child: Builder(
+                builder: (context) {
+                  final chunks = _chunkList(_loaded24Hours, 4);
+
+                  return ListView.separated(
+                    controller: _horizontalScrollController,
+                    scrollDirection: Axis.horizontal,
+                    itemCount: chunks.length + (_isLoadingMore24h ? 1 : 0),
+                    separatorBuilder: (context, index) => const SizedBox(width: 14),
+                    itemBuilder: (context, index) {
+                      if (index == chunks.length) {
+                        return Container(
+                          width: 80,
+                          alignment: Alignment.center,
+                          child: const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.pureBlack,
+                            ),
+                          ),
+                        );
+                      }
+
+                      final chunk = chunks[index];
+                      return SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.85,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: chunk.map((conf) {
+                            return ConfessionCard(
+                              confession: conf,
+                              isHorizontal: false, // Force vertical/list-tile layout inside columns!
+                              onTap: () => _openDetail(context, conf),
+                            );
+                          }).toList(),
                         ),
-                      ),
-                    );
-                  }
-                  final conf = _loaded24Hours[index];
-                  return ConfessionCard(
-                    confession: conf,
-                    isHorizontal: true,
-                    onTap: () => _openDetail(context, conf),
+                      );
+                    },
                   );
                 },
               ),
