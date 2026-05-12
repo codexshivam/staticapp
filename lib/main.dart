@@ -1,0 +1,26 @@
+import 'package:flutter/material.dart';
+import 'core/theme/app_theme.dart';
+import 'screens/splash_screen.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ConfessionsApp());
+}
+
+class ConfessionsApp extends StatelessWidget {
+  const ConfessionsApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Confessions',
+      debugShowCheckedModeBanner: false,
+      
+      // Load custom Material 3 typography theme
+      theme: AppTheme.lightTheme,
+      
+      // Starting gate: Splash Screen with fade entrance
+      home: const SplashScreen(),
+    );
+  }
+}
