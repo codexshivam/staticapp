@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/search_field.dart';
 import '../widgets/section_title.dart';
@@ -20,25 +21,109 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
-  
+
   // Date selection state (Default is '2026-05-12' - Today)
   String _selectedDate = '2026-05-12';
 
-  // Mock Calendar Dates list (Past 7 days)
-  final List<Map<String, String>> _calendarDays = [
-    {'date': '2026-05-06', 'label': 'W', 'num': '6'},
-    {'date': '2026-05-07', 'label': 'T', 'num': '7'},
-    {'date': '2026-05-08', 'label': 'F', 'num': '8'},
-    {'date': '2026-05-09', 'label': 'S', 'num': '9'},
-    {'date': '2026-05-10', 'label': 'S', 'num': '10'},
-    {'date': '2026-05-11', 'label': 'M', 'num': '11'},
-    {'date': '2026-05-12', 'label': 'T', 'num': '12'}, // Today
-  ];
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    final anchor = DateTime(2026, 5, 12);
+    _selectedDate = now.isAfter(anchor) ? _formatDateString(now) : '2026-05-12';
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  // Chunk helper to match YouTube Music column structure from HomeScreen
+  List<List<Confession>> _chunkList(List<Confession> list, int chunkSize) {
+    List<List<Confession>> chunks = [];
+    for (var i = 0; i < list.length; i += chunkSize) {
+      chunks.add(
+        list.sublist(
+          i,
+          i + chunkSize > list.length ? list.length : i + chunkSize,
+        ),
+      );
+    }
+    return chunks;
+  }
+
+  // Format date to standard query string
+  String _formatDateString(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  // Generate date strip list from May 10, 2026 to current date
+  List<Map<String, String>> _generateCalendarDays() {
+    final List<Map<String, String>> days = [];
+    final start = DateTime(2026, 5, 10);
+    final now = DateTime.now();
+    final anchor = DateTime(2026, 5, 12);
+
+    // Set upper bound to today or our mock anchor, whichever is later
+    final endDate = now.isAfter(anchor) ? now : anchor;
+    final labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+    for (int i = 0; ; i++) {
+      final date = start.add(Duration(days: i));
+      if (date.isAfter(endDate)) {
+        break;
+      }
+
+      final yyyymmdd = _formatDateString(date);
+      final label = labels[date.weekday % 7];
+
+      days.add({'date': yyyymmdd, 'label': label, 'num': '${date.day}'});
+    }
+
+    return days;
+  }
+
+  // Date selection picker dialog
+  Future<void> _pickDate() async {
+    final initialDate =
+        DateTime.tryParse(_selectedDate) ?? DateTime(2026, 5, 12);
+    final now = DateTime.now();
+    final anchor = DateTime(2026, 5, 12);
+    final lastDate = now.isAfter(anchor) ? now : anchor;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate.isAfter(lastDate)
+          ? lastDate
+          : (initialDate.isBefore(DateTime(2026, 5, 10))
+                ? DateTime(2026, 5, 10)
+                : initialDate),
+      firstDate: DateTime(2026, 5, 10),
+      lastDate: lastDate,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppColors.accentRed,
+              onPrimary: Colors.white,
+              surface: AppColors.cardBg,
+              onSurface: AppColors.textPrimary,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(foregroundColor: AppColors.accentRed),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedDate = _formatDateString(picked);
+      });
+    }
   }
 
   // Filter confessions based on calendar date or search query
@@ -50,7 +135,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
             c.authorName.toLowerCase().contains(q);
       }).toList();
     } else {
-      return SampleData.mockConfessions.where((c) => c.dateText == _selectedDate).toList();
+      return SampleData.mockConfessions
+          .where((c) => c.dateText == _selectedDate)
+          .toList();
     }
   }
 
@@ -59,7 +146,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (_searchQuery.isEmpty) return [];
     final q = _searchQuery.toLowerCase();
     return SampleData.mockUsers.where((u) {
-      return u.displayName.toLowerCase().contains(q) || u.handle.toLowerCase().contains(q);
+      return u.displayName.toLowerCase().contains(q) ||
+          u.handle.toLowerCase().contains(q);
     }).toList();
   }
 
@@ -92,7 +180,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               const SizedBox(height: 14),
 
               // Search Box
-               SearchField(
+              SearchField(
                 controller: _searchController,
                 hintText: 'Search confessions or usernames...',
                 onChanged: (val) {
@@ -143,78 +231,136 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 ),
                 const SizedBox(height: 12),
                 _filteredConfessions.isEmpty
-                    ? _buildEmptyState('No confessions match your search. Try another query.')
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _filteredConfessions.length,
-                        itemBuilder: (context, index) {
-                          final conf = _filteredConfessions[index];
-                          return ConfessionCard(
-                            confession: conf,
-                            onTap: () => _openDetail(conf),
-                          );
-                        },
+                    ? _buildEmptyState(
+                        'No confessions match your search. Try another query.',
+                      )
+                    : SizedBox(
+                        height: 300,
+                        child: Builder(
+                          builder: (context) {
+                            final chunks = _chunkList(_filteredConfessions, 4);
+                            return ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: chunks.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: 14),
+                              itemBuilder: (context, index) {
+                                final chunk = chunks[index];
+                                return SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.85,
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: chunk.map((conf) {
+                                      return ConfessionCard(
+                                        confession: conf,
+                                        isHorizontal: false,
+                                        onTap: () => _openDetail(conf),
+                                      );
+                                    }).toList(),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
               ] else ...[
-                // MINIMAL CALENDAR STRIP
+                // DYNAMIC CALENDAR STRIP
                 const SectionTitle(
                   title: 'Filter by Date ❤️',
-                  subtitle: 'Browse confessions posted on previous days',
+                  subtitle: 'Browse confessions from May 10 to current date',
                 ),
                 const SizedBox(height: 12),
                 Container(
                   height: 72,
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.cardBg,
                     borderRadius: BorderRadius.circular(5.0),
                     border: Border.all(color: AppColors.divider),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: _calendarDays.map((day) {
-                      final isSelected = _selectedDate == day['date']!;
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: _generateCalendarDays().map((day) {
+                              final isSelected = _selectedDate == day['date']!;
 
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedDate = day['date']!;
-                          });
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          width: 40,
-                          decoration: BoxDecoration(
-                            color: isSelected ? AppColors.pureBlack : Colors.transparent,
-                            borderRadius: BorderRadius.circular(5.0),
-                          ),
-                          alignment: Alignment.center,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                day['label']!,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: isSelected ? Colors.white70 : AppColors.textSecondary,
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedDate = day['date']!;
+                                  });
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  width: 44,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 4.0,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.pureBlack
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(5.0),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        day['label']!,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: isSelected
+                                              ? Colors.white70
+                                              : AppColors.textSecondary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        day['num']!,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                day['num']!,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
+                              );
+                            }).toList(),
                           ),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                      const SizedBox(width: 4),
+                      const VerticalDivider(
+                        width: 1,
+                        color: AppColors.divider,
+                        indent: 8,
+                        endIndent: 8,
+                      ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: const Icon(
+                          Feather.calendar,
+                          color: AppColors.accentRed,
+                          size: 20,
+                        ),
+                        onPressed: _pickDate,
+                      ),
+                    ],
                   ),
                 ),
 
@@ -228,17 +374,37 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 const SizedBox(height: 12),
                 _filteredConfessions.isEmpty
                     ? _buildEmptyState('No confessions shared on this day.')
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _filteredConfessions.length,
-                        itemBuilder: (context, index) {
-                          final conf = _filteredConfessions[index];
-                          return ConfessionCard(
-                            confession: conf,
-                            onTap: () => _openDetail(conf),
-                          );
-                        },
+                    : SizedBox(
+                        height: 300,
+                        child: Builder(
+                          builder: (context) {
+                            final chunks = _chunkList(_filteredConfessions, 4);
+                            return ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: chunks.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: 14),
+                              itemBuilder: (context, index) {
+                                final chunk = chunks[index];
+                                return SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.85,
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: chunk.map((conf) {
+                                      return ConfessionCard(
+                                        confession: conf,
+                                        isHorizontal: false,
+                                        onTap: () => _openDetail(conf),
+                                      );
+                                    }).toList(),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
               ],
               const SizedBox(height: 30),
@@ -260,7 +426,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       alignment: Alignment.center,
       child: Column(
         children: [
-          const Icon(Icons.nights_stay_outlined, color: AppColors.textSecondary, size: 28),
+          const Icon(
+            Icons.nights_stay_outlined,
+            color: AppColors.textSecondary,
+            size: 28,
+          ),
           const SizedBox(height: 8),
           Text(
             message,
@@ -275,11 +445,31 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  String _formatDateLabel(String date) {
-    if (date == '2026-05-12') return 'Today (May 12)';
-    if (date == '2026-05-11') return 'Yesterday (May 11)';
-    
-    final dayNum = date.split('-').last;
-    return 'May $dayNum';
+  String _formatDateLabel(String dateStr) {
+    if (dateStr == '2026-05-12') return 'Today (May 12)';
+    if (dateStr == '2026-05-11') return 'Yesterday (May 11)';
+    if (dateStr == '2026-05-10') return 'May 10';
+
+    final parsed = DateTime.tryParse(dateStr);
+    if (parsed == null) {
+      final dayNum = dateStr.split('-').last;
+      return 'May $dayNum';
+    }
+
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[parsed.month - 1]} ${parsed.day}';
   }
 }
