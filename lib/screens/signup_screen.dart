@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import '../core/theme/app_colors.dart';
 import 'main_navigation_shell.dart';
 
@@ -15,11 +17,123 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _bioController = TextEditingController();
 
+  // Username validation state
+  Timer? _debounceTimer;
+  bool _isCheckingUsername = false;
+  bool? _isUsernameAvailable;
+  String? _usernameErrorText;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_onUsernameChanged);
+  }
+
+  @override
+  void dispose() {
+    _nameController.removeListener(_onUsernameChanged);
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _bioController.dispose();
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onUsernameChanged() {
+    final text = _nameController.text.trim();
+
+    // Cancel previous debounce timers
+    _debounceTimer?.cancel();
+
+    if (text.isEmpty) {
+      setState(() {
+        _isCheckingUsername = false;
+        _isUsernameAvailable = null;
+        _usernameErrorText = null;
+      });
+      return;
+    }
+
+    if (text.length < 3) {
+      setState(() {
+        _isCheckingUsername = false;
+        _isUsernameAvailable = false;
+        _usernameErrorText = 'Username must be at least 3 characters';
+      });
+      return;
+    }
+
+    // Enter validating state
+    setState(() {
+      _isCheckingUsername = true;
+      _isUsernameAvailable = null;
+      _usernameErrorText = null;
+    });
+
+    // Start 600ms debounce timer to simulate server validation
+    _debounceTimer = Timer(const Duration(milliseconds: 600), () {
+      if (!mounted) return;
+
+      // Preset list of taken usernames for demonstration
+      const takenUsernames = {
+        'dreamer',
+        'admin',
+        'love',
+        'secret',
+        'confessor',
+        'angel',
+      };
+      final isTaken = takenUsernames.contains(text.toLowerCase());
+
+      setState(() {
+        _isCheckingUsername = false;
+        _isUsernameAvailable = !isTaken;
+        _usernameErrorText = isTaken ? 'This username is already taken' : null;
+      });
+    });
+  }
+
   void _handleSignup() {
-    // Navigate straight to Shell on registration
+    final username = _nameController.text.trim();
+    if (username.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a username ❤️'),
+          backgroundColor: AppColors.accentRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (_isCheckingUsername) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Still validating your username...'),
+          backgroundColor: AppColors.pureBlack,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (_isUsernameAvailable != true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please choose an available username ❤️'),
+          backgroundColor: AppColors.accentRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    // Navigate straight to Shell on successful registration
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const MainNavigationShell(),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MainNavigationShell(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -30,20 +144,45 @@ class _SignupScreenState extends State<SignupScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Account created successfully! ❤️'),
+        content: Text('Account created successfully!'),
         backgroundColor: AppColors.pureBlack,
         behavior: SnackBarBehavior.floating,
       ),
     );
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _bioController.dispose();
-    super.dispose();
+  Widget? _buildUsernameSuffix() {
+    if (_isCheckingUsername) {
+      return const Padding(
+        padding: EdgeInsets.all(14.0),
+        child: SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.pureBlack,
+          ),
+        ),
+      );
+    }
+
+    if (_isUsernameAvailable == true) {
+      return const Icon(
+        Icons.check_circle_outline_rounded,
+        color: Colors.green,
+        size: 20,
+      );
+    }
+
+    if (_isUsernameAvailable == false) {
+      return const Icon(
+        Icons.error_outline_rounded,
+        color: AppColors.accentRed,
+        size: 20,
+      );
+    }
+
+    return null;
   }
 
   @override
@@ -51,10 +190,16 @@ class _SignupScreenState extends State<SignupScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        toolbarHeight: kToolbarHeight + 20.0,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leadingWidth: 75.0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.pureBlack),
+          icon: const Icon(
+            Feather.x,
+            size: 30.0,
+            color: Color.fromARGB(255, 71, 71, 71),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -65,70 +210,92 @@ class _SignupScreenState extends State<SignupScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Create Account ❤️',
+                'Create Account',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 28,
+                  fontSize: 30,
                   color: AppColors.pureBlack,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 15),
               Text(
-                'Create an anonymous profile and share your confessions with the world.',
+                'Create your profile to start your journey.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: AppColors.textSecondary,
                   height: 1.4,
                 ),
               ),
-              
+
               const SizedBox(height: 35),
 
-              // Fields
+              // Username input with dynamic database validation UI
               TextField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Username / Nickname',
-                  hintText: 'e.g. anonymous_dreamer',
+                style: const TextStyle(fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Your unique username',
+                  hintText: 'e.g. dreamer',
+                  suffixIcon: _buildUsernameSuffix(),
+                  helperText: _isUsernameAvailable == true
+                      ? 'Username is available ❤️'
+                      : null,
+                  helperStyle: const TextStyle(
+                    color: Colors.green,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  errorText: _usernameErrorText,
+                  errorStyle: const TextStyle(
+                    color: AppColors.accentRed,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
+
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
                   labelText: 'Email Address',
-                  hintText: 'e.g. dreamer@mail.com',
+                  hintText: 'e.g. dreamer@helloworld.com',
                 ),
               ),
               const SizedBox(height: 14),
+
               TextField(
                 controller: _passwordController,
                 obscureText: true,
+                style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
                   labelText: 'Password',
                   hintText: '••••••••',
                 ),
               ),
               const SizedBox(height: 14),
+
               TextField(
                 controller: _bioController,
                 maxLines: 2,
+                style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
                   labelText: 'Short Bio',
                   hintText: 'e.g. welcome to my anonymous confessions diary...',
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 27.50),
 
               // Button
               ElevatedButton(
                 onPressed: _handleSignup,
                 child: const Text('SIGN UP'),
               ),
-              
-              const SizedBox(height: 24),
-              
+
+              const SizedBox(height: 27.50),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -149,7 +316,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),

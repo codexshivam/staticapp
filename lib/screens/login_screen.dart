@@ -18,12 +18,16 @@ class _LoginScreenState extends State<LoginScreen> {
     // Elegant slide transition to Main Navigation Shell
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const MainNavigationShell(),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MainNavigationShell(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           final begin = const Offset(0.0, 0.05);
           final end = Offset.zero;
           final curve = Curves.easeOutCubic;
-          final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          final tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
           return SlideTransition(
             position: animation.drive(tween),
             child: FadeTransition(opacity: animation, child: child),
@@ -65,7 +69,10 @@ class _LoginScreenState extends State<LoginScreen> {
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            child: const Text('Send Reset Link', style: TextStyle(fontSize: 12)),
+            child: const Text(
+              'Send Reset Link',
+              style: TextStyle(fontSize: 12),
+            ),
           ),
         ],
       ),
@@ -82,6 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(backgroundColor: AppColors.background),
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -89,26 +97,25 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 40),
-              
-              // Emotional branding text
+              const SizedBox(height: 20),
+
               Text(
-                'Welcome Back ❤️',
+                'Welcome !',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 28,
+                  fontSize: 32,
                   color: AppColors.pureBlack,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 15),
               Text(
-                'Log in to listen to anonymous confessions and share your voice with the world.',
+                'Log in to listen to confessions and share your voice with the world.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: AppColors.textSecondary,
                   height: 1.4,
                 ),
               ),
-              
+
               const SizedBox(height: 50),
 
               // Inputs Group
@@ -117,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
                   labelText: 'Email Address',
-                  hintText: 'e.g. secret@diary.com',
+                  hintText: 'e.g. hello@world.com',
                 ),
               ),
               const SizedBox(height: 14),
@@ -129,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   hintText: '••••••••',
                 ),
               ),
-              
+
               // Forgot Password link
               Align(
                 alignment: Alignment.centerRight,
@@ -157,12 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _handleLogin,
                 child: const Text('LOG IN'),
               ),
-              const SizedBox(height: 14),
-              OutlinedButton(
-                onPressed: _handleLogin, // Can bypass immediately
-                child: const Text('CONTINUE AS GUEST'),
-              ),
-              
+
               const SizedBox(height: 40),
 
               // Signup transition
@@ -178,16 +180,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         PageRouteBuilder(
-                          pageBuilder: (context, animation, secondaryAnimation) => const SignupScreen(),
-                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                            return FadeTransition(opacity: animation, child: child);
-                          },
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  const SignupScreen(),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                );
+                              },
                           transitionDuration: const Duration(milliseconds: 350),
                         ),
                       );
                     },
                     child: Text(
-                      'Sign up ❤️',
+                      'Register your Account',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.pureBlack,
@@ -196,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),

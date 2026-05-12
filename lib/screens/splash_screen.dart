@@ -32,10 +32,12 @@ class _SplashScreenState extends State<SplashScreen> {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const LoginScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
             transitionDuration: const Duration(milliseconds: 850),
           ),
         );
@@ -46,6 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(backgroundColor: AppColors.background),
       backgroundColor: AppColors.background,
       body: Center(
         child: AnimatedScale(
@@ -60,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Confessions ❤️',
+                  'thestatic ❤️',
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     fontSize: 34,
@@ -70,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'listen to anonymous voice confessions',
+                  'share and listen to the real voice confessions',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontStyle: FontStyle.italic,
