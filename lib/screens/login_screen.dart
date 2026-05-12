@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
         ),
         content: Text(
-          'We will send a reset code to your registered email, so your secrets remain secure and uniquely yours.',
+          'Enter your email to receive a password reset link.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         actions: [
@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('A quiet password reset letter has been sent ❤️'),
+                  content: Text('Password reset link sent to your email ❤️'),
                   backgroundColor: AppColors.pureBlack,
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -93,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
               
               // Emotional branding text
               Text(
-                'welcome back ❤️',
+                'Welcome Back ❤️',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 28,
@@ -102,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'some stories wait to be heard. log in to listen to untamed whispers from around the world.',
+                'Log in to listen to anonymous confessions and share your voice with the world.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: AppColors.textSecondary,
                   height: 1.4,
@@ -140,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     minimumSize: Size.zero,
                   ),
                   child: Text(
-                    'Forgot secret passcode?',
+                    'Forgot password?',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
@@ -155,12 +155,12 @@ class _LoginScreenState extends State<LoginScreen> {
               // Action buttons
               ElevatedButton(
                 onPressed: _handleLogin,
-                child: const Text('ENTER CONFESSIONS ROOM'),
+                child: const Text('LOG IN'),
               ),
               const SizedBox(height: 14),
               OutlinedButton(
                 onPressed: _handleLogin, // Can bypass immediately
-                child: const Text('LISTEN AS ANONYMOUS GUEST'),
+                child: const Text('CONTINUE AS GUEST'),
               ),
               
               const SizedBox(height: 40),
@@ -187,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     child: Text(
-                      'Begin a diary ❤️',
+                      'Sign up ❤️',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.pureBlack,

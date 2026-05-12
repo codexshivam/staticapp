@@ -105,7 +105,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               
               // Right side tabs
               _buildNavButton(Icons.bookmark_outline, Icons.bookmark, 'Saved', 2),
-              _buildNavButton(Icons.person_outline, Icons.person, 'Diary', 3),
+              _buildNavButton(Icons.person_outline, Icons.person, 'Profile', 3),
             ],
           ),
         ),

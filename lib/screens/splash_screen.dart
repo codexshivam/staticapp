@@ -70,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'listening to someone’s untold feelings late at night',
+                  'listen to anonymous voice confessions',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontStyle: FontStyle.italic,

@@ -30,11 +30,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Pen Name'),
+        title: const Text('Edit Nickname'),
         content: TextField(
           controller: controller,
           cursorColor: AppColors.pureBlack,
-          decoration: const InputDecoration(labelText: 'Pen Name'),
+          decoration: const InputDecoration(labelText: 'Nickname'),
         ),
         actions: [
           TextButton(
@@ -63,7 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Pen Name updated successfully ❤️'),
+                    content: Text('Nickname updated successfully ❤️'),
                     backgroundColor: AppColors.pureBlack,
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -82,7 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Update Secret Email'),
+        title: const Text('Change Email'),
         content: TextField(
           controller: controller,
           cursorColor: AppColors.pureBlack,
@@ -104,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Secret Email updated successfully ❤️'),
+                    content: Text('Email updated successfully ❤️'),
                     backgroundColor: AppColors.pureBlack,
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -180,11 +180,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: Text(title),
         content: SingleChildScrollView(
           child: Text(
-            'We value absolute anonymity and quiet storytelling above all else.\n\n'
-            '1. All voice records are dynamically encrypted using local parameters before streaming.\n'
+            'We value absolute anonymity and secure voice confessions above all else.\n\n'
+            '1. All voice records are dynamically processed using local secure parameters before streaming.\n'
             '2. We never request your real name, identity markers, or social accounts.\n'
             '3. Any transactional UPI configurations represent direct peer-to-peer relationships—we take exactly 0% commission.\n\n'
-            'Your letters belong solely to you, locked inside the sky of confessions.',
+            'Your voice confessions belong solely to you, kept fully anonymous.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
           ),
         ),
@@ -202,12 +202,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Close your journal? ❤️'),
-        content: const Text('Are you sure you want to log out and secure your anonymous diary keys?'),
+        title: const Text('Log out? ❤️'),
+        content: const Text('Are you sure you want to log out?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Keep Open'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -258,7 +258,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // PROFILE SECTION
             Text(
-              'DIARY IDENTITIES',
+              'ACCOUNT SETTINGS',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
@@ -268,25 +268,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 10),
             SettingsTile(
-              title: 'Edit Pen Name',
+              title: 'Edit Nickname',
               subtitle: _currentName,
               leadingIcon: Icons.edit_outlined,
               onTap: _editProfileName,
             ),
             SettingsTile(
-              title: 'Update Secret Email',
+              title: 'Change Email',
               subtitle: _currentEmail,
               leadingIcon: Icons.email_outlined,
               onTap: _editEmail,
             ),
             SettingsTile(
-              title: 'Update Passcode',
+              title: 'Change Password',
               subtitle: '••••••••',
               leadingIcon: Icons.lock_outline,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Passcode edit simulation triggered...'),
+                    content: Text('Password edit simulation triggered...'),
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -297,7 +297,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             // BILLING SECTION
             Text(
-              'UPI TIPPING SETUP',
+              'UPI PAYMENTS',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
@@ -307,7 +307,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 10),
             SettingsTile(
-              title: 'UPI Virtual Address',
+              title: 'UPI Address',
               subtitle: _currentUpi.isEmpty ? 'Not set yet' : _currentUpi,
               leadingIcon: Icons.payment_outlined,
               onTap: _editUpiId,
@@ -317,7 +317,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             // LEGAL SECTION
             Text(
-              'LEGAL DOCUMENTS',
+              'LEGAL',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
@@ -341,7 +341,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             // LOGOUT BUTTON
             SettingsTile(
-              title: 'Secure & Close Diary',
+              title: 'LOG OUT',
               leadingIcon: Icons.logout_outlined,
               isDestructive: true,
               trailing: const SizedBox.shrink(),

@@ -43,7 +43,7 @@ class _SavedScreenState extends State<SavedScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Removed confession from saved journal ❤️'),
+        content: Text('Removed confession from bookmarks ❤️'),
         duration: Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.pureBlack,
@@ -63,7 +63,7 @@ class _SavedScreenState extends State<SavedScreen> {
             children: [
               // Header title
               Text(
-                'My Saved Journal',
+                'Saved',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -72,8 +72,8 @@ class _SavedScreenState extends State<SavedScreen> {
               const SizedBox(height: 14),
 
               const SectionTitle(
-                title: 'Bookmarked Whispers ❤️',
-                subtitle: 'unspoken words you chose to remember',
+                title: 'Bookmarks ❤️',
+                subtitle: 'Confessions you saved',
               ),
               const SizedBox(height: 14),
 
@@ -132,7 +132,7 @@ class _SavedScreenState extends State<SavedScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'your saved confessions will appear here ❤️',
+              'Your saved confessions will appear here ❤️',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 14,
@@ -142,7 +142,7 @@ class _SavedScreenState extends State<SavedScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'listen to other stories late at night and bookmark them to save them in your emotional diary.',
+              'Browse confessions and bookmark them to listen to them later.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 11,

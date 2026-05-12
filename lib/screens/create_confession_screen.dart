@@ -95,7 +95,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please title your silent whisper... ❤️'),
+          content: Text('Please enter a title for your confession ❤️'),
           backgroundColor: AppColors.accentRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -107,7 +107,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
     setState(() {
       _state = RecordState.publishing;
       _publishProgress = 0.2;
-      _publishingText = 'Formatting silent recording... 🌧️';
+      _publishingText = 'Processing recording... 🌧️';
     });
 
     // Step 1: Encrypt
@@ -115,7 +115,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       if (mounted) {
         setState(() {
           _publishProgress = 0.5;
-          _publishingText = 'Encrypting diary initials... 🔒';
+          _publishingText = 'Securing account initials... 🔒';
         });
       }
     });
@@ -125,7 +125,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       if (mounted) {
         setState(() {
           _publishProgress = 0.8;
-          _publishingText = 'Spreading feelings to the stars... ✨';
+          _publishingText = 'Uploading confession... ✨';
         });
       }
     });
@@ -225,7 +225,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
         return Column(
           children: [
             Text(
-              'tell your story ❤️',
+              'Share your confession ❤️',
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
@@ -233,7 +233,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'some feelings deserve a voice. record a warm, emotional whisper to the world.',
+              "Share what's on your mind. Record a voice confession anonymously.",
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColors.textSecondary,
@@ -268,7 +268,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
             const SizedBox(height: 14),
             Text(
-              'TAP TO RECORD VOICE',
+              'TAP TO RECORD',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -284,7 +284,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             OutlinedButton.icon(
               onPressed: _simulateUploadFile,
               icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-              label: const Text('UPLOAD PRE-RECORDED FILE'),
+              label: const Text('CHOOSE AUDIO FILE'),
             ),
           ],
         );
@@ -315,7 +315,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'listening to your silent letters...',
+                  'Recording...',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: AppColors.textSecondary,
@@ -366,7 +366,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'TAP TO FINISH RECORDING',
+              'TAP TO STOP',
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8),
             ),
           ],
@@ -385,7 +385,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Secret Whisper Recorded ❤️',
+                'Voice Confession Recorded ❤️',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -403,8 +403,8 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
                 controller: _titleController,
                 style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
-                  labelText: 'Title your silent diary page...',
-                  hintText: 'e.g. why did we say goodbye?',
+                  labelText: 'Title your confession...',
+                  hintText: 'e.g. A message to my first love...',
                 ),
               ),
               const SizedBox(height: 20),
@@ -422,7 +422,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: _publishConfession,
-                      child: const Text('PUBLISH'),
+                      child: const Text('POST'),
                     ),
                   ),
                 ],
@@ -484,7 +484,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'your unspoken words are now floating in the dark sky.',
+              'Your voice confession is now live anonymously.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColors.textSecondary,

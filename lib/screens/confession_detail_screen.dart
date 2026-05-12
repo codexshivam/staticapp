@@ -80,7 +80,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Whisper deleted from the room ❤️'),
+        content: Text('Comment deleted ❤️'),
         duration: Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.pureBlack,
@@ -374,7 +374,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'Support the author ❤️',
+                          'Support the creator ❤️',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -382,7 +382,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'If this voice note touched you, buy them a hot tea or support their storytelling anonymously.',
+                          'Show your support for this creator with a small tip.',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontSize: 12,
                           ),
@@ -409,7 +409,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                   Row(
                     children: [
                       Text(
-                        'Confession Room ❤️',
+                        'Comments ❤️',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -423,7 +423,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                           borderRadius: BorderRadius.circular(3),
                         ),
                         child: Text(
-                          '${_comments.length} whispers',
+                          '${_comments.length} comments',
                           style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -437,7 +437,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 40),
                           alignment: Alignment.center,
                           child: Text(
-                            'no letters written here yet. be the first to leave a whisper ❤️',
+                            'No comments yet. Be the first to say something ❤️',
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontStyle: FontStyle.italic,
@@ -536,7 +536,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                         style: const TextStyle(fontSize: 13.5),
                         textCapitalization: TextCapitalization.sentences,
                         decoration: const InputDecoration(
-                          hintText: 'Leave a silent whisper inside...',
+                          hintText: 'Add a comment...',
                           filled: true,
                           fillColor: AppColors.background,
                           contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),

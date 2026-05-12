@@ -99,7 +99,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             children: [
               // Premium Title
               Text(
-                'Explore Whispers',
+                'Explore',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -110,7 +110,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               // Search Box
               SearchField(
                 controller: _searchController,
-                hintText: 'Search diaries, tags, or names...',
+                hintText: 'Search confessions, tags, or usernames...',
                 onChanged: (val) {
                   setState(() {
                     _searchQuery = val;
@@ -161,7 +161,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               if (_searchQuery.isNotEmpty) ...[
                 // SEARCH RESULTS FOR PEOPLE
                 if (_filteredUsers.isNotEmpty) ...[
-                  const SectionTitle(title: 'Matching Diaries ❤️'),
+                  const SectionTitle(title: 'Matching Users ❤️'),
                   const SizedBox(height: 12),
                   ListView.builder(
                     shrinkWrap: true,
@@ -187,11 +187,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 // SEARCH RESULTS FOR AUDIO FILES
                 SectionTitle(
                   title: 'Matching Confessions ❤️',
-                  subtitle: 'whispers matching "${_searchQuery}"',
+                  subtitle: 'Confessions matching "${_searchQuery}"',
                 ),
                 const SizedBox(height: 12),
                 _filteredConfessions.isEmpty
-                    ? _buildEmptyState('no confessions match your search. try another word.')
+                    ? _buildEmptyState('No confessions match your search. Try another query.')
                     : ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -207,8 +207,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ] else ...[
                 // MINIMAL CALENDAR STRIP
                 const SectionTitle(
-                  title: 'Select a Date ❤️',
-                  subtitle: 'step back into the echoes of previous nights...',
+                  title: 'Filter by Date ❤️',
+                  subtitle: 'Browse confessions posted on previous days',
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -271,11 +271,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 // CONFESSIONS ON SELECTED DATE
                 SectionTitle(
                   title: 'Confessions on Selected Date ❤️',
-                  subtitle: 'recorded on ${_formatDateLabel(_selectedDate)}',
+                  subtitle: 'Shared on ${_formatDateLabel(_selectedDate)}',
                 ),
                 const SizedBox(height: 12),
                 _filteredConfessions.isEmpty
-                    ? _buildEmptyState('silence on this day. no diaries were whispered.')
+                    ? _buildEmptyState('No confessions shared on this day.')
                     : ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),

@@ -76,8 +76,8 @@ class HomeScreen extends StatelessWidget {
 
             // SECTION 2: Confessions in 24 Hours ❤️ (Horizontal Scroll)
             const SectionTitle(
-              title: 'Confessions in 24 Hours ❤️',
-              subtitle: 'whispers recorded since sunset...',
+              title: 'New Confessions ❤️',
+              subtitle: 'Confessions recorded in the last 24 hours',
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -101,8 +101,8 @@ class HomeScreen extends StatelessWidget {
 
             // SECTION 3: From People You Follow ❤️ (Vertical List)
             const SectionTitle(
-              title: 'From People You Follow ❤️',
-              subtitle: 'pages from diaries you hold close',
+              title: 'Following Feed ❤️',
+              subtitle: 'Confessions from creators you follow',
             ),
             const SizedBox(height: 12),
             ListView.builder(
@@ -126,7 +126,7 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'We love Confessions ❤️',
+                    'Confessions ❤️',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontStyle: FontStyle.italic,
                       fontWeight: FontWeight.w600,
@@ -137,7 +137,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'thank you for protecting these secrets.',
+                    'Thank you for sharing anonymously.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 10,
                       color: AppColors.textSecondary.withOpacity(0.5),
@@ -194,7 +194,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        isPlaying ? 'listening late night...' : 'last heard story',
+                        isPlaying ? 'Now Playing...' : 'Last Played',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.background.withOpacity(0.7),
                           fontSize: 10,
@@ -213,7 +213,7 @@ class HomeScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: Text(
-                        'OPEN ROOM ❤️',
+                        'VIEW DETAILS ❤️',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 8,
                           color: Colors.white,

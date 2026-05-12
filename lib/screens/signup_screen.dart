@@ -30,7 +30,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Your anonymous diary has been opened successfully ❤️'),
+        content: Text('Account created successfully! ❤️'),
         backgroundColor: AppColors.pureBlack,
         behavior: SnackBarBehavior.floating,
       ),
@@ -65,7 +65,7 @@ class _SignupScreenState extends State<SignupScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'begin your diary ❤️',
+                'Create Account ❤️',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 28,
@@ -74,7 +74,7 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'open a safe, beautiful sanctuary for your unspoken secrets, silent tears, and quiet truths.',
+                'Create an anonymous profile and share your confessions with the world.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: AppColors.textSecondary,
                   height: 1.4,
@@ -87,8 +87,8 @@ class _SignupScreenState extends State<SignupScreen> {
               TextField(
                 controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Pen Name / Initial Display',
-                  hintText: 'e.g. Dreamer, Silent Letters',
+                  labelText: 'Username / Nickname',
+                  hintText: 'e.g. anonymous_dreamer',
                 ),
               ),
               const SizedBox(height: 14),
@@ -96,8 +96,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  labelText: 'Secret Email Address',
-                  hintText: 'e.g. whisper@diary.com',
+                  labelText: 'Email Address',
+                  hintText: 'e.g. dreamer@mail.com',
                 ),
               ),
               const SizedBox(height: 14),
@@ -105,7 +105,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 controller: _passwordController,
                 obscureText: true,
                 decoration: const InputDecoration(
-                  labelText: 'Passcode',
+                  labelText: 'Password',
                   hintText: '••••••••',
                 ),
               ),
@@ -114,8 +114,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 controller: _bioController,
                 maxLines: 2,
                 decoration: const InputDecoration(
-                  labelText: 'A Short Poetic Bio',
-                  hintText: 'e.g. writing letters to a person who left...',
+                  labelText: 'Short Bio',
+                  hintText: 'e.g. welcome to my anonymous confessions diary...',
                 ),
               ),
 
@@ -124,7 +124,7 @@ class _SignupScreenState extends State<SignupScreen> {
               // Button
               ElevatedButton(
                 onPressed: _handleSignup,
-                child: const Text('CREATE ANONYMOUS DIARY'),
+                child: const Text('SIGN UP'),
               ),
               
               const SizedBox(height: 24),
@@ -133,7 +133,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Already have a secret room?",
+                    "Already have an account?",
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(width: 4),

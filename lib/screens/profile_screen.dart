@@ -54,7 +54,7 @@ class ProfileScreen extends StatelessWidget {
               )
             : null,
         title: Text(
-          isMe ? 'My Secret Diary' : '${activeUser.displayName}\'s Diary',
+          isMe ? 'My Profile' : '${activeUser.displayName}\'s Profile',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -149,7 +149,7 @@ class ProfileScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildStatColumn(context, 'Whispers', '${userConfessions.length}'),
+                      _buildStatColumn(context, 'Confessions', '${userConfessions.length}'),
                       _buildVerticalDivider(),
                       GestureDetector(
                         onTap: () => _openFollowersScreen(context, true),
@@ -201,8 +201,8 @@ class ProfileScreen extends StatelessWidget {
 
             // 2. LIST OF USER CONFESSIONS
             SectionTitle(
-              title: isMe ? 'My Recorded Secrets ❤️' : '${activeUser.displayName}\'s Whispers ❤️',
-              subtitle: 'voices spoken late at night...',
+              title: isMe ? 'My Confessions ❤️' : '${activeUser.displayName}\'s Confessions ❤️',
+              subtitle: 'Anonymous voice posts',
             ),
             const SizedBox(height: 14),
 
@@ -211,7 +211,7 @@ class ProfileScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 40),
                     alignment: Alignment.center,
                     child: Text(
-                      'This diary is empty. No feelings have been spoken yet.',
+                      'No confessions posted yet.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontStyle: FontStyle.italic,
