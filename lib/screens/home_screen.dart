@@ -21,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Scroll Controllers for pagination
   final ScrollController _mainScrollController = ScrollController();
   final ScrollController _horizontalScrollController = ScrollController();
+  final ScrollController _followingScrollController = ScrollController();
 
   // Lazy loaded lists
   List<Confession> _loaded24Hours = [];
@@ -30,9 +31,9 @@ class _HomeScreenState extends State<HomeScreen> {
   late final List<Confession> _all24HoursPool;
   late final List<Confession> _allFollowingPool;
 
-  // Pagination bounds
+  // Pagination bounds (initialized to 16 to populate exactly 4 complete columns of 4 rows each)
   int _limit24Hours = 16;
-  int _limitFollowing = 6;
+  int _limitFollowing = 16;
 
   bool _isLoadingMore24h = false;
   bool _isLoadingMoreFollowing = false;
@@ -55,19 +56,21 @@ class _HomeScreenState extends State<HomeScreen> {
     // Bind scroll controllers to trigger loaders
     _mainScrollController.addListener(_onMainScroll);
     _horizontalScrollController.addListener(_onHorizontalScroll);
+    _followingScrollController.addListener(_onFollowingScroll);
   }
 
   @override
   void dispose() {
     _mainScrollController.dispose();
     _horizontalScrollController.dispose();
+    _followingScrollController.dispose();
     super.dispose();
   }
 
-  // Detect bottom of page scroll for vertical Following feed
+  // Detect bottom of page scroll (for vertical bounce container)
   void _onMainScroll() {
     if (_mainScrollController.position.pixels >= _mainScrollController.position.maxScrollExtent - 150) {
-      _lazyLoadMoreFollowing();
+      // Main vertical scroll if needed
     }
   }
 
@@ -75,6 +78,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onHorizontalScroll() {
     if (_horizontalScrollController.position.pixels >= _horizontalScrollController.position.maxScrollExtent - 80) {
       _lazyLoadMore24h();
+    }
+  }
+
+  // Detect end of list scroll for horizontal Following grid
+  void _onFollowingScroll() {
+    if (_followingScrollController.position.pixels >= _followingScrollController.position.maxScrollExtent - 80) {
+      _lazyLoadMoreFollowing();
     }
   }
 
@@ -89,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
       
-      final nextLimit = _limitFollowing + 6;
+      final nextLimit = _limitFollowing + 8; // Load exactly 2 additional complete columns of 4 rows
       final hasMore = nextLimit < _allFollowingPool.length;
       final newItems = _allFollowingPool.take(nextLimit).toList();
 
@@ -113,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
 
-      final nextLimit = _limit24Hours + 8;
+      final nextLimit = _limit24Hours + 8; // Load exactly 2 additional complete columns of 4 rows
       final hasMore = nextLimit < _all24HoursPool.length;
       final newItems = _all24HoursPool.take(nextLimit).toList();
 
@@ -124,14 +134,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _hasMore24h = hasMore;
       });
     });
-  }
-
-  List<List<Confession>> _chunkList(List<Confession> list, int chunkSize) {
-    List<List<Confession>> chunks = [];
-    for (var i = 0; i < list.length; i += chunkSize) {
-      chunks.add(list.sublist(i, i + chunkSize > list.length ? list.length : i + chunkSize));
-    }
-    return chunks;
   }
 
   void _openDetail(BuildContext context, Confession confession) {
@@ -152,6 +154,14 @@ class _HomeScreenState extends State<HomeScreen> {
         transitionDuration: const Duration(milliseconds: 500),
       ),
     );
+  }
+
+  List<List<Confession>> _chunkList(List<Confession> list, int chunkSize) {
+    List<List<Confession>> chunks = [];
+    for (var i = 0; i < list.length; i += chunkSize) {
+      chunks.add(list.sublist(i, i + chunkSize > list.length ? list.length : i + chunkSize));
+    }
+    return chunks;
   }
 
   @override
@@ -203,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 270, // 4 items of ~60px height + gap spacing
+              height: 300, // Raised to 300px to perfectly prevent any RenderFlex bottom overflow!
               child: Builder(
                 builder: (context) {
                   final chunks = _chunkList(_loaded24Hours, 4);
@@ -237,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: chunk.map((conf) {
                             return ConfessionCard(
                               confession: conf,
-                              isHorizontal: false, // Force vertical/list-tile layout inside columns!
+                              isHorizontal: false, // Standard vertical list layout inside horizontal grid columns
                               onTap: () => _openDetail(context, conf),
                             );
                           }).toList(),
@@ -251,40 +261,60 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 28),
 
-            // SECTION 3: From People You Follow ❤️ (Vertical List)
+            // SECTION 3: From People You Follow ❤️ (Horizontal Scroll Grid)
             const SectionTitle(
               title: 'Following Feed ❤️',
               subtitle: 'Confessions from creators you follow',
             ),
             const SizedBox(height: 12),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _loadedFollowing.length + (_isLoadingMoreFollowing ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _loadedFollowing.length) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24.0),
-                    child: Center(
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.pureBlack,
-                        ),
-                      ),
+            _loadedFollowing.isEmpty
+                ? _buildEmptyFollowingState(context)
+                : SizedBox(
+                    height: 300, // Matching 300px height for complete layout consistency and overflow safety
+                    child: Builder(
+                      builder: (context) {
+                        final chunks = _chunkList(_loadedFollowing, 4);
+
+                        return ListView.separated(
+                          controller: _followingScrollController,
+                          scrollDirection: Axis.horizontal,
+                          itemCount: chunks.length + (_isLoadingMoreFollowing ? 1 : 0),
+                          separatorBuilder: (context, index) => const SizedBox(width: 14),
+                          itemBuilder: (context, index) {
+                            if (index == chunks.length) {
+                              return Container(
+                                width: 80,
+                                alignment: Alignment.center,
+                                child: const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.pureBlack,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final chunk = chunks[index];
+                            return SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.85,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: chunk.map((conf) {
+                                  return ConfessionCard(
+                                    confession: conf,
+                                    isHorizontal: false,
+                                    onTap: () => _openDetail(context, conf),
+                                  );
+                                }).toList(),
+                              ),
+                            );
+                          },
+                        );
+                      },
                     ),
-                  );
-                }
-                final conf = _loadedFollowing[index];
-                return ConfessionCard(
-                  confession: conf,
-                  isHorizontal: false,
-                  onTap: () => _openDetail(context, conf),
-                );
-              },
-            ),
+                  ),
 
             const SizedBox(height: 36),
 
@@ -545,6 +575,47 @@ class _HomeScreenState extends State<HomeScreen> {
               color: AppColors.background.withOpacity(0.65),
               fontSize: 13,
               height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Beautiful Following Feed Empty State Card
+  Widget _buildEmptyFollowingState(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.cardBg.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(5.0),
+        border: Border.all(color: AppColors.divider),
+      ),
+      alignment: Alignment.center,
+      child: Column(
+        children: [
+          const Icon(
+            Icons.people_outline_rounded,
+            color: AppColors.textSecondary,
+            size: 32,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            "Your feed is quiet...",
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Follow other users to listen to their voice stories late at night.",
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontSize: 12,
+              color: AppColors.textSecondary.withOpacity(0.8),
             ),
           ),
         ],
