@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import '../core/theme/app_colors.dart';
 import 'home_screen.dart';
 import 'explore_screen.dart';
@@ -35,12 +37,16 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
-        pageBuilder: (context, animation, secondaryAnimation) => const CreateConfessionScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const CreateConfessionScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(0.0, 1.0);
           const end = Offset.zero;
           const curve = Curves.easeOutQuart;
-          final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          final tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
           return SlideTransition(
             position: animation.drive(tween),
             child: child,
@@ -55,39 +61,53 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _tabs,
-      ),
-      
-      // Custom Bottom App Bar (Clean, Symmetrical, flat layout)
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadow,
-              blurRadius: 10.0,
-              offset: Offset(0, -2),
+      extendBody:
+          true, // Allows list body scroll paths to pass cleanly behind the transparent bar!
+      body: IndexedStack(index: _currentIndex, children: _tabs),
+
+      // Custom Bottom App Bar (Frosted Glass Transparent layout)
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.cardBg.withOpacity(
+                0.72,
+              ), // Premium semi-transparency
+              border: const Border(
+                top: BorderSide(
+                  color: Color(
+                    0x0F000000,
+                  ), // Ultra-faint top border for separation
+                  width: 0.5,
+                ),
+              ),
             ),
-          ],
-        ),
-        child: BottomAppBar(
-          height: 64.0,
-          color: AppColors.cardBg,
-          elevation: 0,
-          padding: EdgeInsets.zero,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavButton(Icons.home_outlined, Icons.home, 'Home', 0),
-              _buildNavButton(Icons.search, Icons.search, 'Explore', 1),
-              
-              // Clean, simple central Add/Record Trigger
-              _buildCreateButton(),
-              
-              _buildNavButton(Icons.bookmark_outline, Icons.bookmark, 'Saved', 2),
-              _buildNavButton(Icons.person_outline, Icons.person, 'Profile', 3),
-            ],
+            child: BottomAppBar(
+              height: 64.0,
+              color: Colors
+                  .transparent, // Let Container color and blur pass through
+              elevation: 0,
+              padding: EdgeInsets.zero,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavButton(Feather.grid, Feather.grid, 'Home', 0),
+                  _buildNavButton(Feather.search, Feather.search, 'Explore', 1),
+
+                  // Clean, simple central Add/Record Trigger
+                  _buildCreateButton(),
+
+                  _buildNavButton(
+                    Feather.bookmark,
+                    Feather.bookmark,
+                    'Saved',
+                    2,
+                  ),
+                  _buildNavButton(Feather.user, Feather.user, 'Profile', 3),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -104,21 +124,21 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.add_circle_outline_rounded,
+              Feather.plus_square,
               color: AppColors.textSecondary,
-              size: 22,
+              size: 26,
             ),
-            const SizedBox(height: 3),
-            Text(
-              'Add',
-              style: TextStyle(
-                fontFamily: 'Playfair Display',
-                fontSize: 10,
-                fontWeight: FontWeight.normal,
-                color: AppColors.textSecondary,
-                letterSpacing: 0.2,
-              ),
-            ),
+            // const SizedBox(height: 3),
+            // Text(
+            //   'Add',
+            //   style: TextStyle(
+            //     fontFamily: 'Playfair Display',
+            //     fontSize: 10,
+            //     fontWeight: FontWeight.normal,
+            //     color: AppColors.textSecondary,
+            //     letterSpacing: 0.2,
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -145,22 +165,18 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              isSelected ? filledIcon : outlineIcon,
-              color: color,
-              size: 20,
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Playfair Display',
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
-                color: color,
-                letterSpacing: 0.2,
-              ),
-            ),
+            Icon(isSelected ? filledIcon : outlineIcon, color: color, size: 24),
+            // const SizedBox(height: 3),
+            // Text(
+            //   label,
+            //   style: TextStyle(
+            //     fontFamily: 'Playfair Display',
+            //     fontSize: 10,
+            //     fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+            //     color: color,
+            //     letterSpacing: 0.2,
+            //   ),
+            // ),
           ],
         ),
       ),
