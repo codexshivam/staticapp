@@ -4,21 +4,137 @@ import '../core/navigation/playback_manager.dart';
 import '../widgets/section_title.dart';
 import '../widgets/confession_card.dart';
 import '../mock_data/sample_data.dart';
+import '../models/confession.dart';
 import 'confession_detail_screen.dart';
 import 'settings_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  void _openDetail(BuildContext context, dynamic confession) {
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final PlaybackManager _pm = PlaybackManager();
+  
+  // Scroll Controllers for pagination
+  final ScrollController _mainScrollController = ScrollController();
+  final ScrollController _horizontalScrollController = ScrollController();
+
+  // Lazy loaded lists
+  List<Confession> _loaded24Hours = [];
+  List<Confession> _loadedFollowing = [];
+
+  // Pagination pools
+  late final List<Confession> _all24HoursPool;
+  late final List<Confession> _allFollowingPool;
+
+  // Pagination bounds
+  int _limit24Hours = 6;
+  int _limitFollowing = 6;
+
+  bool _isLoadingMore24h = false;
+  bool _isLoadingMoreFollowing = false;
+
+  bool _hasMore24h = true;
+  bool _hasMoreFollowing = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Pre-populate mock databases of 60+ items each
+    _all24HoursPool = SampleData.generateManyMockConfessions(60, forFollowing: false);
+    _allFollowingPool = SampleData.generateManyMockConfessions(60, forFollowing: true);
+
+    // Initial chunk
+    _loaded24Hours = _all24HoursPool.take(_limit24Hours).toList();
+    _loadedFollowing = _allFollowingPool.take(_limitFollowing).toList();
+
+    // Bind scroll controllers to trigger loaders
+    _mainScrollController.addListener(_onMainScroll);
+    _horizontalScrollController.addListener(_onHorizontalScroll);
+  }
+
+  @override
+  void dispose() {
+    _mainScrollController.dispose();
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
+
+  // Detect bottom of page scroll for vertical Following feed
+  void _onMainScroll() {
+    if (_mainScrollController.position.pixels >= _mainScrollController.position.maxScrollExtent - 150) {
+      _lazyLoadMoreFollowing();
+    }
+  }
+
+  // Detect end of list scroll for horizontal New Confessions
+  void _onHorizontalScroll() {
+    if (_horizontalScrollController.position.pixels >= _horizontalScrollController.position.maxScrollExtent - 80) {
+      _lazyLoadMore24h();
+    }
+  }
+
+  void _lazyLoadMoreFollowing() {
+    if (_isLoadingMoreFollowing || !_hasMoreFollowing) return;
+
+    setState(() {
+      _isLoadingMoreFollowing = true;
+    });
+
+    // Simulate standard 600ms network delay
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (!mounted) return;
+      
+      final nextLimit = _limitFollowing + 6;
+      final hasMore = nextLimit < _allFollowingPool.length;
+      final newItems = _allFollowingPool.take(nextLimit).toList();
+
+      setState(() {
+        _limitFollowing = nextLimit;
+        _loadedFollowing = newItems;
+        _isLoadingMoreFollowing = false;
+        _hasMoreFollowing = hasMore;
+      });
+    });
+  }
+
+  void _lazyLoadMore24h() {
+    if (_isLoadingMore24h || !_hasMore24h) return;
+
+    setState(() {
+      _isLoadingMore24h = true;
+    });
+
+    // Simulate standard 600ms network delay
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (!mounted) return;
+
+      final nextLimit = _limit24Hours + 4;
+      final hasMore = nextLimit < _all24HoursPool.length;
+      final newItems = _all24HoursPool.take(nextLimit).toList();
+
+      setState(() {
+        _limit24Hours = nextLimit;
+        _loaded24Hours = newItems;
+        _isLoadingMore24h = false;
+        _hasMore24h = hasMore;
+      });
+    });
+  }
+
+  void _openDetail(BuildContext context, Confession confession) {
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => 
             ConfessionDetailScreen(confession: confession),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final begin = const Offset(0.0, 0.05);
-          final end = Offset.zero;
-          final curve = Curves.easeOutCubic;
+          const begin = Offset(0.0, 0.05);
+          const end = Offset.zero;
+          const curve = Curves.easeOutCubic;
           final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
           return SlideTransition(
             position: animation.drive(tween),
@@ -32,10 +148,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pm = PlaybackManager();
-    // Default active confession to first item if none selected
-    final activeConf = pm.activeConfession ?? SampleData.mockConfessions[0];
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -65,12 +177,14 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
+        controller: _mainScrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // SECTION 1: Currently Playing Active Player
-            _buildActivePlayer(context, pm, activeConf),
+            // SECTION 1: Currently Playing Active Player / Welcome Banner
+            _buildActivePlayer(context, _pm),
             
             const SizedBox(height: 24),
 
@@ -81,13 +195,28 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 160,
+              height: 185, // Optimized breathing room for YTM cover art
               child: ListView.separated(
+                controller: _horizontalScrollController,
                 scrollDirection: Axis.horizontal,
-                itemCount: SampleData.last24HoursConfessions.length,
+                itemCount: _loaded24Hours.length + (_isLoadingMore24h ? 1 : 0),
                 separatorBuilder: (context, index) => const SizedBox(width: 14),
                 itemBuilder: (context, index) {
-                  final conf = SampleData.last24HoursConfessions[index];
+                  if (index == _loaded24Hours.length) {
+                    return Container(
+                      width: 80,
+                      alignment: Alignment.center,
+                      child: const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.pureBlack,
+                        ),
+                      ),
+                    );
+                  }
+                  final conf = _loaded24Hours[index];
                   return ConfessionCard(
                     confession: conf,
                     isHorizontal: true,
@@ -108,9 +237,24 @@ class HomeScreen extends StatelessWidget {
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: SampleData.followingConfessions.length,
+              itemCount: _loadedFollowing.length + (_isLoadingMoreFollowing ? 1 : 0),
               itemBuilder: (context, index) {
-                final conf = SampleData.followingConfessions[index];
+                if (index == _loadedFollowing.length) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.0),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.pureBlack,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                final conf = _loadedFollowing[index];
                 return ConfessionCard(
                   confession: conf,
                   isHorizontal: false,
@@ -153,12 +297,18 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Active Top Player Card
-  Widget _buildActivePlayer(BuildContext context, PlaybackManager pm, dynamic defaultConf) {
+  // Active Top Player Card / Welcome Banner
+  Widget _buildActivePlayer(BuildContext context, PlaybackManager pm) {
     return ListenableBuilder(
       listenable: pm,
       builder: (context, _) {
-        final conf = pm.activeConfession ?? defaultConf;
+        final conf = pm.activeConfession;
+
+        // Display Welcome Message Hero if no track was loaded (New User)
+        if (conf == null) {
+          return _buildWelcomeBanner(context);
+        }
+
         final isPlaying = pm.isPlaying;
         final progress = pm.progress;
 
@@ -312,6 +462,70 @@ class HomeScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  // Welcome Banner empty state when activeConfession is null
+  Widget _buildWelcomeBanner(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        color: AppColors.pureBlack,
+        borderRadius: BorderRadius.circular(5.0),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x3F000000),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: AppColors.accentRed,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'WELCOME TO CONFESSIONS',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.background.withOpacity(0.7),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Listen to untold feelings ❤️',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "An anonymous space where people share their deepest thoughts, secrets, and messages. Tap any voice confession below to start listening.",
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.background.withOpacity(0.65),
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

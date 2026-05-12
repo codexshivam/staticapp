@@ -267,6 +267,51 @@ class SampleData {
     return mockConfessions.where((c) => c.authorId != 'user_current').toList();
   }
 
+  static List<Confession> generateManyMockConfessions(int count, {bool forFollowing = false}) {
+    final List<String> titles = [
+      'I still think about our late night talks',
+      'I wish I had the courage to say sorry',
+      'To the stranger I met in the coffee shop',
+      'Some memories never fade away',
+      'I lied to you about my feelings',
+      'I am still holding onto your letter',
+      'Sometimes I walk past your street',
+      'I missed my chance to tell you the truth',
+      'I hope you are happy wherever you are',
+      'The hardest part was letting you go',
+      'Sleepless nights make me remember your smile',
+      'I kept the promise we made last autumn',
+      'I see your shadow in every crowd',
+      'We became strangers with memories',
+      'I still play the song you shared with me',
+    ];
+
+    return List.generate(count, (index) {
+      final userIndex = index % mockUsers.length;
+      final user = mockUsers[userIndex];
+      final titleIndex = (index + (forFollowing ? 5 : 0)) % titles.length;
+      final durationM = 1 + (index % 4);
+      final durationS = 10 + (index * 13) % 49;
+      
+      return Confession(
+        id: forFollowing ? 'conf_gen_f_$index' : 'conf_gen_24h_$index',
+        title: titles[titleIndex],
+        authorName: user.displayName,
+        authorHandle: user.handle,
+        authorId: user.id,
+        timestamp: '${index + 1}h ago',
+        durationString: '$durationM:${durationS.toString().padLeft(2, '0')}',
+        durationSeconds: durationM * 60 + durationS,
+        waveformData: generateWaveform(35),
+        likesCount: 10 + index * 3,
+        commentsCount: 2 + index,
+        isSaved: index % 7 == 0,
+        dateText: '2026-05-12',
+        tags: ['Thoughts', 'Memory', 'Late Night'],
+      );
+    });
+  }
+
   // Dynamic user list representation (Followers / Following)
   static List<AppUser> get followersList {
     return [

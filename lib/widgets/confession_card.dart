@@ -24,114 +24,113 @@ class ConfessionCard extends StatelessWidget {
       builder: (context, _) {
         final isActive = pm.activeConfession?.id == confession.id;
         final isPlaying = isActive && pm.isPlaying;
-        final progress = isActive ? pm.progress : 0.0;
 
         if (isHorizontal) {
-          return _buildHorizontalCard(context, isActive, isPlaying, progress, pm);
+          return _buildHorizontalCard(context, isActive, isPlaying, pm);
         } else {
-          return _buildVerticalCard(context, isActive, isPlaying, progress, pm);
+          return _buildVerticalCard(context, isActive, isPlaying, pm);
         }
       },
     );
   }
 
+  // Cover-Art Thumbnail Block with elegant initials
+  Widget _buildCoverArt(BuildContext context, double size, bool isPlaying) {
+    final initial = confession.authorName.isNotEmpty ? confession.authorName[0].toUpperCase() : 'C';
+    
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppColors.pureBlack,
+        borderRadius: BorderRadius.circular(5.0), // strict 5px
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1F000000),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF232526),
+            Color(0xFF414345),
+          ],
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Elegant Initials
+          Text(
+            initial,
+            style: TextStyle(
+              fontFamily: 'Playfair Display',
+              fontSize: size * 0.4,
+              fontWeight: FontWeight.bold,
+              color: Colors.white.withOpacity(0.85),
+            ),
+          ),
+          // Volume/Play Overlay if currently playing
+          if (isPlaying)
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(5.0),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.volume_up_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // 1. YouTube Music Horizontal Square Card
   Widget _buildHorizontalCard(
     BuildContext context,
     bool isActive,
     bool isPlaying,
-    double progress,
     PlaybackManager pm,
   ) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 280,
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: AppColors.cardBg,
-          borderRadius: BorderRadius.circular(5.0),
-          border: Border.all(
-            color: isActive ? AppColors.pureBlack.withOpacity(0.3) : AppColors.divider,
-            width: isActive ? 1.5 : 1.0,
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.shadow,
-              blurRadius: 6.0,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
+      child: SizedBox(
+        width: 140, // standard cover art width
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Row with Avatar/Author & play button
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        confession.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        confession.authorName,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => pm.togglePlay(confession),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isActive ? AppColors.pureBlack : AppColors.background,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Icon(
-                      isPlaying ? Icons.pause : Icons.play_arrow,
-                      size: 16,
-                      color: isActive ? AppColors.cardBg : AppColors.pureBlack,
-                    ),
-                  ),
-                ),
-              ],
+            // Square Cover Art
+            _buildCoverArt(context, 140, isPlaying),
+            const SizedBox(height: 8),
+            // Title
+            Text(
+              confession.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: isActive ? AppColors.accentRed : AppColors.textPrimary,
+              ),
             ),
-            const Spacer(),
-            // Custom visual Waveform
-            _buildWaveform(confession.waveformData, progress, height: 28),
-            const SizedBox(height: 10),
-            // Progress details
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  isActive ? pm.elapsedString : '0:00',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  confession.durationString,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 10,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 2),
+            // Creator details
+            Text(
+              '${confession.authorName} • ${confession.durationString}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -139,157 +138,73 @@ class ConfessionCard extends StatelessWidget {
     );
   }
 
+  // 2. YouTube Music Vertical List Tile
   Widget _buildVerticalCard(
     BuildContext context,
     bool isActive,
     bool isPlaying,
-    double progress,
     PlaybackManager pm,
   ) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(5.0),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 14.0),
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: AppColors.cardBg,
-          borderRadius: BorderRadius.circular(5.0),
-          border: Border.all(
-            color: isActive ? AppColors.pureBlack.withOpacity(0.3) : AppColors.divider,
-            width: isActive ? 1.5 : 1.0,
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.shadow,
-              blurRadius: 4.0,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
+        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
         child: Row(
           children: [
-            // Play Button Block
-            GestureDetector(
-              onTap: () => pm.togglePlay(confession),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isActive ? AppColors.pureBlack : AppColors.background,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Icon(
-                  isPlaying ? Icons.pause : Icons.play_arrow,
-                  color: isActive ? AppColors.cardBg : AppColors.pureBlack,
-                  size: 20,
-                ),
-              ),
-            ),
+            // Left: Square Thumbnail Cover Art
+            _buildCoverArt(context, 48, isPlaying),
             const SizedBox(width: 14),
-            // Middle Details Block (waveform, titles)
+            
+            // Center: Metadata
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          confession.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        confession.timestamp,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 10,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    confession.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: isActive ? AppColors.accentRed : AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'by ${confession.authorName}',
+                    '${confession.authorName} • ${confession.durationString} • ${confession.timestamp}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  // Small waveform
-                  _buildWaveform(confession.waveformData, progress, height: 18),
                 ],
               ),
             ),
-            const SizedBox(width: 14),
-            // Right Stats/Durations
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  isActive ? pm.elapsedString : confession.durationString,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: isActive ? AppColors.pureBlack : AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text('❤️', style: TextStyle(fontSize: 10)),
-                    const SizedBox(width: 2),
-                    Text(
-                      '${confession.likesCount}',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                )
-              ],
-            )
+            const SizedBox(width: 12),
+            
+            // Right: Three-dot options menu (YouTube Music style)
+            IconButton(
+              icon: Icon(
+                Icons.more_vert,
+                color: AppColors.textSecondary.withOpacity(0.7),
+                size: 18,
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: () {
+                // Instantly open details/comments on options tab as a clean secondary interaction
+                if (onTap != null) {
+                  onTap!();
+                }
+              },
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  // Waveform drawing helper
-  Widget _buildWaveform(List<double> data, double progress, {required double height}) {
-    return SizedBox(
-      height: height,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: List.generate(data.length, (index) {
-          final barProgress = index / data.length;
-          final isFilled = barProgress <= progress;
-          
-          final barHeight = data[index] * height;
-
-          return Expanded(
-            child: Container(
-              height: barHeight.clamp(2.0, height),
-              margin: const EdgeInsets.symmetric(horizontal: 1.0),
-              decoration: BoxDecoration(
-                color: isFilled 
-                    ? AppColors.pureBlack 
-                    : AppColors.textSecondary.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(1.0),
-              ),
-            ),
-          );
-        }),
       ),
     );
   }
