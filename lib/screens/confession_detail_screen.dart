@@ -31,7 +31,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     _isSaved = widget.confession.isSaved;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      PlaybackManager().play(widget.confession);
+      PlaybackManager().play(widget.confession, context: context);
     });
   }
 
@@ -239,7 +239,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                                   if (isActive) {
                                     pm.seek(val);
                                   } else {
-                                    pm.play(widget.confession);
+                                    pm.play(widget.confession, context: context);
                                     pm.seek(val);
                                   }
                                 },
@@ -279,7 +279,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                                 ),
                                 const SizedBox(width: 14),
                                 GestureDetector(
-                                  onTap: () => pm.togglePlay(widget.confession),
+                                  onTap: () => pm.togglePlay(widget.confession, context: context),
                                   child: Container(
                                     width: 56,
                                     height: 56,

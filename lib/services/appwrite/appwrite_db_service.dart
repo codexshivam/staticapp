@@ -11,7 +11,7 @@ class AppwriteDbService {
 
   final Databases _db = Databases(AppwriteConfig.client);
 
-  // --- USER PROFILES ---
+
   
   Future<void> createUserProfile(AppUser user) async {
     return AppwritePerformanceHelper.traceAndHandle(
@@ -55,7 +55,7 @@ class AppwriteDbService {
     );
   }
 
-  // --- CONFESSIONS ---
+
 
   Future<void> createConfession(Confession confession) async {
     return AppwritePerformanceHelper.traceAndHandle(
@@ -98,7 +98,7 @@ class AppwriteDbService {
     );
   }
 
-  // --- COMMENTS ---
+
 
   Future<void> createComment(String confessionId, Comment comment) async {
     return AppwritePerformanceHelper.traceAndHandle(

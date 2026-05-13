@@ -1,6 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:purchase_service/purchase_service.dart';
+import 'package:intl/intl.dart';
+import '../mock_data/sample_data.dart';
+import '../models/user.dart';
+import 'appwrite/appwrite_db_service.dart';
+import 'remote_config_service.dart';
 
 class SubscriptionService {
   static final SubscriptionService instance = SubscriptionService._init();
@@ -63,6 +68,48 @@ class SubscriptionService {
       await _purchases.updateUserId(userId);
     } catch (e) {
       debugPrint('Update userId failed: $e');
+    }
+  }
+
+  Future<bool> canPlayConfession() async {
+    if (!RemoteConfigService.instance.isSubscriptionEnabled) {
+      return true;
+    }
+
+    if (isPro) {
+      return true;
+    }
+
+    try {
+      final currentUserId = SampleData.currentUser.id;
+      AppUser? profile = await AppwriteDbService.instance.getUserProfile(currentUserId);
+      profile ??= SampleData.currentUser;
+
+      final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      if (profile.lastPlaybackDate == currentDate) {
+        if (profile.dailyPlaybackCount >= 1) {
+          return false;
+        } else {
+          final updated = profile.copyWith(
+            dailyPlaybackCount: 1,
+          );
+          SampleData.currentUser = updated;
+          await AppwriteDbService.instance.updateUserProfile(updated);
+          return true;
+        }
+      } else {
+        final updated = profile.copyWith(
+          lastPlaybackDate: currentDate,
+          dailyPlaybackCount: 1,
+        );
+        SampleData.currentUser = updated;
+        await AppwriteDbService.instance.updateUserProfile(updated);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Offline/Error limit bypass grace: $e');
+      return true;
     }
   }
 

@@ -8,6 +8,8 @@ class AppUser {
   final int confessionCount;
   final String upiId;
   final List<String> links;
+  final String lastPlaybackDate;
+  final int dailyPlaybackCount;
 
   const AppUser({
     required this.id,
@@ -19,6 +21,8 @@ class AppUser {
     required this.confessionCount,
     required this.upiId,
     required this.links,
+    this.lastPlaybackDate = '',
+    this.dailyPlaybackCount = 0,
   });
 
   String get initials {
@@ -40,6 +44,8 @@ class AppUser {
     int? confessionCount,
     String? upiId,
     List<String>? links,
+    String? lastPlaybackDate,
+    int? dailyPlaybackCount,
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -51,6 +57,8 @@ class AppUser {
       confessionCount: confessionCount ?? this.confessionCount,
       upiId: upiId ?? this.upiId,
       links: links ?? this.links,
+      lastPlaybackDate: lastPlaybackDate ?? this.lastPlaybackDate,
+      dailyPlaybackCount: dailyPlaybackCount ?? this.dailyPlaybackCount,
     );
   }
 
@@ -65,6 +73,8 @@ class AppUser {
       confessionCount: json['confessionCount'] ?? 0,
       upiId: json['upiId'] ?? '',
       links: List<String>.from(json['links'] ?? []),
+      lastPlaybackDate: json['lastPlaybackDate'] ?? '',
+      dailyPlaybackCount: json['dailyPlaybackCount'] ?? 0,
     );
   }
 
@@ -78,6 +88,8 @@ class AppUser {
       'confessionCount': confessionCount,
       'upiId': upiId,
       'links': links,
+      'lastPlaybackDate': lastPlaybackDate,
+      'dailyPlaybackCount': dailyPlaybackCount,
     };
   }
 }

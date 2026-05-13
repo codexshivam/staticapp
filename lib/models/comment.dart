@@ -4,7 +4,7 @@ class Comment {
   final String authorAvatar;
   final String content;
   final String timestamp;
-  final String? imageUrl; // For optional image support UI
+  final String? imageUrl;
   final bool isAuthor;
 
   const Comment({

@@ -9,6 +9,7 @@ import '../mock_data/sample_data.dart';
 import '../services/subscription_service.dart';
 import 'login_screen.dart';
 import 'legal_document_screen.dart';
+import 'change_email_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -205,45 +206,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ).then((_) => debounce?.cancel());
   }
 
-  void _editEmail() {
-    final controller = TextEditingController(text: _currentEmail);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Change Email'),
-        content: TextField(
-          controller: controller,
-          cursorColor: AppColors.pureBlack,
-          keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(labelText: 'Email Address'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final newEmail = controller.text.trim();
-              if (newEmail.isNotEmpty) {
-                setState(() {
-                  _currentEmail = newEmail;
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Verification link sent to new email ❤️'),
-                    backgroundColor: AppColors.pureBlack,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
-            },
-            child: const Text('Save'),
-          )
-        ],
+  void _editEmail() async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (context) => ChangeEmailScreen(currentEmail: _currentEmail),
       ),
     );
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        _currentEmail = result;
+      });
+    }
   }
 
   void _changePassword() {

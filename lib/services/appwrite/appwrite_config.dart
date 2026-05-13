@@ -7,17 +7,15 @@ class AppwriteConfig {
   static const String projectId = 'YOUR_APPWRITE_PROJECT_ID';
   static const String databaseId = 'confessions_db';
 
-  // Collections
   static const String usersCollectionId = 'users';
   static const String confessionsCollectionId = 'confessions';
   static const String commentsCollectionId = 'comments';
 
-  // Storage Buckets
   static const String audioBucketId = 'confessions_audio';
   static const String imagesBucketId = 'comments_images';
 
   static final Client client = Client()
     ..setEndpoint(endpoint)
     ..setProject(projectId)
-    ..setSelfSigned(status: true); // Helpful during local development
+    ..setSelfSigned(status: true);
 }

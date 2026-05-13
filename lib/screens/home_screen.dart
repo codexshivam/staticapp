@@ -460,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: () => pm.togglePlay(conf),
+                      onTap: () => pm.togglePlay(conf, context: context),
                       child: Container(
                         width: 36,
                         height: 36,

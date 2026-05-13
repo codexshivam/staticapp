@@ -5,6 +5,8 @@ import 'package:audio_session/audio_session.dart';
 import '../../models/confession.dart';
 import '../../mock_data/sample_data.dart';
 import '../../services/database_service.dart';
+import '../../services/subscription_service.dart';
+import '../../widgets/premium_paywall_dialog.dart';
 
 class PlaybackManager extends ChangeNotifier {
   static final PlaybackManager _instance = PlaybackManager._internal();
@@ -111,8 +113,16 @@ class PlaybackManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> play(Confession confession) async {
+  Future<void> play(Confession confession, {BuildContext? context}) async {
     try {
+      final canPlay = await SubscriptionService.instance.canPlayConfession();
+      if (!canPlay) {
+        if (context != null) {
+          PremiumPaywallDialog.show(context);
+        }
+        return;
+      }
+
       if (_activeConfession?.id != confession.id) {
         _activeConfession = confession;
         _progress = 0.0;
@@ -151,11 +161,11 @@ class PlaybackManager extends ChangeNotifier {
     }
   }
 
-  void togglePlay(Confession confession) {
+  void togglePlay(Confession confession, {BuildContext? context}) {
     if (_activeConfession?.id == confession.id && _isPlaying) {
       pause();
     } else {
-      play(confession);
+      play(confession, context: context);
     }
   }
 

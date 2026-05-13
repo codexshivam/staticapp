@@ -8,6 +8,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'firebase_options.dart';
 import 'services/notification_service.dart';
 import 'services/subscription_service.dart';
+import 'services/remote_config_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +20,8 @@ void main() async {
 
     await NotificationService.instance.initialize();
     await SubscriptionService.instance.initialize();
-    
+    await RemoteConfigService.instance.initialize();
+
     FlutterError.onError = (errorDetails) {
       FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
     };
