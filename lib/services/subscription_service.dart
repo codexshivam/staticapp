@@ -9,7 +9,6 @@ class SubscriptionService {
   final PurchasesService _purchases = PurchasesService();
   bool _initialized = false;
 
-  // TODO: Replace with your actual RevenueCat API keys from the RevenueCat dashboard
   static const String _androidKey = 'YOUR_REVENUECAT_ANDROID_KEY';
   static const String _iosKey = 'YOUR_REVENUECAT_IOS_KEY';
 

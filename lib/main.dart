@@ -17,7 +17,6 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // Initialize Push Notifications
     await NotificationService.instance.initialize();
     await SubscriptionService.instance.initialize();
     

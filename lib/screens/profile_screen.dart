@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import '../core/theme/app_colors.dart';
 import '../models/user.dart';
 import '../models/confession.dart';
@@ -10,6 +11,7 @@ import 'confession_detail_screen.dart';
 import 'edit_profile_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'settings_screen.dart';
+
 class ProfileScreen extends StatefulWidget {
   final AppUser? user;
 
@@ -143,9 +145,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: _isMe
             ? [
                 IconButton(
-                  icon: const Icon(Icons.settings_outlined, color: AppColors.pureBlack),
+                  icon: const Icon(
+                    Feather.menu,
+                    color: AppColors.pureBlack,
+                    size: 21.50,
+                  ),
                   onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
                   ),
                 ),
               ]
@@ -241,13 +249,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.only(bottom: 6.0),
                           child: GestureDetector(
                             onTap: () async {
-                              final url = Uri.parse(link.startsWith('http') ? link : 'https://$link');
+                              final url = Uri.parse(
+                                link.startsWith('http')
+                                    ? link
+                                    : 'https://$link',
+                              );
                               if (await canLaunchUrl(url)) {
-                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                                await launchUrl(
+                                  url,
+                                  mode: LaunchMode.externalApplication,
+                                );
                               } else {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Could not launch $link')),
+                                    SnackBar(
+                                      content: Text('Could not launch $link'),
+                                    ),
                                   );
                                 }
                               }
@@ -262,8 +279,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
-                                    link.replaceFirst(RegExp(r'^https?://'), ''),
-                                    style: Theme.of(context).textTheme.bodyMedium
+                                    link.replaceFirst(
+                                      RegExp(r'^https?://'),
+                                      '',
+                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
                                         ?.copyWith(
                                           fontSize: 12,
                                           color: AppColors.pureBlack,

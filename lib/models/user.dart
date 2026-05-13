@@ -53,4 +53,31 @@ class AppUser {
       links: links ?? this.links,
     );
   }
+
+  factory AppUser.fromJson(Map<String, dynamic> json) {
+    return AppUser(
+      id: json['\$id'] ?? json['id'] ?? '',
+      displayName: json['displayName'] ?? '',
+      handle: json['handle'] ?? '',
+      bio: json['bio'] ?? '',
+      followersCount: json['followersCount'] ?? 0,
+      followingCount: json['followingCount'] ?? 0,
+      confessionCount: json['confessionCount'] ?? 0,
+      upiId: json['upiId'] ?? '',
+      links: List<String>.from(json['links'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'displayName': displayName,
+      'handle': handle,
+      'bio': bio,
+      'followersCount': followersCount,
+      'followingCount': followingCount,
+      'confessionCount': confessionCount,
+      'upiId': upiId,
+      'links': links,
+    };
+  }
 }

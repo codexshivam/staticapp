@@ -69,4 +69,43 @@ class Confession {
       audioFilePath: audioFilePath ?? this.audioFilePath,
     );
   }
+
+  factory Confession.fromJson(Map<String, dynamic> json) {
+    return Confession(
+      id: json['\$id'] ?? json['id'] ?? '',
+      title: json['title'] ?? '',
+      authorName: json['authorName'] ?? '',
+      authorHandle: json['authorHandle'] ?? '',
+      authorId: json['authorId'] ?? '',
+      timestamp: json['timestamp'] ?? '',
+      durationString: json['durationString'] ?? '',
+      durationSeconds: json['durationSeconds'] ?? 0,
+      waveformData: List<double>.from((json['waveformData'] ?? []).map((e) => (e as num).toDouble())),
+      likesCount: json['likesCount'] ?? 0,
+      commentsCount: json['commentsCount'] ?? 0,
+      isSaved: json['isSaved'] ?? false,
+      dateText: json['dateText'] ?? '',
+      audioUrl: json['audioUrl'],
+      audioFilePath: json['audioFilePath'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'authorName': authorName,
+      'authorHandle': authorHandle,
+      'authorId': authorId,
+      'timestamp': timestamp,
+      'durationString': durationString,
+      'durationSeconds': durationSeconds,
+      'waveformData': waveformData,
+      'likesCount': likesCount,
+      'commentsCount': commentsCount,
+      'isSaved': isSaved,
+      'dateText': dateText,
+      'audioUrl': audioUrl,
+      'audioFilePath': audioFilePath,
+    };
+  }
 }

@@ -16,4 +16,27 @@ class Comment {
     this.imageUrl,
     this.isAuthor = false,
   });
+
+  factory Comment.fromJson(Map<String, dynamic> json) {
+    return Comment(
+      id: json['\$id'] ?? json['id'] ?? '',
+      authorName: json['authorName'] ?? '',
+      authorAvatar: json['authorAvatar'] ?? '',
+      content: json['content'] ?? '',
+      timestamp: json['timestamp'] ?? '',
+      imageUrl: json['imageUrl'],
+      isAuthor: json['isAuthor'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'authorName': authorName,
+      'authorAvatar': authorAvatar,
+      'content': content,
+      'timestamp': timestamp,
+      'imageUrl': imageUrl,
+      'isAuthor': isAuthor,
+    };
+  }
 }
