@@ -202,7 +202,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       });
 
       final id = ID.unique();
-      final now = DateTime.now();
+      final _ = DateTime.now();
       final newConf = Confession(
         id: id,
         title: title,
