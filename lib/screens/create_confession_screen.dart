@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 import 'package:file_picker/file_picker.dart';
@@ -8,8 +7,8 @@ import 'package:path_provider/path_provider.dart';
 import '../core/theme/app_colors.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
-import '../services/appwrite/appwrite_db_service.dart';
-import '../services/appwrite/appwrite_storage_service.dart';
+import '../services/firebase/firebase_db_service.dart';
+import '../services/firebase/firebase_storage_service.dart';
 import '../services/auth_state_service.dart';
 
 enum RecordState { idle, recording, recorded, publishing, success }
@@ -191,7 +190,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           _publishProgress = 0.5;
           _publishingText = 'Uploading audio... ✨';
         });
-        audioUrl = await AppwriteStorageService.instance.uploadConfessionAudio(
+        audioUrl = await FirebaseStorageService.instance.uploadConfessionAudio(
           _recordedFilePath!,
         );
       }
@@ -201,7 +200,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
         _publishingText = 'Saving confession... 🔒';
       });
 
-      final id = ID.unique();
+      final id = 'conf_${DateTime.now().millisecondsSinceEpoch}';
       final _ = DateTime.now();
       final newConf = Confession(
         id: id,
@@ -216,12 +215,12 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
         audioUrl: audioUrl,
       );
 
-      await AppwriteDbService.instance.createConfession(newConf);
+      await FirebaseDbService.instance.createConfession(newConf);
 
       final updatedUser = currentUser.copyWith(
         confessionCount: currentUser.confessionCount + 1,
       );
-      await AppwriteDbService.instance.updateUserProfile(updatedUser);
+      await FirebaseDbService.instance.updateUserProfile(updatedUser);
       AuthStateService.instance.updateUser(updatedUser);
 
       if (mounted) {

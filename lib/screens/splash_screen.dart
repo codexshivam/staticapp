@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
-import '../services/appwrite/appwrite_auth_service.dart';
-import '../services/appwrite/appwrite_db_service.dart';
+import '../services/firebase/firebase_auth_service.dart';
+import '../services/firebase/firebase_db_service.dart';
 import '../services/auth_state_service.dart';
 import 'login_screen.dart';
 import 'main_navigation_shell.dart';
@@ -38,12 +38,12 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _checkSession() async {
     if (!mounted) return;
 
-    final sessionUser = await AppwriteAuthService.instance.getCurrentSessionUser();
+    final sessionUser = FirebaseAuthService.instance.getCurrentSessionUser();
 
     if (!mounted) return;
 
     if (sessionUser != null) {
-      final profile = await AppwriteDbService.instance.getUserProfile(sessionUser.$id);
+      final profile = await FirebaseDbService.instance.getUserProfile(sessionUser.uid);
       if (!mounted) return;
 
       if (profile != null) {

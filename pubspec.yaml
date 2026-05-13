@@ -9,16 +9,18 @@ environment:
   sdk: ^3.11.5
 
 dependencies:
-  appwrite: ^24.0.0
   audio_session: ^0.2.3
+  cloud_firestore: any
   cupertino_icons: ^1.0.8
   file_picker: ^11.0.2
   firebase_analytics: ^12.4.0
+  firebase_auth: any
   firebase_core: ^4.8.0
   firebase_crashlytics: ^5.2.1
   firebase_messaging: ^16.2.1
   firebase_performance: ^0.11.4
   firebase_remote_config: ^6.5.0
+  firebase_storage: any
   flutter:
     sdk: flutter
   flutter_local_notifications: ^21.0.0

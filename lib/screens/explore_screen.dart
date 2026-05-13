@@ -9,7 +9,7 @@ import '../widgets/user_list_tile.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
 import '../models/user.dart';
-import '../services/appwrite/appwrite_db_service.dart';
+import '../services/firebase/firebase_db_service.dart';
 import 'confession_detail_screen.dart';
 import 'profile_screen.dart';
 
@@ -40,7 +40,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Future<void> _loadConfessionsForDate(String date) async {
     setState(() => _isLoading = true);
     try {
-      final result = await AppwriteDbService.instance.getConfessionsByDate(date);
+      final result = await FirebaseDbService.instance.getConfessionsByDate(date);
       if (mounted) setState(() { _displayedConfessions = result; _isLoading = false; });
     } catch (_) {
       final fallback = SampleData.mockConfessions.where((c) => _formatDateString(c.createdAt) == date).toList();
@@ -56,7 +56,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
     setState(() => _isLoading = true);
     try {
-      final confessions = await AppwriteDbService.instance.searchConfessions(query);
+      final confessions = await FirebaseDbService.instance.searchConfessions(query);
       final users = SampleData.mockUsers.where((u) {
         final q = query.toLowerCase();
         return u.displayName.toLowerCase().contains(q) || u.handle.toLowerCase().contains(q);

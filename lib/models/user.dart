@@ -1,6 +1,7 @@
 class AppUser {
   final String id;
   final String displayName;
+  final String email;
   final String handle;
   final String bio;
   final int followersCount;
@@ -17,6 +18,7 @@ class AppUser {
   const AppUser({
     required this.id,
     required this.displayName,
+    required this.email,
     required this.handle,
     required this.bio,
     required this.followersCount,
@@ -46,6 +48,7 @@ class AppUser {
   AppUser copyWith({
     String? id,
     String? displayName,
+    String? email,
     String? handle,
     String? bio,
     int? followersCount,
@@ -62,6 +65,7 @@ class AppUser {
     return AppUser(
       id: id ?? this.id,
       displayName: displayName ?? this.displayName,
+      email: email ?? this.email,
       handle: handle ?? this.handle,
       bio: bio ?? this.bio,
       followersCount: followersCount ?? this.followersCount,
@@ -81,6 +85,7 @@ class AppUser {
     return AppUser(
       id: json['\$id'] ?? json['id'] ?? '',
       displayName: json['displayName'] ?? '',
+      email: json['email'] ?? '',
       handle: json['handle'] ?? '',
       bio: json['bio'] ?? '',
       followersCount: json['followersCount'] ?? 0,
@@ -99,6 +104,7 @@ class AppUser {
   Map<String, dynamic> toJson() {
     return {
       'displayName': displayName,
+      'email': email,
       'handle': handle,
       'bio': bio,
       'followersCount': followersCount,

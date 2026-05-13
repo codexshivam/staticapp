@@ -23,7 +23,9 @@ class Comment {
       confessionId: json['confessionId'] ?? '',
       authorId: json['authorId'] ?? '',
       content: json['content'] ?? '',
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
+      createdAt: json['\$createdAt'] != null
+          ? DateTime.parse(json['\$createdAt'])
+          : (json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now()),
       imageUrl: json['imageUrl'],
       isAuthor: json['isAuthor'] ?? false,
     );
@@ -31,6 +33,7 @@ class Comment {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'confessionId': confessionId,
       'authorId': authorId,
       'content': content,

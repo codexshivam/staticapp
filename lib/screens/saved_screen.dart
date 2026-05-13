@@ -6,7 +6,7 @@ import '../widgets/confession_card.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
 import '../core/navigation/playback_manager.dart';
-import '../services/appwrite/appwrite_db_service.dart';
+import '../services/firebase/firebase_db_service.dart';
 import '../services/auth_state_service.dart';
 import 'confession_detail_screen.dart';
 
@@ -40,7 +40,7 @@ class _SavedScreenState extends State<SavedScreen> {
       return;
     }
     try {
-      final saved = await AppwriteDbService.instance.getSavedConfessions(currentUser.savedConfessionIds);
+      final saved = await FirebaseDbService.instance.getSavedConfessions(currentUser.savedConfessionIds);
       if (mounted) setState(() { _savedConfessions = saved; });
     } catch (_) {
       final fallback = SampleData.mockConfessions.where((c) => c.isSaved).toList();

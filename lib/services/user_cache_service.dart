@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/user.dart';
-import 'appwrite/appwrite_db_service.dart';
+import 'firebase/firebase_db_service.dart';
 
 class UserCacheService {
   static final UserCacheService instance = UserCacheService._init();
@@ -22,7 +22,7 @@ class UserCacheService {
       return await _inflightRequests[userId];
     }
 
-    final future = AppwriteDbService.instance.getUserProfile(userId);
+    final future = FirebaseDbService.instance.getUserProfile(userId);
     _inflightRequests[userId] = future;
 
     try {

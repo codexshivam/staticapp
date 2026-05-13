@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import '../core/theme/app_colors.dart';
-import '../services/appwrite/appwrite_auth_service.dart';
-import '../services/appwrite/appwrite_db_service.dart';
+import '../services/firebase/firebase_auth_service.dart';
+import '../services/firebase/firebase_db_service.dart';
 import '../services/auth_state_service.dart';
 import 'legal_document_screen.dart';
 import 'signup_screen.dart';
@@ -40,11 +40,11 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await AppwriteAuthService.instance.signIn(email: email, password: password);
-      final sessionUser = await AppwriteAuthService.instance.getCurrentSessionUser();
+      final userCredential = await FirebaseAuthService.instance.signIn(email: email, password: password);
+      final sessionUser = userCredential.user;
       if (sessionUser == null) throw Exception('Session not found after login');
 
-      final profile = await AppwriteDbService.instance.getUserProfile(sessionUser.$id);
+      final profile = await FirebaseDbService.instance.getUserProfile(sessionUser.uid);
       if (profile == null) throw Exception('Profile not found');
 
       AuthStateService.instance.setUser(profile, email: sessionUser.email);
@@ -108,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
               if (email.isEmpty) return;
               Navigator.pop(context);
               try {
-                await AppwriteAuthService.instance.triggerPasswordReset(
+                await FirebaseAuthService.instance.triggerPasswordReset(
                   email: email,
                   redirectUrl: 'https://confessions.app/reset',
                 );
@@ -224,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     : const Text('LOG IN'),
               ),
               const SizedBox(height: 24),
-              _LegalConsentText(context),
+              _legalConsentText(context),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -261,7 +261,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-Widget _LegalConsentText(BuildContext context) {
+Widget _legalConsentText(BuildContext context) {
   return RichText(
     textAlign: TextAlign.center,
     text: TextSpan(

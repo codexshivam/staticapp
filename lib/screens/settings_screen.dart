@@ -6,13 +6,13 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/settings_tile.dart';
 import '../mock_data/sample_data.dart';
-import '../services/appwrite/appwrite_auth_service.dart';
-import '../services/appwrite/appwrite_db_service.dart';
+import '../services/firebase/firebase_auth_service.dart';
 import '../services/auth_state_service.dart';
 import '../services/subscription_service.dart';
 import 'login_screen.dart';
 import 'legal_document_screen.dart';
 import 'change_email_screen.dart';
+import 'change_username_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -73,142 +73,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _editHandle() {
-    final controller = TextEditingController(
-      text: _currentHandle.startsWith('@') ? _currentHandle.substring(1) : _currentHandle,
-    );
-    
-    bool isChecking = false;
-    bool? isAvailable;
-    String? errorText;
-    Timer? debounce;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          void onTextChanged() {
-            final text = controller.text.trim().replaceAll('@', '');
-            debounce?.cancel();
-
-            if (text.isEmpty) {
-              setDialogState(() {
-                isChecking = false;
-                isAvailable = null;
-                errorText = null;
-              });
-              return;
-            }
-
-            if (text.length < 3) {
-              setDialogState(() {
-                isChecking = false;
-                isAvailable = false;
-                errorText = 'Username must be at least 3 characters';
-              });
-              return;
-            }
-
-            setDialogState(() {
-              isChecking = true;
-              isAvailable = null;
-              errorText = null;
-            });
-
-            debounce = Timer(const Duration(milliseconds: 600), () async {
-              try {
-                final handle = '@$text';
-                final available = await AppwriteDbService.instance.checkHandleAvailable(handle);
-                setDialogState(() {
-                  isChecking = false;
-                  isAvailable = available;
-                  errorText = available ? null : 'This username is already taken';
-                });
-              } catch (_) {
-                setDialogState(() { isChecking = false; isAvailable = null; errorText = null; });
-              }
-            });
-          }
-
-          return AlertDialog(
-            title: const Text('Edit Username'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  controller: controller,
-                  cursorColor: AppColors.pureBlack,
-                  onChanged: (_) => onTextChanged(),
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    prefixText: '@',
-                    errorText: errorText,
-                    helperText: isAvailable == true ? 'Username is available.' : null,
-                    helperStyle: const TextStyle(color: Colors.green),
-                    suffixIcon: isChecking
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.pureBlack,
-                              ),
-                            ),
-                          )
-                        : (isAvailable == true
-                            ? const Icon(Icons.check_circle, color: Colors.green)
-                            : (isAvailable == false
-                                ? const Icon(Icons.error, color: AppColors.accentRed)
-                                : null)),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  debounce?.cancel();
-                  Navigator.pop(context);
-                },
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                    onPressed: (isAvailable == true && !isChecking)
-                    ? () async {
-                        debounce?.cancel();
-                        final raw = controller.text.trim().replaceAll('@', '');
-                        final newHandle = '@$raw';
-                        Navigator.pop(context);
-                        try {
-                          final currentUser = AuthStateService.instance.currentUser;
-                          if (currentUser != null) {
-                            final updated = currentUser.copyWith(handle: newHandle);
-                            await AppwriteDbService.instance.updateUserProfile(updated);
-                            AuthStateService.instance.updateUser(updated);
-                          }
-                          if (mounted) {
-                            setState(() => _currentHandle = newHandle);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Username updated successfully ❤️'), backgroundColor: AppColors.pureBlack, behavior: SnackBarBehavior.floating));
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
-                          }
-                        }
-                      }
-                    : null,
-                child: const Text('Save'),
-              )
-            ],
-          );
-        }
+  void _editHandle() async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (context) => ChangeUsernameScreen(currentHandle: _currentHandle),
       ),
-    ).then((_) => debounce?.cancel());
+    );
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        _currentHandle = result;
+      });
+    }
   }
 
   void _editEmail() async {
@@ -239,7 +114,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               Navigator.pop(context);
               try {
-                await AppwriteAuthService.instance.triggerPasswordReset(
+                await FirebaseAuthService.instance.triggerPasswordReset(
                   email: _currentEmail,
                   redirectUrl: 'https://confessions.app/reset',
                 );
@@ -276,7 +151,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               Navigator.pop(context);
               try {
-                await AppwriteAuthService.instance.signOut();
+                await FirebaseAuthService.instance.signOut();
               } catch (_) {}
               AuthStateService.instance.clearUser();
               if (context.mounted) {

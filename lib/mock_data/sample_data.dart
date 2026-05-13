@@ -8,6 +8,7 @@ class SampleData {
   static AppUser currentUser = const AppUser(
     id: 'user_current',
     displayName: 'Shivam Yadav',
+    email: 'shivam@example.com',
     handle: '@shivamyadav',
     bio: 'Listening to raw stories and sharing my voice.',
     followersCount: 148,
@@ -24,6 +25,7 @@ class SampleData {
     const AppUser(
       id: 'author_1',
       displayName: 'Aria Mitchell',
+      email: 'aria@example.com',
       handle: '@aria_m',
       bio: 'Sharing my daily thoughts and voice recordings 🌧️',
       followersCount: 1240,
@@ -35,6 +37,7 @@ class SampleData {
     const AppUser(
       id: 'author_2',
       displayName: 'Julian K',
+      email: 'julian@example.com',
       handle: '@julian_k',
       bio: 'Just sharing real stories from my life.',
       followersCount: 412,
@@ -46,6 +49,7 @@ class SampleData {
     const AppUser(
       id: 'author_3',
       displayName: 'Maya Patel',
+      email: 'maya@example.com',
       handle: '@maya_writes',
       bio: 'Recording expressive thoughts and stories. Hope you enjoy!',
       followersCount: 2310,
@@ -57,6 +61,7 @@ class SampleData {
     const AppUser(
       id: 'author_4',
       displayName: 'Leo Sterling',
+      email: 'leo@example.com',
       handle: '@leo_s',
       bio: 'Welcome to my page. Sharing real stories here.',
       followersCount: 95,

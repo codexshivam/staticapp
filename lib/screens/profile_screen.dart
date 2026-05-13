@@ -6,7 +6,7 @@ import '../models/confession.dart';
 import '../mock_data/sample_data.dart';
 import '../widgets/section_title.dart';
 import '../widgets/confession_card.dart';
-import '../services/appwrite/appwrite_db_service.dart';
+import '../services/firebase/firebase_db_service.dart';
 import '../services/auth_state_service.dart';
 import 'followers_screen.dart';
 import 'confession_detail_screen.dart';
@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadUserConfessions() async {
     try {
-      final confessions = await AppwriteDbService.instance.getConfessionsByUser(_activeUser.id);
+      final confessions = await FirebaseDbService.instance.getConfessionsByUser(_activeUser.id);
       if (mounted) setState(() => _userConfessions = confessions);
     } catch (_) {
       if (mounted) {
@@ -101,14 +101,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       if (newFollowing) {
-        await AppwriteDbService.instance.followUser(
+        await FirebaseDbService.instance.followUser(
             currentUserId: currentUser.id, targetUserId: _activeUser.id);
         AuthStateService.instance.updateUser(currentUser.copyWith(
           followingIds: [...currentUser.followingIds, _activeUser.id],
           followingCount: currentUser.followingCount + 1,
         ));
       } else {
-        await AppwriteDbService.instance.unfollowUser(
+        await FirebaseDbService.instance.unfollowUser(
             currentUserId: currentUser.id, targetUserId: _activeUser.id);
         AuthStateService.instance.updateUser(currentUser.copyWith(
           followingIds: currentUser.followingIds.where((id) => id != _activeUser.id).toList(),

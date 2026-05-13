@@ -1,6 +1,5 @@
 // ignore_for_file: unused_element
 
-import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
@@ -8,7 +7,7 @@ import '../core/navigation/playback_manager.dart';
 import '../models/confession.dart';
 import '../models/comment.dart';
 import '../mock_data/sample_data.dart';
-import '../services/appwrite/appwrite_db_service.dart';
+import '../services/firebase/firebase_db_service.dart';
 import '../services/auth_state_service.dart';
 import '../services/user_cache_service.dart';
 import '../models/user.dart';
@@ -46,7 +45,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
 
   Future<void> _loadComments() async {
     try {
-      final comments = await AppwriteDbService.instance.getComments(
+      final comments = await FirebaseDbService.instance.getComments(
         widget.confession.id,
       );
       if (mounted)
@@ -87,7 +86,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
         savedIds.remove(widget.confession.id);
       }
       final updatedUser = currentUser.copyWith(savedConfessionIds: savedIds);
-      await AppwriteDbService.instance.updateSavedConfessions(
+      await FirebaseDbService.instance.updateSavedConfessions(
         currentUser.id,
         savedIds,
       );
@@ -122,7 +121,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     if (currentUser == null) return;
 
     final newComment = Comment(
-      id: ID.unique(),
+      id: 'comment_${DateTime.now().millisecondsSinceEpoch}',
       confessionId: widget.confession.id,
       authorId: currentUser.id,
       content: text.isNotEmpty ? text : 'Shared a visual whisper... 🕯️',
@@ -139,8 +138,8 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     FocusScope.of(context).unfocus();
 
     try {
-      await AppwriteDbService.instance.createComment(newComment);
-      await AppwriteDbService.instance.incrementCommentsCount(
+      await FirebaseDbService.instance.createComment(newComment);
+      await FirebaseDbService.instance.incrementCommentsCount(
         widget.confession.id,
         widget.confession.commentsCount,
       );

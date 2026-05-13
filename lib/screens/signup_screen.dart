@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import '../core/theme/app_colors.dart';
-import '../services/appwrite/appwrite_auth_service.dart';
-import '../services/appwrite/appwrite_db_service.dart';
+import '../services/firebase/firebase_auth_service.dart';
+import '../services/firebase/firebase_db_service.dart';
 import '../services/auth_state_service.dart';
 import 'legal_document_screen.dart';
 import 'main_navigation_shell.dart';
@@ -87,7 +87,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
       try {
         final handle = '@$text';
-        final available = await AppwriteDbService.instance.checkHandleAvailable(handle);
+        final available = await FirebaseDbService.instance.checkHandleAvailable(handle);
         if (mounted) {
           setState(() {
             _isCheckingUsername = false;
@@ -95,12 +95,13 @@ class _SignupScreenState extends State<SignupScreen> {
             _usernameErrorText = available ? null : 'This username is already taken';
           });
         }
-      } catch (_) {
+      } catch (e) {
+        debugPrint('Username check error: $e');
         if (mounted) {
           setState(() {
             _isCheckingUsername = false;
             _isUsernameAvailable = null;
-            _usernameErrorText = null;
+            _usernameErrorText = 'Error checking availability';
           });
         }
       }
@@ -137,7 +138,7 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final newUser = await AppwriteAuthService.instance.signUp(
+      final newUser = await FirebaseAuthService.instance.signUp(
         email: email,
         password: password,
         displayName: username,
@@ -147,7 +148,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (newUser == null) throw Exception('Account creation failed');
 
-      final sessionUser = await AppwriteAuthService.instance.getCurrentSessionUser();
+      final sessionUser = FirebaseAuthService.instance.getCurrentSessionUser();
       AuthStateService.instance.setUser(newUser, email: sessionUser?.email ?? email);
 
       if (mounted) {
@@ -242,7 +243,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 enabled: !_isLoading,
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  labelText: 'Your unique @handle',
+                  labelText: 'Your username',
                   hintText: 'e.g. dreamer',
                   prefixText: '@',
                   suffixIcon: _buildUsernameSuffix(),
@@ -294,7 +295,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              _LegalConsentText(context),
+              _legalConsentText(context),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _isLoading ? null : _handleSignup,
@@ -333,7 +334,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 }
 
-Widget _LegalConsentText(BuildContext context) {
+Widget _legalConsentText(BuildContext context) {
   return RichText(
     textAlign: TextAlign.center,
     text: TextSpan(

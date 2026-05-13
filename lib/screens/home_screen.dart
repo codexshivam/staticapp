@@ -6,7 +6,7 @@ import '../widgets/section_title.dart';
 import '../widgets/confession_card.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
-import '../services/appwrite/appwrite_db_service.dart';
+import '../services/firebase/firebase_db_service.dart';
 import '../services/auth_state_service.dart';
 import '../services/user_cache_service.dart';
 import '../models/user.dart';
@@ -51,11 +51,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadInitialData() async {
     try {
-      final confessions = await AppwriteDbService.instance.getConfessions(limit: _pageSize, offset: 0);
+      final confessions = await FirebaseDbService.instance.getConfessions(limit: _pageSize, offset: 0);
       final currentUser = AuthStateService.instance.currentUser;
       List<Confession> following = [];
       if (currentUser != null && currentUser.followingIds.isNotEmpty) {
-        following = await AppwriteDbService.instance.getFollowingConfessions(
+        following = await FirebaseDbService.instance.getFollowingConfessions(
           currentUser.followingIds, limit: _pageSize, offset: 0);
       }
       if (mounted) {
@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final currentUser = AuthStateService.instance.currentUser;
       List<Confession> more = [];
       if (currentUser != null && currentUser.followingIds.isNotEmpty) {
-        more = await AppwriteDbService.instance.getFollowingConfessions(
+        more = await FirebaseDbService.instance.getFollowingConfessions(
           currentUser.followingIds, limit: _pageSize, offset: _offsetFollowing);
       }
       if (mounted) {
@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isLoadingMore24h || !_hasMore24h) return;
     setState(() => _isLoadingMore24h = true);
     try {
-      final more = await AppwriteDbService.instance.getConfessions(limit: _pageSize, offset: _offset24h);
+      final more = await FirebaseDbService.instance.getConfessions(limit: _pageSize, offset: _offset24h);
       if (mounted) {
         setState(() {
           _loaded24Hours.addAll(more);

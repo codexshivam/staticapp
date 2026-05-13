@@ -58,10 +58,14 @@ class Confession {
       id: json['\$id'] ?? json['id'] ?? '',
       title: json['title'] ?? '',
       authorId: json['authorId'] ?? '',
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
+      createdAt: json['\$createdAt'] != null
+          ? DateTime.parse(json['\$createdAt'])
+          : (json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now()),
       durationString: json['durationString'] ?? '',
       durationSeconds: json['durationSeconds'] ?? 0,
-      waveformData: List<double>.from((json['waveformData'] ?? []).map((e) => (e as num).toDouble())),
+      waveformData: List<double>.from(
+        (json['waveformData'] ?? []).map((e) => (e as num).toDouble()),
+      ),
       commentsCount: json['commentsCount'] ?? 0,
       isSaved: json['isSaved'] ?? false,
       audioUrl: json['audioUrl'],
@@ -71,6 +75,7 @@ class Confession {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'title': title,
       'authorId': authorId,
       'createdAt': createdAt.toIso8601String(),

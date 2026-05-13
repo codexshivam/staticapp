@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
-import '../services/appwrite/appwrite_auth_service.dart';
+import '../services/firebase/firebase_auth_service.dart';
 
 class ChangeEmailScreen extends StatefulWidget {
   final String currentEmail;
@@ -36,7 +36,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
       final newEmail = _emailController.text.trim();
       final password = _passwordController.text;
 
-      await AppwriteAuthService.instance.updateEmail(
+      await FirebaseAuthService.instance.updateEmail(
         email: newEmail,
         password: password,
       );
@@ -125,7 +125,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Changing your email address will immediately affect how you sign in. This will be your new login email for Appwrite authentication.',
+                              'Changing your email address will immediately affect how you sign in. This will be your new login email for Firebase authentication.',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.amber.shade900,
