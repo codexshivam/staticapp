@@ -13,7 +13,6 @@ class Confession {
   final bool isSaved;
   final String dateText;
   
-  // Real Audio properties
   final String? audioUrl;
   final String? audioFilePath;
 

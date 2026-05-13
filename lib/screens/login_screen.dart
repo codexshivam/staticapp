@@ -15,7 +15,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   void _handleLogin() {
-    // Elegant slide transition to Main Navigation Shell
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
@@ -118,7 +117,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 50),
 
-              // Inputs Group
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -137,7 +135,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              // Forgot Password link
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -159,7 +156,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 28),
 
-              // Action buttons
               ElevatedButton(
                 onPressed: _handleLogin,
                 child: const Text('LOG IN'),
@@ -167,7 +163,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 40),
 
-              // Signup transition
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

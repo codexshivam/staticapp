@@ -72,12 +72,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     setState(() {
       if (currentlyFollowing) {
-        // Unfollow
         SampleData.followingList.removeWhere((u) => u.id == _activeUser.id);
         _activeUser = _activeUser.copyWith(
           followersCount: _activeUser.followersCount - 1,
         );
-        // Update in global mockUsers pool to persist selection
         final idx = SampleData.mockUsers.indexWhere(
           (u) => u.id == _activeUser.id,
         );
@@ -85,12 +83,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SampleData.mockUsers[idx] = _activeUser;
         }
       } else {
-        // Follow
         SampleData.followingList.add(_activeUser);
         _activeUser = _activeUser.copyWith(
           followersCount: _activeUser.followersCount + 1,
         );
-        // Update in global mockUsers pool to persist selection
         final idx = SampleData.mockUsers.indexWhere(
           (u) => u.id == _activeUser.id,
         );
@@ -118,7 +114,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final displayUser = _isMe ? SampleData.currentUser : _activeUser;
 
-    // Filter confessions uploaded by this user
     final userConfessions = SampleData.mockConfessions
         .where((c) => c.authorId == displayUser.id)
         .toList();
@@ -161,7 +156,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 1. TOP PROFILE CARD
             Container(
               padding: const EdgeInsets.all(20.0),
               decoration: BoxDecoration(
@@ -179,7 +173,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Row with Initials Avatar & Name
                   Row(
                     children: [
                       Container(
@@ -230,7 +223,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Bio Description
                   Text(
                     displayUser.bio,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -240,7 +232,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  // Optional Links section
                   if (displayUser.links.isNotEmpty) ...[
                     const SizedBox(height: 14),
                     Column(
@@ -292,7 +283,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const Divider(),
                   const SizedBox(height: 16),
 
-                  // Stats Row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -324,7 +314,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 18),
 
-                  // Primary Action Button (Edit Profile / Follow-Unfollow)
                   if (_isMe) ...[
                     OutlinedButton(
                       onPressed: _navigateToEditProfile,
@@ -386,7 +375,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 24),
 
-            // 2. LIST OF USER CONFESSIONS
             SectionTitle(
               title: _isMe
                   ? 'Confessions from You ❤️'

@@ -221,7 +221,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // PROFILE SECTION
             Text(
               'ACCOUNT SETTINGS',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -253,7 +252,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 24),
 
-            // SUBSCRIPTION SECTION
             Text(
               'SUBSCRIPTION',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -291,7 +289,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 24),
 
-            // LEGAL SECTION
             Text(
               'LEGAL',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -323,7 +320,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 32),
 
-            // LOGOUT BUTTON
             SettingsTile(
               title: 'LOG OUT',
               leadingIcon: Icons.logout_outlined,

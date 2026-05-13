@@ -59,7 +59,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (l1.isNotEmpty) updatedLinks.add(l1);
     if (l2.isNotEmpty) updatedLinks.add(l2);
 
-    // Update global state
     SampleData.currentUser = SampleData.currentUser.copyWith(
       displayName: name,
       bio: bio,
@@ -117,7 +116,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           children: [
             const SizedBox(height: 10),
 
-            // Name field
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(
@@ -127,7 +125,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Bio field
             TextField(
               controller: _bioController,
               maxLines: 4,
@@ -138,7 +135,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Link 1 field
             TextField(
               controller: _link1Controller,
               decoration: const InputDecoration(
@@ -148,7 +144,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Link 2 field
             TextField(
               controller: _link2Controller,
               decoration: const InputDecoration(

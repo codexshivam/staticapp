@@ -5,7 +5,6 @@ import '../models/comment.dart';
 class SampleData {
   SampleData._();
 
-  // Active Current User
   static AppUser currentUser = const AppUser(
     id: 'user_current',
     displayName: 'Shivam Yadav',
@@ -21,7 +20,6 @@ class SampleData {
     ],
   );
 
-  // Other Platform Authors
   static List<AppUser> mockUsers = [
     const AppUser(
       id: 'author_1',
@@ -69,7 +67,6 @@ class SampleData {
     ),
   ];
 
-  // Helper Waveform generator
   static List<double> generateWaveform(int count) {
     return List.generate(count, (index) {
       if (index % 5 == 0) return 0.2;
@@ -85,7 +82,6 @@ class SampleData {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  // Pre-configured Mock Confessions
   static List<Confession> mockConfessions = [
     Confession(
       id: 'conf_1',
@@ -179,7 +175,6 @@ class SampleData {
     )
   ];
 
-  // Map of Comments for individual Confessions
   static Map<String, List<Comment>> mockComments = {
     'conf_1': [
       const Comment(
@@ -256,12 +251,10 @@ class SampleData {
   };
 
   static List<Confession> get last24HoursConfessions {
-    // Return confessions with dateText matching today's relative date
     return mockConfessions.where((c) => c.dateText == _getRelativeDateStr(0)).toList();
   }
 
   static List<Confession> get followingConfessions {
-    // Return confessions from people we follow (Aria, Julian, Maya)
     return mockConfessions.where((c) => c.authorId != 'user_current').toList();
   }
 
@@ -309,7 +302,6 @@ class SampleData {
     });
   }
 
-  // Dynamic user list representation (Followers / Following)
   static List<AppUser> followersList = [
     mockUsers[0], // Aria
     mockUsers[1], // Julian

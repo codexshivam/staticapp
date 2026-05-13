@@ -115,7 +115,6 @@ class ConfessionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2),
-            // Creator details
             Text(
               '${confession.authorName} • ${confession.durationString}',
               maxLines: 1,

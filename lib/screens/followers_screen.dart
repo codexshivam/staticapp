@@ -29,7 +29,6 @@ class _FollowersScreenState extends State<FollowersScreen> {
     super.initState();
     _showFollowers = widget.initialShowFollowers;
     
-    // Load lists from mock data
     _followers = List.from(SampleData.followersList);
     _following = List.from(SampleData.followingList);
   }
@@ -47,7 +46,6 @@ class _FollowersScreenState extends State<FollowersScreen> {
 
     setState(() {
       if (isCurrentlyFollowing) {
-        // Unfollow action
         _following.removeWhere((u) => u.id == otherUser.id);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -58,7 +56,6 @@ class _FollowersScreenState extends State<FollowersScreen> {
           ),
         );
       } else {
-        // Follow action
         _following.add(otherUser);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -99,7 +96,6 @@ class _FollowersScreenState extends State<FollowersScreen> {
           children: [
             const SizedBox(height: 10),
             
-            // Toggle sliding tab bar
             Container(
               height: 48,
               padding: const EdgeInsets.all(4),
@@ -156,7 +152,6 @@ class _FollowersScreenState extends State<FollowersScreen> {
 
             const SizedBox(height: 20),
 
-            // List of Users
             Expanded(
               child: activeList.isEmpty
                   ? _buildEmptyState()

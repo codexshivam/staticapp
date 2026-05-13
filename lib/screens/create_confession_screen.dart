@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
@@ -21,16 +22,13 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
   RecordState _state = RecordState.idle;
   final _titleController = TextEditingController();
   
-  // Real Native Recording
   late final AudioRecorder _audioRecorder;
   String? _recordedFilePath;
 
-  // Timer & levels state for recording
   Timer? _recordTimer;
   int _secondsRecorded = 0;
   List<double> _micLevels = List.filled(20, 0.1);
 
-  // Publishing state steps
   String _publishingText = 'Formatting audio stream...';
   double _publishProgress = 0.0;
 
@@ -157,14 +155,12 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       return;
     }
 
-    // Begin progression pipeline
     setState(() {
       _state = RecordState.publishing;
       _publishProgress = 0.2;
       _publishingText = 'Processing recording... 🌧️';
     });
 
-    // Step 1: Encrypt
     Timer(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() {
@@ -174,7 +170,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       }
     });
 
-    // Step 2: Spreading
     Timer(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
@@ -184,10 +179,8 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       }
     });
 
-    // Step 3: Success
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
-        // Create actual confession object
         final id = 'conf_user_${DateTime.now().millisecondsSinceEpoch}';
         final newConf = Confession(
           id: id,
@@ -202,8 +195,8 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           likesCount: 0,
           commentsCount: 0,
           isSaved: false,
-          dateText: '2026-05-12', // Today
-          audioFilePath: _recordedFilePath, // Attach our real audio file!
+          dateText: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+          audioFilePath: _recordedFilePath,
         );
 
         SampleData.mockConfessions.insert(0, newConf);
@@ -213,7 +206,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           _state = RecordState.success;
         });
 
-        // Auto close dialog modal
         Timer(const Duration(milliseconds: 1500), () {
           if (mounted) {
             Navigator.of(context).pop();
@@ -233,7 +225,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Top dismiss row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -263,7 +254,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
               ),
               const Spacer(),
 
-              // CORE INTERACTIVE STATE BOX
               _buildCoreStateWidget(context),
 
               const Spacer(),
@@ -277,7 +267,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
 
   Widget _buildCoreStateWidget(BuildContext context) {
     switch (_state) {
-      // 1. IDLE STATE
       case RecordState.idle:
         return Column(
           children: [
@@ -299,7 +288,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
             const SizedBox(height: 48),
 
-            // Record Button (Glowing Pulse effect container)
             GestureDetector(
               onTap: _startRecording,
               child: Container(
@@ -336,7 +324,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
             const SizedBox(height: 30),
 
-            // Import button
             OutlinedButton.icon(
               onPressed: _pickAudioFile,
               icon: const Icon(Icons.cloud_upload_outlined, size: 18),
@@ -345,7 +332,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           ],
         );
 
-      // 2. RECORDING STATE
       case RecordState.recording:
         return Column(
           children: [
@@ -381,7 +367,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
             const SizedBox(height: 40),
 
-            // Animated Mic Waves levels
             SizedBox(
               height: 60,
               child: Row(
@@ -403,7 +388,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
 
             const SizedBox(height: 50),
 
-            // Stop button
             GestureDetector(
               onTap: _stopRecording,
               child: Container(
@@ -428,7 +412,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           ],
         );
 
-      // 3. RECORDED STATE
       case RecordState.recorded:
         return Container(
           padding: const EdgeInsets.all(20.0),
@@ -457,7 +440,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Title input
               TextField(
                 controller: _titleController,
                 maxLength: 50,
@@ -473,7 +455,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Action buttons row
               Row(
                 children: [
                   Expanded(
@@ -495,7 +476,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           ),
         );
 
-      // 4. PUBLISHING PIPELINE
       case RecordState.publishing:
         return Column(
           children: [
@@ -513,7 +493,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            // Progress Bar
             ClipRRect(
               borderRadius: BorderRadius.circular(2.5),
               child: SizedBox(
@@ -531,7 +510,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           ],
         );
 
-      // 5. SUCCESS
       case RecordState.success:
         return Column(
           children: [

@@ -2,16 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/confession.dart';
 import '../../mock_data/sample_data.dart';
+import '../../services/database_service.dart';
 
 class PlaybackManager extends ChangeNotifier {
   static final PlaybackManager _instance = PlaybackManager._internal();
   factory PlaybackManager() => _instance;
 
   final AudioPlayer _audioPlayer = AudioPlayer();
-  List<Confession> _history = [];
+  final List<Confession> _history = [];
 
   Confession? _activeConfession;
   bool _isPlaying = false;
@@ -34,43 +34,29 @@ class PlaybackManager extends ChangeNotifier {
 
   Future<void> _loadHistory() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final historyIds = prefs.getStringList('listen_history') ?? [];
-      
-      final loadedHistory = <Confession>[];
+      final historyIds = await DatabaseService.instance.getHistoryIds();
+      _history.clear();
       for (final id in historyIds) {
-        final conf = SampleData.mockConfessions.where((c) => c.id == id).firstOrNull;
-        if (conf != null) {
-          loadedHistory.add(conf);
+        final confession = SampleData.mockConfessions
+            .cast<Confession?>()
+            .firstWhere((c) => c?.id == id, orElse: () => null);
+        if (confession != null) {
+          _history.add(confession);
         }
-      }
-      
-      if (loadedHistory.isEmpty) {
-        _history.addAll(SampleData.mockConfessions); // default fallback
-      } else {
-        _history = loadedHistory;
       }
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to load history: $e');
-    }
-  }
-
-  Future<void> _saveHistory() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final historyIds = _history.map((c) => c.id).toList();
-      await prefs.setStringList('listen_history', historyIds);
-    } catch (e) {
-      debugPrint('Failed to save history: $e');
+      debugPrint('Failed to load SQLite history: $e');
     }
   }
 
   void _setupAudioListeners() {
     _positionSubscription = _audioPlayer.positionStream.listen((position) {
       _elapsed = position;
-      if (_audioPlayer.duration != null && _audioPlayer.duration!.inMilliseconds > 0) {
-        _progress = position.inMilliseconds / _audioPlayer.duration!.inMilliseconds;
+      if (_audioPlayer.duration != null &&
+          _audioPlayer.duration!.inMilliseconds > 0) {
+        _progress =
+            position.inMilliseconds / _audioPlayer.duration!.inMilliseconds;
       }
       notifyListeners();
     });
@@ -103,25 +89,25 @@ class PlaybackManager extends ChangeNotifier {
   void addToHistory(Confession confession) {
     _history.removeWhere((c) => c.id == confession.id);
     _history.insert(0, confession);
-    _saveHistory();
+    DatabaseService.instance.saveHistoryItem(confession.id);
     notifyListeners();
   }
 
   void removeFromHistory(String id) {
     _history.removeWhere((c) => c.id == id);
-    _saveHistory();
+    DatabaseService.instance.deleteHistoryItem(id);
     notifyListeners();
   }
 
   void removeMultipleFromHistory(Set<String> ids) {
     _history.removeWhere((c) => ids.contains(c.id));
-    _saveHistory();
+    DatabaseService.instance.deleteMultipleHistoryItems(ids);
     notifyListeners();
   }
 
   void clearHistory() {
     _history.clear();
-    _saveHistory();
+    DatabaseService.instance.clearAllHistory();
     notifyListeners();
   }
 
@@ -133,21 +119,21 @@ class PlaybackManager extends ChangeNotifier {
         _elapsed = Duration.zero;
         notifyListeners();
 
-        if (confession.audioFilePath != null && confession.audioFilePath!.isNotEmpty) {
-           await _audioPlayer.setFilePath(confession.audioFilePath!);
-        } else if (confession.audioUrl != null && confession.audioUrl!.isNotEmpty) {
-           await _audioPlayer.setUrl(confession.audioUrl!);
+        if (confession.audioFilePath != null &&
+            confession.audioFilePath!.isNotEmpty) {
+          await _audioPlayer.setFilePath(confession.audioFilePath!);
+        } else if (confession.audioUrl != null &&
+            confession.audioUrl!.isNotEmpty) {
+          await _audioPlayer.setUrl(confession.audioUrl!);
         } else {
-           // For mock UI visualization only, we could load a dummy URL if we had one
-           debugPrint('No real audio source provided for this confession.');
+          debugPrint('No real audio source provided for this confession.');
         }
       }
-      
+
       addToHistory(confession);
       if (confession.audioUrl != null || confession.audioFilePath != null) {
         _audioPlayer.play();
       } else {
-        // Fallback fake play state for UI
         _isPlaying = true;
         notifyListeners();
       }
@@ -158,8 +144,8 @@ class PlaybackManager extends ChangeNotifier {
 
   void pause() {
     _audioPlayer.pause();
-    // Fallback fake pause state for UI
-    if (_activeConfession?.audioUrl == null && _activeConfession?.audioFilePath == null) {
+    if (_activeConfession?.audioUrl == null &&
+        _activeConfession?.audioFilePath == null) {
       _isPlaying = false;
       notifyListeners();
     }
@@ -177,7 +163,9 @@ class PlaybackManager extends ChangeNotifier {
     final newPos = value.clamp(0.0, 1.0);
     final duration = _audioPlayer.duration;
     if (duration != null) {
-      _audioPlayer.seek(Duration(milliseconds: (duration.inMilliseconds * newPos).round()));
+      _audioPlayer.seek(
+        Duration(milliseconds: (duration.inMilliseconds * newPos).round()),
+      );
     }
     _progress = newPos;
     notifyListeners();

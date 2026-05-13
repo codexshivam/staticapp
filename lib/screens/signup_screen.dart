@@ -281,7 +281,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
               const SizedBox(height: 27.50),
 
-              // Button
               ElevatedButton(
                 onPressed: _handleSignup,
                 child: const Text('SIGN UP'),

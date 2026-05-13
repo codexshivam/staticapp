@@ -30,7 +30,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     _comments = List.from(SampleData.mockComments[widget.confession.id] ?? []);
     _isSaved = widget.confession.isSaved;
 
-    // Auto-play confession on entry!
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PlaybackManager().play(widget.confession);
     });
@@ -139,7 +138,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
       ),
       body: Column(
         children: [
-          // Expanded scrolling content (Player + UPI Support + Comment Lists)
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -147,7 +145,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   
-                  // 1. HERO AUDIO PLAYER CARD
                   ListenableBuilder(
                     listenable: pm,
                     builder: (context, _) {
@@ -172,7 +169,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Post Timestamp details
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
@@ -187,7 +183,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                             ),
                             const SizedBox(height: 12),
 
-                            // Confession Title
                             Text(
                               widget.confession.title,
                               style: Theme.of(context).textTheme.displayMedium?.copyWith(
@@ -199,7 +194,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                             ),
                             const SizedBox(height: 6),
 
-                            // Author section
                             Row(
                               children: [
                                 Container(
@@ -227,11 +221,9 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
 
                             const SizedBox(height: 28),
 
-                            // Main audio slider progress or large waveform
                             _buildLargeWaveform(widget.confession.waveformData, progress),
                             const SizedBox(height: 14),
 
-                            // Timeline & Slider track
                             SliderTheme(
                               data: SliderTheme.of(context).copyWith(
                                 trackHeight: 3,
@@ -254,7 +246,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                               ),
                             ),
 
-                            // Elapsed Duration Details
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -277,7 +268,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
 
                             const SizedBox(height: 20),
 
-                            // Audio Playback Controls Row
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -321,7 +311,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
 
                   const SizedBox(height: 20),
 
-                  // 3. CONFESSION ROOM ❤️ CHAT BOARD HEADER
                   Row(
                     children: [
                       Text(
@@ -347,7 +336,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Comments listing
                   _comments.isEmpty
                       ? Container(
                           padding: const EdgeInsets.symmetric(vertical: 40),
@@ -382,7 +370,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
             ),
           ),
 
-          // 4. PERSISTENT INTIMATE COMMENT INPUT BAR (at the bottom)
           Container(
             padding: EdgeInsets.only(
               left: 16,
@@ -399,7 +386,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Image preview row (if image is chosen)
                 if (_mockSelectedImagePath != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
@@ -431,10 +417,8 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                     ),
                   ),
 
-                // TextField Row
                 Row(
                   children: [
-                    // Image attach icon button - ONLY FOR AUTHOR
                     if (widget.confession.authorId == SampleData.currentUser.id) ...[
                       GestureDetector(
                         onTap: _simulatePickImage,
@@ -446,7 +430,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                       ),
                       const SizedBox(width: 12),
                     ],
-                    // Input Text
                     Expanded(
                       child: TextField(
                         controller: _commentController,
@@ -470,7 +453,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Send Button (Raised Square with 5px radius)
                     GestureDetector(
                       onTap: _addComment,
                       child: Container(
@@ -496,7 +478,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     );
   }
 
-  // Large Waveform Drawing
   Widget _buildLargeWaveform(List<double> data, double progress) {
     return SizedBox(
       height: 60,

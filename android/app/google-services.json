@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "499104430098",
+    "project_id": "built-by-shivam",
+    "storage_bucket": "built-by-shivam.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:499104430098:android:88e6aa266a4dd06ea000cb",
+        "android_client_info": {
+          "package_name": "com.confessions.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhamltzctHqCjwStn_rWIqvEO6bKiHy9Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

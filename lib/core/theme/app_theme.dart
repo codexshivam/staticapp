@@ -6,10 +6,8 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get lightTheme {
-    // Generate the baseline GoogleFonts text theme
     final TextTheme baseTextTheme = GoogleFonts.playfairDisplayTextTheme();
 
-    // Customise letter spacing and color hierarchy
     final TextTheme customTextTheme = baseTextTheme.copyWith(
       displayLarge: baseTextTheme.displayLarge?.copyWith(
         fontSize: 32,
@@ -71,7 +69,6 @@ class AppTheme {
       ),
       textTheme: customTextTheme,
       
-      // Card Theme with strict 5px border radius and subtle shadows
       cardTheme: CardThemeData(
         color: AppColors.cardBg,
         elevation: 2,
@@ -82,7 +79,6 @@ class AppTheme {
         ),
       ),
 
-      // Input Decoration Theme (Login / Signup / Search fields)
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.cardBg,
@@ -114,7 +110,6 @@ class AppTheme {
         ),
       ),
 
-      // Elevated Button Theme (Primary Action Button)
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.pureBlack,
@@ -132,7 +127,6 @@ class AppTheme {
         ),
       ),
 
-      // Outlined Button Theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.pureBlack,
@@ -149,7 +143,6 @@ class AppTheme {
         ),
       ),
 
-      // Text Button Theme
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.pureBlack,
@@ -164,7 +157,6 @@ class AppTheme {
         ),
       ),
 
-      // Dialog / Bottom Sheet themes
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.background,
         elevation: 8,
@@ -183,7 +175,6 @@ class AppTheme {
         ),
       ),
 
-      // Divider Theme
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,
         thickness: 1.0,

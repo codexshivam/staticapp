@@ -38,11 +38,9 @@ class CommentBubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row: initials avatar, display name, author tag, timestamp, actions
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Initials avatar
               Container(
                 width: 28,
                 height: 28,
@@ -61,7 +59,6 @@ class CommentBubble extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // Author Name
               Text(
                 comment.authorName,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -70,7 +67,6 @@ class CommentBubble extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              // Original Author Tag
               if (comment.isAuthor)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
@@ -88,7 +84,6 @@ class CommentBubble extends StatelessWidget {
                   ),
                 ),
               const Spacer(),
-              // Timestamp
               Text(
                 comment.timestamp,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -97,7 +92,6 @@ class CommentBubble extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // Copy Message Icon
               GestureDetector(
                 onTap: () => _copyToClipboard(context),
                 child: const Icon(
@@ -108,7 +102,6 @@ class CommentBubble extends StatelessWidget {
               ),
               if (onDelete != null) ...[
                 const SizedBox(width: 8),
-                // Delete Message Icon
                 GestureDetector(
                   onTap: onDelete,
                   child: const Icon(
@@ -121,7 +114,6 @@ class CommentBubble extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          // Content text
           Text(
             comment.content,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -130,7 +122,6 @@ class CommentBubble extends StatelessWidget {
               height: 1.4,
             ),
           ),
-          // Optional uploaded image UI
           if (comment.imageUrl != null) ...[
             const SizedBox(height: 10),
             ClipRRect(

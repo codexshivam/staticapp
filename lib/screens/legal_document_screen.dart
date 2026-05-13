@@ -32,10 +32,8 @@ class _LegalDocumentScreenState extends State<LegalDocumentScreen> {
   Future<void> _loadDocument() async {
     try {
       final remoteConfig = FirebaseRemoteConfig.instance;
-      // Try to fetch string value from remote config
       String configText = remoteConfig.getString(widget.remoteConfigKey);
       
-      // Check if the remote config provided actual content, not just a URL
       if (configText.isNotEmpty && !configText.startsWith('http')) {
         setState(() {
           _content = configText;
@@ -47,7 +45,6 @@ class _LegalDocumentScreenState extends State<LegalDocumentScreen> {
       debugPrint('Failed to load from remote config, using offline fallback: $e');
     }
 
-    // Fallback to offline bundled asset
     try {
       final localText = await rootBundle.loadString(widget.localAssetPath);
       setState(() {

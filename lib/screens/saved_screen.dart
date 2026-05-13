@@ -266,10 +266,8 @@ class _SavedScreenState extends State<SavedScreen> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      // Saved Tab
                       _buildSavedTab(),
 
-                      // Play History Tab
                       _buildHistoryTab(),
                     ],
                   ),
@@ -347,7 +345,6 @@ class _SavedScreenState extends State<SavedScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Timeline Section Header
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10.0),
                     child: Row(
@@ -375,7 +372,6 @@ class _SavedScreenState extends State<SavedScreen> {
                     ),
                   ),
 
-                  // Stack of cards in this timeline section
                   Padding(
                     padding: const EdgeInsets.only(left: 4.0),
                     child: Container(
