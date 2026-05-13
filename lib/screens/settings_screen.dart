@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/settings_tile.dart';
 import '../mock_data/sample_data.dart';
-import '../models/user.dart';
 import 'login_screen.dart';
+import 'legal_document_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,14 +16,30 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late String _currentName;
   late String _currentEmail;
-  late String _currentUpi;
 
   @override
   void initState() {
     super.initState();
     _currentName = SampleData.currentUser.displayName;
     _currentEmail = 'shivam@diary.com'; // Mock email
-    _currentUpi = SampleData.currentUser.upiId;
+    _setupRemoteConfig();
+  }
+
+  Future<void> _setupRemoteConfig() async {
+    try {
+      final remoteConfig = FirebaseRemoteConfig.instance;
+      await remoteConfig.setConfigSettings(RemoteConfigSettings(
+        fetchTimeout: const Duration(minutes: 1),
+        minimumFetchInterval: const Duration(hours: 1),
+      ));
+      await remoteConfig.setDefaults(const {
+        "privacy_policy_url": "https://codexshivam.github.io/privacy",
+        "terms_of_service_url": "https://codexshivam.github.io/terms"
+      });
+      await remoteConfig.fetchAndActivate();
+    } catch (e) {
+      debugPrint('Remote config fetch failed: $e');
+    }
   }
 
   void _editProfileName() {
@@ -30,11 +47,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Nickname'),
+        title: const Text('Edit Username'),
         content: TextField(
           controller: controller,
           cursorColor: AppColors.pureBlack,
-          decoration: const InputDecoration(labelText: 'Nickname'),
+          decoration: const InputDecoration(labelText: 'Username'),
         ),
         actions: [
           TextButton(
@@ -47,23 +64,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (newName.isNotEmpty) {
                 setState(() {
                   _currentName = newName;
-                  // Update global user model
-                  SampleData.currentUser = AppUser(
-                    id: SampleData.currentUser.id,
-                    displayName: newName,
-                    handle: SampleData.currentUser.handle,
-                    bio: SampleData.currentUser.bio,
-                    followersCount: SampleData.currentUser.followersCount,
-                    followingCount: SampleData.currentUser.followingCount,
-                    confessionCount: SampleData.currentUser.confessionCount,
-                    upiId: SampleData.currentUser.upiId,
-                    links: SampleData.currentUser.links,
-                  );
+                  SampleData.currentUser = SampleData.currentUser.copyWith(displayName: newName);
                 });
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Nickname updated successfully ❤️'),
+                    content: Text('Username updated successfully ❤️'),
                     backgroundColor: AppColors.pureBlack,
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -104,7 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Email updated successfully ❤️'),
+                    content: Text('Verification link sent to new email ❤️'),
                     backgroundColor: AppColors.pureBlack,
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -118,20 +124,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _editUpiId() {
-    final controller = TextEditingController(text: _currentUpi);
+  void _changePassword() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Set UPI ID'),
-        content: TextField(
-          controller: controller,
-          cursorColor: AppColors.pureBlack,
-          decoration: const InputDecoration(
-            labelText: 'UPI address',
-            hintText: 'e.g. yourname@upi',
-          ),
-        ),
+        title: const Text('Change Password'),
+        content: const Text('We will send a password reset link to your email address.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -139,61 +137,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              final newUpi = controller.text.trim();
-              if (newUpi.isNotEmpty) {
-                setState(() {
-                  _currentUpi = newUpi;
-                  // Update global user model
-                  SampleData.currentUser = AppUser(
-                    id: SampleData.currentUser.id,
-                    displayName: SampleData.currentUser.displayName,
-                    handle: SampleData.currentUser.handle,
-                    bio: SampleData.currentUser.bio,
-                    followersCount: SampleData.currentUser.followersCount,
-                    followingCount: SampleData.currentUser.followingCount,
-                    confessionCount: SampleData.currentUser.confessionCount,
-                    upiId: newUpi,
-                    links: SampleData.currentUser.links,
-                  );
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('UPI ID details configured successfully ❤️'),
-                    backgroundColor: AppColors.pureBlack,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Password reset link sent! Check your inbox ❤️'),
+                  backgroundColor: AppColors.pureBlack,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
             },
-            child: const Text('Save'),
+            child: const Text('Send Link'),
           )
         ],
       ),
     );
   }
 
-  void _showLegalDocs(String title) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: SingleChildScrollView(
-          child: Text(
-            'We value raw expression and secure voice confessions above all else.\n\n'
-            '1. All voice records are dynamically processed using local secure parameters before streaming.\n'
-            '2. We empower authentic expression through vocal depth, intonation, and creative messaging.\n'
-            '3. Any transactional UPI configurations represent direct peer-to-peer relationships—we take exactly 0% commission.\n\n'
-            'Your voice confessions belong solely to you, helping you express freely.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
-          ),
+  void _openLegalDocument(String title, String remoteKey, String assetPath) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => LegalDocumentScreen(
+          title: title,
+          remoteConfigKey: remoteKey,
+          localAssetPath: assetPath,
         ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('I Understand'),
-          )
-        ],
       ),
     );
   }
@@ -211,9 +178,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context); // Close dialog
-              
-              // Clear current route hierarchy and return to Login Screen
+              Navigator.pop(context);
               Navigator.of(context).pushAndRemoveUntil(
                 PageRouteBuilder(
                   pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
@@ -268,9 +233,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 10),
             SettingsTile(
-              title: 'Edit Nickname',
+              title: 'Edit Username',
               subtitle: _currentName,
-              leadingIcon: Icons.edit_outlined,
+              leadingIcon: Icons.person_outline,
               onTap: _editProfileName,
             ),
             SettingsTile(
@@ -283,21 +248,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: 'Change Password',
               subtitle: '••••••••',
               leadingIcon: Icons.lock_outline,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Password edit simulation triggered...'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
+              onTap: _changePassword,
             ),
 
             const SizedBox(height: 24),
 
-            // BILLING SECTION
+            // SUBSCRIPTION SECTION
             Text(
-              'UPI PAYMENTS',
+              'SUBSCRIPTION',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
@@ -307,10 +265,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 10),
             SettingsTile(
-              title: 'UPI Address',
-              subtitle: _currentUpi.isEmpty ? 'Not set yet' : _currentUpi,
-              leadingIcon: Icons.payment_outlined,
-              onTap: _editUpiId,
+              title: 'Premium Access',
+              subtitle: '₹270 / \$8 per month',
+              leadingIcon: Icons.star_border_rounded,
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.pureBlack,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'UPGRADE',
+                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+              ),
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('RevenueCat purchase flow initiated... 🚀'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 24),
@@ -329,12 +305,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SettingsTile(
               title: 'Privacy Policy',
               leadingIcon: Icons.policy_outlined,
-              onTap: () => _showLegalDocs('Privacy Policy'),
+              onTap: () => _openLegalDocument(
+                'Privacy Policy', 
+                'privacy_policy_text', 
+                'assets/legal/privacy_policy.md'
+              ),
             ),
             SettingsTile(
               title: 'Terms of Service',
               leadingIcon: Icons.gavel_outlined,
-              onTap: () => _showLegalDocs('Terms of Service'),
+              onTap: () => _openLegalDocument(
+                'Terms of Service', 
+                'terms_of_service_text', 
+                'assets/legal/terms_of_service.md'
+              ),
             ),
 
             const SizedBox(height: 32),

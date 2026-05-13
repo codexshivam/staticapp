@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
-import '../widgets/section_title.dart';
 import '../widgets/confession_card.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';

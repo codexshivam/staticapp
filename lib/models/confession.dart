@@ -12,6 +12,10 @@ class Confession {
   final int commentsCount;
   final bool isSaved;
   final String dateText;
+  
+  // Real Audio properties
+  final String? audioUrl;
+  final String? audioFilePath;
 
   const Confession({
     required this.id,
@@ -27,6 +31,8 @@ class Confession {
     required this.commentsCount,
     required this.isSaved,
     required this.dateText,
+    this.audioUrl,
+    this.audioFilePath,
   });
 
   Confession copyWith({
@@ -43,6 +49,8 @@ class Confession {
     int? commentsCount,
     bool? isSaved,
     String? dateText,
+    String? audioUrl,
+    String? audioFilePath,
   }) {
     return Confession(
       id: id ?? this.id,
@@ -58,6 +66,8 @@ class Confession {
       commentsCount: commentsCount ?? this.commentsCount,
       isSaved: isSaved ?? this.isSaved,
       dateText: dateText ?? this.dateText,
+      audioUrl: audioUrl ?? this.audioUrl,
+      audioFilePath: audioFilePath ?? this.audioFilePath,
     );
   }
 }

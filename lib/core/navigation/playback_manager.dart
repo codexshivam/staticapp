@@ -1,40 +1,100 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:audio_session/audio_session.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/confession.dart';
 import '../../mock_data/sample_data.dart';
 
 class PlaybackManager extends ChangeNotifier {
-  // Singleton Pattern
   static final PlaybackManager _instance = PlaybackManager._internal();
   factory PlaybackManager() => _instance;
 
-  final List<Confession> _history = [];
-
-  PlaybackManager._internal() {
-    // Pre-populate with mock confessions to demonstrate history features
-    _history.addAll(SampleData.mockConfessions);
-  }
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  List<Confession> _history = [];
 
   Confession? _activeConfession;
   bool _isPlaying = false;
-  double _progress = 0.0; // 0.0 to 1.0
-  Timer? _timer;
+  double _progress = 0.0;
+  Duration _elapsed = Duration.zero;
+
+  StreamSubscription? _positionSubscription;
+  StreamSubscription? _playerStateSubscription;
+
+  PlaybackManager._internal() {
+    _initAudioSession();
+    _loadHistory();
+    _setupAudioListeners();
+  }
+
+  Future<void> _initAudioSession() async {
+    final session = await AudioSession.instance;
+    await session.configure(const AudioSessionConfiguration.music());
+  }
+
+  Future<void> _loadHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyIds = prefs.getStringList('listen_history') ?? [];
+      
+      final loadedHistory = <Confession>[];
+      for (final id in historyIds) {
+        final conf = SampleData.mockConfessions.where((c) => c.id == id).firstOrNull;
+        if (conf != null) {
+          loadedHistory.add(conf);
+        }
+      }
+      
+      if (loadedHistory.isEmpty) {
+        _history.addAll(SampleData.mockConfessions); // default fallback
+      } else {
+        _history = loadedHistory;
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Failed to load history: $e');
+    }
+  }
+
+  Future<void> _saveHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyIds = _history.map((c) => c.id).toList();
+      await prefs.setStringList('listen_history', historyIds);
+    } catch (e) {
+      debugPrint('Failed to save history: $e');
+    }
+  }
+
+  void _setupAudioListeners() {
+    _positionSubscription = _audioPlayer.positionStream.listen((position) {
+      _elapsed = position;
+      if (_audioPlayer.duration != null && _audioPlayer.duration!.inMilliseconds > 0) {
+        _progress = position.inMilliseconds / _audioPlayer.duration!.inMilliseconds;
+      }
+      notifyListeners();
+    });
+
+    _playerStateSubscription = _audioPlayer.playerStateStream.listen((state) {
+      _isPlaying = state.playing;
+      if (state.processingState == ProcessingState.completed) {
+        _isPlaying = false;
+        _progress = 0.0;
+        _audioPlayer.seek(Duration.zero);
+        _audioPlayer.pause();
+      }
+      notifyListeners();
+    });
+  }
 
   Confession? get activeConfession => _activeConfession;
   bool get isPlaying => _isPlaying;
   double get progress => _progress;
-
-  Duration get elapsed {
-    if (_activeConfession == null) return Duration.zero;
-    final totalSeconds = _activeConfession!.durationSeconds;
-    final elapsedSeconds = (totalSeconds * _progress).round();
-    return Duration(seconds: elapsedSeconds);
-  }
+  Duration get elapsed => _elapsed;
 
   String get elapsedString {
-    final dur = elapsed;
-    final minutes = dur.inMinutes.toString();
-    final seconds = (dur.inSeconds % 60).toString().padLeft(2, '0');
+    final minutes = _elapsed.inMinutes.toString();
+    final seconds = (_elapsed.inSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
 
@@ -43,38 +103,66 @@ class PlaybackManager extends ChangeNotifier {
   void addToHistory(Confession confession) {
     _history.removeWhere((c) => c.id == confession.id);
     _history.insert(0, confession);
+    _saveHistory();
     notifyListeners();
   }
 
   void removeFromHistory(String id) {
     _history.removeWhere((c) => c.id == id);
+    _saveHistory();
     notifyListeners();
   }
 
   void removeMultipleFromHistory(Set<String> ids) {
     _history.removeWhere((c) => ids.contains(c.id));
+    _saveHistory();
     notifyListeners();
   }
 
   void clearHistory() {
     _history.clear();
+    _saveHistory();
     notifyListeners();
   }
 
-  void play(Confession confession) {
-    if (_activeConfession?.id != confession.id) {
-      _activeConfession = confession;
-      _progress = 0.0;
+  Future<void> play(Confession confession) async {
+    try {
+      if (_activeConfession?.id != confession.id) {
+        _activeConfession = confession;
+        _progress = 0.0;
+        _elapsed = Duration.zero;
+        notifyListeners();
+
+        if (confession.audioFilePath != null && confession.audioFilePath!.isNotEmpty) {
+           await _audioPlayer.setFilePath(confession.audioFilePath!);
+        } else if (confession.audioUrl != null && confession.audioUrl!.isNotEmpty) {
+           await _audioPlayer.setUrl(confession.audioUrl!);
+        } else {
+           // For mock UI visualization only, we could load a dummy URL if we had one
+           debugPrint('No real audio source provided for this confession.');
+        }
+      }
+      
+      addToHistory(confession);
+      if (confession.audioUrl != null || confession.audioFilePath != null) {
+        _audioPlayer.play();
+      } else {
+        // Fallback fake play state for UI
+        _isPlaying = true;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error playing audio: $e');
     }
-    _isPlaying = true;
-    _startTimer();
-    addToHistory(confession);
   }
 
   void pause() {
-    _isPlaying = false;
-    _stopTimer();
-    notifyListeners();
+    _audioPlayer.pause();
+    // Fallback fake pause state for UI
+    if (_activeConfession?.audioUrl == null && _activeConfession?.audioFilePath == null) {
+      _isPlaying = false;
+      notifyListeners();
+    }
   }
 
   void togglePlay(Confession confession) {
@@ -86,38 +174,20 @@ class PlaybackManager extends ChangeNotifier {
   }
 
   void seek(double value) {
-    _progress = value.clamp(0.0, 1.0);
+    final newPos = value.clamp(0.0, 1.0);
+    final duration = _audioPlayer.duration;
+    if (duration != null) {
+      _audioPlayer.seek(Duration(milliseconds: (duration.inMilliseconds * newPos).round()));
+    }
+    _progress = newPos;
     notifyListeners();
-  }
-
-  void _startTimer() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (_activeConfession == null) {
-        _stopTimer();
-        return;
-      }
-
-      final double step = 0.1 / _activeConfession!.durationSeconds;
-      _progress += step;
-
-      if (_progress >= 1.0) {
-        _progress = 0.0;
-        _isPlaying = false;
-        _stopTimer();
-      }
-      notifyListeners();
-    });
-  }
-
-  void _stopTimer() {
-    _timer?.cancel();
-    _timer = null;
   }
 
   @override
   void dispose() {
-    _stopTimer();
+    _positionSubscription?.cancel();
+    _playerStateSubscription?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
   }
 }

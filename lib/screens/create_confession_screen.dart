@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:record/record.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../core/theme/app_colors.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
@@ -17,6 +20,10 @@ class CreateConfessionScreen extends StatefulWidget {
 class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
   RecordState _state = RecordState.idle;
   final _titleController = TextEditingController();
+  
+  // Real Native Recording
+  late final AudioRecorder _audioRecorder;
+  String? _recordedFilePath;
 
   // Timer & levels state for recording
   Timer? _recordTimer;
@@ -28,60 +35,107 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
   double _publishProgress = 0.0;
 
   @override
+  void initState() {
+    super.initState();
+    _audioRecorder = AudioRecorder();
+  }
+
+  @override
   void dispose() {
     _recordTimer?.cancel();
     _titleController.dispose();
+    _audioRecorder.dispose();
     super.dispose();
   }
 
-  void _startRecording() {
-    setState(() {
-      _state = RecordState.recording;
-      _secondsRecorded = 0;
-      _micLevels = List.filled(20, 0.15);
-    });
+  Future<void> _startRecording() async {
+    try {
+      if (await _audioRecorder.hasPermission()) {
+        final dir = await getTemporaryDirectory();
+        final path = '${dir.path}/conf_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
-    final random = Random();
-    _recordTimer = Timer.periodic(const Duration(milliseconds: 150), (timer) {
-      setState(() {
-        _secondsRecorded = (timer.tick * 0.15).floor();
-        // Shift old mic levels and add a new random level
-        _micLevels = List.generate(20, (index) {
-          return 0.1 + random.nextDouble() * 0.8;
+        await _audioRecorder.start(
+          const RecordConfig(encoder: AudioEncoder.aacLc),
+          path: path,
+        );
+
+        setState(() {
+          _state = RecordState.recording;
+          _secondsRecorded = 0;
+          _micLevels = List.filled(20, 0.15);
         });
-      });
-    });
+
+        final random = Random();
+        _recordTimer = Timer.periodic(const Duration(milliseconds: 150), (timer) {
+          setState(() {
+            _secondsRecorded = (timer.tick * 0.15).floor();
+            _micLevels = List.generate(20, (index) {
+              return 0.1 + random.nextDouble() * 0.8;
+            });
+          });
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Microphone permission required!'), backgroundColor: AppColors.accentRed),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error starting record: $e');
+    }
   }
 
-  void _stopRecording() {
+  Future<void> _stopRecording() async {
     _recordTimer?.cancel();
     _recordTimer = null;
-    setState(() {
-      _state = RecordState.recorded;
-    });
+    
+    try {
+      final path = await _audioRecorder.stop();
+      setState(() {
+        _recordedFilePath = path;
+        _state = RecordState.recorded;
+      });
+    } catch (e) {
+      debugPrint('Error stopping record: $e');
+    }
   }
 
   void _resetRecording() {
     setState(() {
+      _recordedFilePath = null;
       _state = RecordState.idle;
       _secondsRecorded = 0;
       _micLevels = List.filled(20, 0.1);
     });
   }
 
-  void _simulateUploadFile() {
-    setState(() {
-      _state = RecordState.recorded;
-      _secondsRecorded = 145; // 2m 25s
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Audio file imported successfully ❤️'),
-        duration: Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.pureBlack,
-      ),
-    );
+  Future<void> _pickAudioFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.audio,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          _recordedFilePath = result.files.single.path;
+          _state = RecordState.recorded;
+          _secondsRecorded = 60; // Mock 60 seconds duration for imported files for now
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Audio file imported successfully ❤️'),
+              duration: Duration(seconds: 1),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.pureBlack,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking file: $e');
+    }
   }
 
   String _formatDuration(int totalSeconds) {
@@ -96,16 +150,6 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a title for your confession ❤️'),
-          backgroundColor: AppColors.accentRed,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-    if (title.length > 50) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Title must be 50 characters or less ❤️'),
           backgroundColor: AppColors.accentRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -143,7 +187,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
     // Step 3: Success
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
-        // Create actual confession object and prepend it to global list!
+        // Create actual confession object
         final id = 'conf_user_${DateTime.now().millisecondsSinceEpoch}';
         final newConf = Confession(
           id: id,
@@ -159,19 +203,17 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           commentsCount: 0,
           isSaved: false,
           dateText: '2026-05-12', // Today
+          audioFilePath: _recordedFilePath, // Attach our real audio file!
         );
 
-        SampleData.mockConfessions.insert(
-          0,
-          newConf,
-        ); // Insert at the very top!
+        SampleData.mockConfessions.insert(0, newConf);
 
         setState(() {
           _publishProgress = 1.0;
           _state = RecordState.success;
         });
 
-        // Auto close dialog modal after 1.5 seconds
+        // Auto close dialog modal
         Timer(const Duration(milliseconds: 1500), () {
           if (mounted) {
             Navigator.of(context).pop();
@@ -296,7 +338,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
 
             // Import button
             OutlinedButton.icon(
-              onPressed: _simulateUploadFile,
+              onPressed: _pickAudioFile,
               icon: const Icon(Icons.cloud_upload_outlined, size: 18),
               label: const Text('CHOOSE AUDIO FILE'),
             ),
@@ -386,7 +428,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           ],
         );
 
-      // 3. RECORDED STATE (previewing / detailing)
+      // 3. RECORDED STATE
       case RecordState.recorded:
         return Container(
           padding: const EdgeInsets.all(20.0),
@@ -399,7 +441,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Voice Confession Recorded ❤️',
+                'Voice Confession Ready ❤️',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -453,7 +495,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           ),
         );
 
-      // 4. PUBLISHING PROGRESS PIPELINE
+      // 4. PUBLISHING PIPELINE
       case RecordState.publishing:
         return Column(
           children: [
@@ -489,7 +531,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           ],
         );
 
-      // 5. SUCCESS FINALE STATE
+      // 5. SUCCESS
       case RecordState.success:
         return Column(
           children: [

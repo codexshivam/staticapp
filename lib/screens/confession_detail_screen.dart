@@ -29,6 +29,11 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     super.initState();
     _comments = List.from(SampleData.mockComments[widget.confession.id] ?? []);
     _isSaved = widget.confession.isSaved;
+
+    // Auto-play confession on entry!
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PlaybackManager().play(widget.confession);
+    });
   }
 
   @override
@@ -98,41 +103,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
         duration: Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.pureBlack,
-      ),
-    );
-  }
-
-  void _triggerUpiTip(int amount) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Support Author ❤️',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
-        ),
-        content: Text(
-          'Sending a quiet gift of ₹$amount to ${widget.confession.authorName} at ${widget.confession.authorHandle}.\n\nThis will open your primary UPI app.',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('₹$amount UPI support sent to ${widget.confession.authorName}! ❤️'),
-                  backgroundColor: AppColors.pureBlack,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            child: const Text('Proceed'),
-          )
-        ],
       ),
     );
   }
@@ -351,49 +321,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
 
                   const SizedBox(height: 20),
 
-                  // 2. UPI SUPPORT BOX: "Support the author ❤️"
-                  Container(
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardBg,
-                      borderRadius: BorderRadius.circular(5.0),
-                      border: Border.all(color: AppColors.divider),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Support the creator ❤️',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Show your support for this creator with a small tip.',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            _buildTipButton('₹20', 20),
-                            const SizedBox(width: 8),
-                            _buildTipButton('₹50', 50),
-                            const SizedBox(width: 8),
-                            _buildTipButton('₹100', 100),
-                            const SizedBox(width: 8),
-                            _buildTipButton('₹200', 200),
-                          ],
-                        )
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
                   // 3. CONFESSION ROOM ❤️ CHAT BOARD HEADER
                   Row(
                     children: [
@@ -507,16 +434,18 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                 // TextField Row
                 Row(
                   children: [
-                    // Mock Image attach icon button
-                    GestureDetector(
-                      onTap: _simulatePickImage,
-                      child: const Icon(
-                        Icons.add_photo_alternate_outlined,
-                        color: AppColors.textSecondary,
-                        size: 24,
+                    // Image attach icon button - ONLY FOR AUTHOR
+                    if (widget.confession.authorId == SampleData.currentUser.id) ...[
+                      GestureDetector(
+                        onTap: _simulatePickImage,
+                        child: const Icon(
+                          Icons.add_photo_alternate_outlined,
+                          color: AppColors.textSecondary,
+                          size: 24,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
+                      const SizedBox(width: 12),
+                    ],
                     // Input Text
                     Expanded(
                       child: TextField(
@@ -563,32 +492,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
             ),
           )
         ],
-      ),
-    );
-  }
-
-  // Tipping custom buttons
-  Widget _buildTipButton(String label, int amount) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => _triggerUpiTip(amount),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(5.0),
-            border: Border.all(color: AppColors.divider),
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: AppColors.pureBlack,
-            ),
-          ),
-        ),
       ),
     );
   }

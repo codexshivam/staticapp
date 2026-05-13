@@ -8,7 +8,8 @@ import '../widgets/confession_card.dart';
 import 'followers_screen.dart';
 import 'confession_detail_screen.dart';
 import 'edit_profile_screen.dart';
-
+import 'package:url_launcher/url_launcher.dart';
+import 'settings_screen.dart';
 class ProfileScreen extends StatefulWidget {
   final AppUser? user;
 
@@ -144,6 +145,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontSize: _isMe ? 24 : 19,
           ),
         ),
+        actions: _isMe
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined, color: AppColors.pureBlack),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                  ),
+                ),
+              ]
+            : null,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -237,26 +248,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: displayUser.links.map((link) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 6.0),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.link,
-                                size: 14,
-                                color: AppColors.textSecondary,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  link.replaceFirst('https://', ''),
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        fontSize: 12,
-                                        color: AppColors.pureBlack,
-                                        decoration: TextDecoration.underline,
-                                      ),
+                          child: GestureDetector(
+                            onTap: () async {
+                              final url = Uri.parse(link.startsWith('http') ? link : 'https://$link');
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                              } else {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Could not launch $link')),
+                                  );
+                                }
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.link,
+                                  size: 14,
+                                  color: AppColors.textSecondary,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    link.replaceFirst(RegExp(r'^https?://'), ''),
+                                    style: Theme.of(context).textTheme.bodyMedium
+                                        ?.copyWith(
+                                          fontSize: 12,
+                                          color: AppColors.pureBlack,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }).toList(),
