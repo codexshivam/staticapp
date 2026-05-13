@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
 import '../core/navigation/playback_manager.dart';
 import '../models/confession.dart';
+import '../models/user.dart';
+import '../services/user_cache_service.dart';
 
 class ConfessionCard extends StatelessWidget {
   final Confession confession;
@@ -34,9 +37,9 @@ class ConfessionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCoverArt(BuildContext context, double size, bool isPlaying) {
-    final initial = confession.authorName.isNotEmpty
-        ? confession.authorName[0].toUpperCase()
+  Widget _buildCoverArt(BuildContext context, double size, bool isPlaying, AppUser? author) {
+    final initial = (author?.displayName.isNotEmpty ?? false)
+        ? author!.displayName[0].toUpperCase()
         : 'C';
 
     return Container(
@@ -97,35 +100,43 @@ class ConfessionCard extends StatelessWidget {
   ) {
     return GestureDetector(
       onTap: onTap,
-      child: SizedBox(
-        width: 140,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildCoverArt(context, 140, isPlaying),
-            const SizedBox(height: 8),
-            Text(
-              confession.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isActive ? AppColors.accentRed : AppColors.textPrimary,
-              ),
+      child: FutureBuilder<AppUser?>(
+        future: UserCacheService.instance.getUser(confession.authorId),
+        builder: (context, snapshot) {
+          final author = snapshot.data;
+          final authorName = author?.displayName ?? 'Anonymous';
+
+          return SizedBox(
+            width: 140,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildCoverArt(context, 140, isPlaying, author),
+                const SizedBox(height: 8),
+                Text(
+                  confession.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isActive ? AppColors.accentRed : AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$authorName • ${confession.durationString}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              '${confession.authorName} • ${confession.durationString}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 11,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
+          );
+        }
       ),
     );
   }
@@ -139,46 +150,71 @@ class ConfessionCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(5.0),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4.0),
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-        child: Row(
-          children: [
-            _buildCoverArt(context, 48, isPlaying),
-            const SizedBox(width: 14),
+      child: FutureBuilder<AppUser?>(
+        future: UserCacheService.instance.getUser(confession.authorId),
+        builder: (context, snapshot) {
+          final author = snapshot.data;
+          final authorName = author?.displayName ?? 'Anonymous';
+          final timeAgo = _getRelativeTime(confession.createdAt);
 
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    confession.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: isActive
-                          ? AppColors.accentRed
-                          : AppColors.textPrimary,
-                    ),
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 4.0),
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+            child: Row(
+              children: [
+                _buildCoverArt(context, 48, isPlaying, author),
+                const SizedBox(width: 14),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        confession.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: isActive
+                              ? AppColors.accentRed
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '$authorName • ${confession.durationString} • $timeAgo',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${confession.authorName} • ${confession.durationString} • ${confession.timestamp}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        }
       ),
     );
+  }
+
+  String _getRelativeTime(DateTime time) {
+    final now = DateTime.now();
+    final difference = now.difference(time);
+    if (difference.inDays > 7) {
+      return DateFormat('MMM d, yyyy').format(time);
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
   }
 }

@@ -1,180 +1,159 @@
-# 🌌 Confessions — Premium Audio Storytelling Platform
+# Confessions App — Developer Setup Guide
 
-> *"Listening to someone's untold feelings late at night... ❤️"*
-
-**Confessions** is an intimate, luxurious, and highly emotional romantic audio storytelling platform built with Flutter. Unlike loud, fast-paced, and highly colorful social media clones, **Confessions** feels like a quiet evening journal. It is a warm, poetic, and minimal sanctuary where users record, stream, share, and preserve secret audio whispers under anonymous pen names.
+Welcome to the **Confessions** application setup documentation. This guide covers how to set up the backend infrastructure (Appwrite), subscription management (RevenueCat), observability/notifications (Firebase), and how to configure environment variables.
 
 ---
 
-## 🎨 Design Philosophy & UX Tokens
-
-Every pixel, curve, and typographical contrast is tailored to capture the feeling of reading a personal diary under soft midnight lamplight:
-
-*   **Typography**: Exclusively mapped to **Playfair Display** (via `google_fonts`), creating a premium, literary, and high-editorial editorial look.
-*   **Color Palette**:
-    *   `Primary Background`: `#E8E4DF` (Warm, comforting beige)
-    *   `Container Background`: `#FFFFFF` (Pure white journal backdrops)
-    *   `Primary Text`: `#2E2E2E` (Solid charcoal black for effortless readability)
-    *   `Secondary Text`: `#6F6B66` (Warm grey for timelines and descriptive captions)
-    *   `Accent Highlight`: `#111111` (Deep black for buttons, icons, and focus points)
-    *   `Romantic Highlight`: Minimalist red hearts (`#D32F2F` ❤️)
-*   **Border Curves**: Strictly restricted to a clean **`5.0px`** on all widgets (containers, cards, buttons, text fields, and sheets) to achieve a modern, premium, structured silhouette.
-*   **Spacing**: Harmonized using a consistent `16px` standard padding and `14px` layout gaps.
+## 📋 Table of Contents
+1. [Architecture Overview](#architecture-overview)
+2. [Prerequisites](#prerequisites)
+3. [Environment Configuration (.env)](#environment-configuration-env)
+4. [Appwrite Backend Setup](#appwrite-backend-setup)
+5. [RevenueCat Subscription Setup](#revenuecat-subscription-setup)
+6. [Firebase Observability & Notifications](#firebase-observability--notifications)
+7. [Running the Application](#running-the-application)
 
 ---
 
-## 📱 High-Fidelity App Tour & Flows
+## 🏛 Architecture Overview
 
-Confessions is fully interactive using highly polished mock diaries, user logs, and background animations:
-
-1.  **Splash & Onboarding** (`splash_screen.dart`, `login_screen.dart`, `signup_screen.dart`):
-    *   Animated fade-and-scale brand launcher that takes you into intimate authorization fields.
-    *   Allows pen name and diary bio onboarding so users can write *letters they will never mail*.
-2.  **Bottom Navigation & Active Playback** (`main_navigation_shell.dart`, `playback_manager.dart`):
-    *   Custom-notched navigation bar housing dynamic tabs (Home, Explore, Saved, Profile).
-    *   A **synchronized audio playback simulation engine** with elapsed timer calculations. Playing any card across the application updates all active cards and top players instantly.
-3.  **Home Feed** (`home_screen.dart`):
-    *   Features a persistent active global controller.
-    *   Horizontally scrolling sliders for *"Active in the Past 24 Hours"* alongside vertical streams for *"People You Follow"*.
-4.  **Confession Detail & Whisper Room** (`confession_detail_screen.dart`):
-    *   Renders a large, precise **audio waveform generator** that colors in bars proportionally as the simulated head moves.
-    *   **UPI Support Block**: Support authors anonymously using select tipping buttons (₹20 to ₹200) that connect to real UPI app launch dialogs.
-    *   **Discussion Feed**: Live-editable discussion thread enabling users to post silent whispers, attach simulated photo thumbnails, and delete comment lines dynamically.
-5.  **Calendar Explore** (`explore_screen.dart`):
-    *   Interactive **7-day weekly calendar strip** to step back into the echoes of previous nights and filter diaries.
-    *   Quick-tag filter capsules (e.g., *Late Night*, *First Love*, *Regrets*).
-6.  **Saved Journals & Follow logs** (`saved_screen.dart`, `followers_screen.dart`):
-    *   Bookmarked diaries supporting **dismissible swipe-to-unsave gesture animations**.
-    *   Slidable profiles allowing you to follow other diaries, navigate directly to their feeds, and explore their stories.
-7.  **Simulated Recorder** (`create_confession_screen.dart`):
-    *   Fully animated recording visualizer that **toggles real microphone wave oscillations** and tracks time limits.
-    *   Detailed **uploading state pipeline** (*Formatting audio...*, *Encrypting anonymous initials...*, *Broadcasting to the stars...*) that inserts the newly created confession into our live list upon success!
+The application utilizes a modular, decoupled architecture:
+- **Frontend**: Flutter (Material Design 3)
+- **Backend (Auth, Database, Storage)**: Appwrite
+- **In-App Subscriptions**: RevenueCat (`purchase_service`)
+- **Observability & Push Notifications**: Firebase (Crashlytics, Analytics, FCM, Remote Config)
+- **Environment Management**: `flutter_dotenv` loading from a `.env` file
 
 ---
 
-## 📁 Repository Structure
+## ⚙️ Prerequisites
 
-```
-lib/
-├── main.dart                      <- App bootstrap & custom Material 3 theme load
-├── core/
-│   ├── theme/
-│   │   ├── app_colors.dart        <- Hexadecimal design system tokens
-│   │   └── app_theme.dart         <- Custom ThemeData (5px curves, Playfair TextTheme)
-│   └── navigation/
-│       └── playback_manager.dart  <- Synchronized ChangeNotifier simulating elapsed durations
-├── models/
-│   ├── user.dart                  <- Pen-name profiles and statistics
-│   ├── comment.dart               <- Whisper room comments with text, images, and author markers
-│   └── confession.dart            <- Audio cards mapping waves, duration records, and save states
-├── mock_data/
-│   └── sample_data.dart           <- Emotional, night-themed mock content and initial states
-├── widgets/
-│   ├── section_title.dart         <- Clean section headers with action triggers
-│   ├── search_field.dart          <- Minimalist text input bars
-│   ├── settings_tile.dart         <- Custom rows for profile configuration
-│   ├── user_list_tile.dart        <- slidable followers row with follow actions
-│   ├── comment_bubble.dart        <- Chat balloons supporting deletion and photo whisper shapes
-│   └── confession_card.dart       <- Playable cards with real-time waveform seek bars
-└── screens/
-    ├── splash_screen.dart         <- Animated launch gate
-    ├── login_screen.dart          <- Access panel with poetic instructions
-    ├── signup_screen.dart         <- Onboarding registration forms
-    ├── main_navigation_shell.dart <- Unified bottom shell orchestrator
-    ├── home_screen.dart           <- Dynamic player hub, 24h streams, and following feeds
-    ├── confession_detail_screen.dart <- Waveform controller, UPI tipping, & comments
-    ├── explore_screen.dart        <- Multi-filter searches, categories, and calendar strips
-    ├── saved_screen.dart          <- Favorited diaries with slidable dismissals
-    ├── profile_screen.dart        <- Biographies, statistical counters, and owner diaries
-    ├── create_confession_screen.dart <- Sound recorder and multi-step publisher
-    ├── settings_screen.dart       <- Identifier adjustments, UPI virtual updates, and logouts
-    └── followers_screen.dart      <- Followers & following listings with navigation loops
-```
+Before getting started, make sure you have the following installed:
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (`^3.11.0` or higher)
+- [Dart SDK](https://dart.dev/get-dart)
+- An active account on [Appwrite Cloud](https://cloud.appwrite.io) (or self-hosted Appwrite)
+- An active account on [RevenueCat](https://app.revenuecat.com)
+- An active project on [Firebase Console](https://console.firebase.google.com)
 
 ---
 
-## ⚙️ Android Configuration & Release Preparation
+## 🔐 Environment Configuration (.env)
 
-The Android wrapper files have been properly audited and upgraded to release-ready state:
+The project uses `flutter_dotenv` to securely manage API keys and endpoints without hardcoding them into Dart source files.
 
-*   **Release-ready namespace & package**: Default `com.example` has been completely deleted and replaced with a professional, deployment-ready namespace:
-    *   **Application ID / Namespace**: `com.confessions.app` in [build.gradle.kts](android/app/build.gradle.kts)
-    *   **MainActivity package structure**: Moved to a clean folder tree `android/app/src/main/kotlin/com/confessions/app/MainActivity.kt`
-*   **App Icon & Label**: Set to `"Confessions"` in [AndroidManifest.xml](android/app/src/main/AndroidManifest.xml).
-*   **Core Audio Permissions**: Configured permissions required for high-fidelity recording and playback:
-    ```xml
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    ```
+1. In the root directory of the project, duplicate the template file `.env.example` and name it `.env`:
+   ```bash
+   cp .env.example .env
+   ```
 
----
+2. Open `.env` and fill in your corresponding production or development credentials:
+   ```env
+   # Appwrite Backend Configuration
+   APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+   APPWRITE_PROJECT_ID=YOUR_APPWRITE_PROJECT_ID
 
-## 🚀 Step-by-Step Installation & Setup
+   # RevenueCat Subscription Management
+   REVENUECAT_ANDROID_KEY=YOUR_REVENUECAT_ANDROID_KEY
+   REVENUECAT_IOS_KEY=YOUR_REVENUECAT_IOS_KEY
+   ```
 
-Get "Confessions" running on your local machine or device in minutes:
-
-### Prerequisites
-Make sure you have the following installed on your machine:
-*   [Flutter SDK](https://docs.flutter.dev/get-started/install) (v3.19 or higher recommended)
-*   [Dart SDK](https://dart.dev/get-started)
-*   An Android Emulator, iOS Simulator, or physical test device with USB debugging enabled.
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/yourusername/confessions.git
-cd confessions
-```
-
-### 2. Install Dependencies
-Download and fetch all required packages (including `google_fonts`):
-```bash
-flutter pub get
-```
-
-### 3. Verify Code Health
-Run the static analyzer to confirm there are no compilation or syntax errors:
-```bash
-flutter analyze
-```
-
-### 4. Run the App
-Launch the codebase on your connected mobile device or emulator in developer mode:
-```bash
-flutter run
-```
+> **Note**: The `.env` file is automatically included in your asset bundle via `pubspec.yaml` but should be kept out of version control (ensure `.env` is added to `.gitignore`).
 
 ---
 
-## 🛠️ Build & Compilation
+## ☁️ Appwrite Backend Setup
 
-To generate builds for release, testing, or distribution:
+### 1. Create Project & API Key
+- Log into Appwrite Cloud and create a new project.
+- Copy the **Project ID** into your `.env` file under `APPWRITE_PROJECT_ID`.
+- Register your Flutter mobile application platforms (Android package name & iOS Bundle ID) in the Appwrite Console under **Platforms**.
 
-### Android APK Build
-Compile a high-performance release APK file:
-```bash
-flutter build apk --release
-```
-*The resulting APK will be saved at `build/app/outputs/flutter-apk/app-release.apk`.*
+### 2. Database & Collections Setup
+Create a new Database named `confessions_db` (ID: `confessions_db`). Within this database, create the following collections:
 
-### Android App Bundle (AAB)
-To submit the application to the Google Play Store, bundle the assets:
-```bash
-flutter build appbundle --release
-```
-*The resulting AAB will be saved at `build/app/outputs/bundle/release/app-release.aab`.*
+#### Collection: `users`
+- `displayName` (String, required)
+- `email` (String, required)
+- `handle` (String, required)
+- `avatarUrl` (String, optional)
+- `bio` (String, optional)
+- `link` (String, optional)
+- `followersCount` (Integer, default: `0`)
+- `followingCount` (Integer, default: `0`)
+- `savedConfessionIds` (String Array, default: `[]`)
+- `followingIds` (String Array, default: `[]`)
+- `followerIds` (String Array, default: `[]`)
+- `dailyPlaybackCount` (Integer, default: `0`)
+- `lastPlaybackDate` (String, optional)
+
+#### Collection: `confessions`
+- `title` (String, required)
+- `audioUrl` (String, required)
+- `durationText` (String, required)
+- `authorId` (String, required)
+- `waveformData` (Float Array, required)
+- `commentsCount` (Integer, default: `0`)
+- `createdAt` (Datetime, required)
+
+#### Collection: `comments`
+- `confessionId` (String, required)
+- `authorId` (String, required)
+- `content` (String, required)
+- `createdAt` (Datetime, required)
+
+### 3. Storage Buckets Setup
+Create two Storage Buckets in your Appwrite console:
+- **`confessions_audio`**: For audio recordings (.m4a/.aac). Ensure appropriate permissions (e.g., Any user can read, authenticated users can write).
+- **`comments_images`**: For optional comment attachments or avatars.
 
 ---
 
-## 🔮 Next Phase: Live Backend Integration
-Since this phase focuses exclusively on premium front-end UI and mock state preservation, the code is prepared to easily adopt any backend architecture in the next stage.
-*   **Suggested integrations**: Firebase Auth / Firestore, Appwrite Cloud, or custom GraphQL node layers.
-*   **Audio Uploading**: Transition `create_confession_screen.dart` uploading pipeline to send the recorded WAV/AAC byte streams directly to an Appwrite Storage bucket or AWS S3, updating user document arrays.
-*   **UPI Processing**: Transition our peer-to-peer tip buttons to connect directly to native UPI intent links using custom payment SDK gateways.
+## 💎 RevenueCat Subscription Setup
+
+The app uses RevenueCat to manage pro subscriptions (allowing unlimited daily confession listening).
+
+1. Log into your RevenueCat dashboard and create a new Project.
+2. Add an **Android App** (Google Play) and/or an **iOS App** (App Store) to the project.
+3. Copy the generated **Public API Keys** into your `.env` file (`REVENUECAT_ANDROID_KEY` and `REVENUECAT_IOS_KEY`).
+4. Set up an **Entitlement** named `pro` in RevenueCat.
+5. Attach your corresponding App Store / Google Play products to this entitlement.
 
 ---
 
-## 📄 License
-This project is licensed under the MIT License — see the `LICENSE` file for details.
+## 🔥 Firebase Observability & Notifications
 
-*Developed with love, night skies, and untold confessions.* ❤️
+Firebase is used for Crashlytics, Analytics, Cloud Messaging (Push Notifications), and Remote Config (for dynamic subscription toggling).
+
+1. Install the FlutterFire CLI:
+   ```bash
+   dart pub global activate flutterfire_cli
+   ```
+
+2. Configure your Firebase project:
+   ```bash
+   flutterfire configure
+   ```
+   This command automatically generates the `lib/firebase_options.dart` file.
+
+3. In Firebase Console under **Remote Config**, create a boolean parameter named `subscription_enabled` (default: `true` or `false` based on your regional rollout strategy).
+
+---
+
+## 🚀 Running the Application
+
+1. Ensure all packages are downloaded and synced:
+   ```bash
+   flutter pub get
+   ```
+
+2. Run the application on your target emulator or physical device:
+   ```bash
+   flutter run
+   ```
+
+---
+
+## 🛠 Troubleshooting
+
+- **Appwrite Connection Issues**: Ensure your device/emulator has internet access and your app's Package Name / Bundle ID matches exactly what is configured in Appwrite under Platforms.
+- **DotEnv Loading Errors**: Make sure your `.env` file exists in the root folder and is listed exactly as `- .env` under the `assets` section in `pubspec.yaml`.

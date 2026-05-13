@@ -1,52 +1,80 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:purchase_service/purchase_service.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:intl/intl.dart';
 import '../models/user.dart';
 import 'appwrite/appwrite_db_service.dart';
 import 'auth_state_service.dart';
 import 'remote_config_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SubscriptionService {
   static final SubscriptionService instance = SubscriptionService._init();
   SubscriptionService._init();
 
-  final PurchasesService _purchases = PurchasesService();
   bool _initialized = false;
+  bool _isPro = false;
+  final StreamController<bool> _proStatusController = StreamController<bool>.broadcast();
 
-  static const String _androidKey = 'YOUR_REVENUECAT_ANDROID_KEY';
-  static const String _iosKey = 'YOUR_REVENUECAT_IOS_KEY';
+  static String get _androidKey => dotenv.env['REVENUECAT_ANDROID_KEY'] ?? 'test_dqUqZKVCRZxyjcGymsxZQGRxHJf';
+  static String get _iosKey => dotenv.env['REVENUECAT_IOS_KEY'] ?? 'test_dqUqZKVCRZxyjcGymsxZQGRxHJf';
 
   Future<void> initialize({String? userId}) async {
     if (_initialized) return;
     try {
-      final apiKey = Platform.isIOS ? _iosKey : _androidKey;
-      await _purchases.initialize(
-        apiKey: apiKey,
-        userId: userId,
-        observerMode: false,
-      );
-      _initialized = true;
-      debugPrint('SubscriptionService initialized');
+      if (Platform.isIOS || Platform.isAndroid) {
+        final apiKey = Platform.isIOS ? _iosKey : _androidKey;
+        final configuration = PurchasesConfiguration(apiKey);
+        if (userId != null && userId.isNotEmpty) {
+          configuration.appUserID = userId;
+        }
+        await Purchases.configure(configuration);
+        
+        Purchases.addCustomerInfoUpdateListener(_onCustomerInfoUpdated);
+        await _checkCustomerInfo();
+
+        _initialized = true;
+        debugPrint('RevenueCat SDK initialized successfully');
+      } else {
+        debugPrint('Platform not supported by RevenueCat');
+      }
     } catch (e) {
-      debugPrint('SubscriptionService init failed: $e');
+      debugPrint('RevenueCat init failed: $e');
     }
   }
 
-  bool get isPro => _initialized ? _purchases.isPro : false;
+  void _onCustomerInfoUpdated(CustomerInfo customerInfo) {
+    final hasPro = customerInfo.entitlements.active.containsKey('TheStatic Pro');
+    if (_isPro != hasPro) {
+      _isPro = hasPro;
+      _proStatusController.add(_isPro);
+    }
+  }
 
-  Stream<bool> get proStatusStream => _purchases.proStatusStream;
+  Future<void> _checkCustomerInfo() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      _onCustomerInfoUpdated(customerInfo);
+    } catch (e) {
+      debugPrint('Failed to get customer info: $e');
+    }
+  }
+
+  bool get isPro => _isPro;
+
+  Stream<bool> get proStatusStream => _proStatusController.stream;
 
   Future<PaywallResult?> showPaywall() async {
     if (!_initialized) {
-      debugPrint('SubscriptionService not initialized, cannot show paywall');
+      debugPrint('RevenueCat not initialized, cannot show paywall');
       return null;
     }
     try {
-      return await _purchases.presentPaywallIfNeeded(
-        entitlement: 'pro',
-        showCloseButton: true,
-      );
+      final paywallResult = await RevenueCatUI.presentPaywallIfNeeded('TheStatic Pro');
+      await _checkCustomerInfo();
+      return paywallResult;
     } catch (e) {
       debugPrint('Error presenting paywall: $e');
       return PaywallResult.error;
@@ -56,16 +84,18 @@ class SubscriptionService {
   Future<void> restorePurchases() async {
     if (!_initialized) return;
     try {
-      await _purchases.restorePurchases();
+      final customerInfo = await Purchases.restorePurchases();
+      _onCustomerInfoUpdated(customerInfo);
     } catch (e) {
       debugPrint('Restore purchases failed: $e');
     }
   }
 
   Future<void> updateUserId(String? userId) async {
-    if (!_initialized) return;
+    if (!_initialized || userId == null || userId.isEmpty) return;
     try {
-      await _purchases.updateUserId(userId);
+      final logInResult = await Purchases.logIn(userId);
+      _onCustomerInfoUpdated(logInResult.customerInfo);
     } catch (e) {
       debugPrint('Update userId failed: $e');
     }
@@ -110,5 +140,7 @@ class SubscriptionService {
     }
   }
 
-  void dispose() => _purchases.dispose();
+  void dispose() {
+    _proStatusController.close();
+  }
 }

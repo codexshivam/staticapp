@@ -194,7 +194,7 @@ class AppwriteDbService {
           queries: [
             Query.limit(limit),
             Query.offset(offset),
-            Query.orderDesc('\$createdAt'),
+            Query.orderDesc('createdAt'),
           ],
         );
         return list.documents.map((doc) => Confession.fromJson(doc.data)).toList();
@@ -212,7 +212,7 @@ class AppwriteDbService {
           queries: [
             Query.equal('authorId', userId),
             Query.limit(limit),
-            Query.orderDesc('\$createdAt'),
+            Query.orderDesc('createdAt'),
           ],
         );
         return list.documents.map((doc) => Confession.fromJson(doc.data)).toList();
@@ -228,10 +228,10 @@ class AppwriteDbService {
           databaseId: AppwriteConfig.databaseId,
           collectionId: AppwriteConfig.confessionsCollectionId,
           queries: [
-            Query.equal('dateText', dateText),
+            Query.equal('dateText', dateText), // You might want to update this to createdAt ranges if needed later
             Query.limit(limit),
             Query.offset(offset),
-            Query.orderDesc('\$createdAt'),
+            Query.orderDesc('createdAt'),
           ],
         );
         return list.documents.map((doc) => Confession.fromJson(doc.data)).toList();
@@ -286,7 +286,7 @@ class AppwriteDbService {
             Query.equal('authorId', authorIds),
             Query.limit(limit),
             Query.offset(offset),
-            Query.orderDesc('\$createdAt'),
+            Query.orderDesc('createdAt'),
           ],
         );
         return list.documents.map((doc) => Confession.fromJson(doc.data)).toList();
@@ -294,33 +294,7 @@ class AppwriteDbService {
     );
   }
 
-  Future<void> toggleLike({
-    required String confessionId,
-    required String userId,
-    required bool liked,
-    required List<String> currentLikedBy,
-    required int currentLikesCount,
-  }) async {
-    return AppwritePerformanceHelper.traceAndHandle(
-      traceName: 'db_toggle_like',
-      operation: () {
-        final updatedLikedBy = liked
-            ? [...currentLikedBy, userId]
-            : currentLikedBy.where((id) => id != userId).toList();
-        return _db.updateDocument(
-          databaseId: AppwriteConfig.databaseId,
-          collectionId: AppwriteConfig.confessionsCollectionId,
-          documentId: confessionId,
-          data: {
-            'likedBy': updatedLikedBy,
-            'likesCount': liked
-                ? currentLikesCount + 1
-                : (currentLikesCount - 1).clamp(0, 9999999),
-          },
-        );
-      },
-    );
-  }
+
 
   Future<void> incrementCommentsCount(String confessionId, int currentCount) async {
     return AppwritePerformanceHelper.traceAndHandle(
@@ -368,7 +342,7 @@ class AppwriteDbService {
           collectionId: AppwriteConfig.commentsCollectionId,
           queries: [
             Query.equal('confessionId', confessionId),
-            Query.orderAsc('\$createdAt'),
+            Query.orderAsc('createdAt'),
           ],
         );
         return list.documents.map((doc) => Comment.fromJson(doc.data)).toList();

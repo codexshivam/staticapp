@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
@@ -25,7 +24,7 @@ class CreateConfessionScreen extends StatefulWidget {
 class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
   RecordState _state = RecordState.idle;
   final _titleController = TextEditingController();
-  
+
   late final AudioRecorder _audioRecorder;
   String? _recordedFilePath;
 
@@ -54,7 +53,8 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
     try {
       if (await _audioRecorder.hasPermission()) {
         final dir = await getTemporaryDirectory();
-        final path = '${dir.path}/conf_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final path =
+            '${dir.path}/conf_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
         await _audioRecorder.start(
           const RecordConfig(encoder: AudioEncoder.aacLc),
@@ -68,7 +68,9 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
         });
 
         final random = Random();
-        _recordTimer = Timer.periodic(const Duration(milliseconds: 150), (timer) {
+        _recordTimer = Timer.periodic(const Duration(milliseconds: 150), (
+          timer,
+        ) {
           setState(() {
             _secondsRecorded = (timer.tick * 0.15).floor();
             _micLevels = List.generate(20, (index) {
@@ -79,7 +81,10 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Microphone permission required!'), backgroundColor: AppColors.accentRed),
+            const SnackBar(
+              content: Text('Microphone permission required!'),
+              backgroundColor: AppColors.accentRed,
+            ),
           );
         }
       }
@@ -91,7 +96,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
   Future<void> _stopRecording() async {
     _recordTimer?.cancel();
     _recordTimer = null;
-    
+
     try {
       final path = await _audioRecorder.stop();
       setState(() {
@@ -122,7 +127,8 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
         setState(() {
           _recordedFilePath = result.files.single.path;
           _state = RecordState.recorded;
-          _secondsRecorded = 60; // Mock 60 seconds duration for imported files for now
+          _secondsRecorded =
+              60; // Mock 60 seconds duration for imported files for now
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -162,7 +168,11 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
     final currentUser = AuthStateService.instance.currentUser;
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to publish'), backgroundColor: AppColors.accentRed, behavior: SnackBarBehavior.floating),
+        const SnackBar(
+          content: Text('Please log in to publish'),
+          backgroundColor: AppColors.accentRed,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
@@ -181,7 +191,9 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           _publishProgress = 0.5;
           _publishingText = 'Uploading audio... ✨';
         });
-        audioUrl = await AppwriteStorageService.instance.uploadConfessionAudio(_recordedFilePath!);
+        audioUrl = await AppwriteStorageService.instance.uploadConfessionAudio(
+          _recordedFilePath!,
+        );
       }
 
       setState(() {
@@ -194,17 +206,13 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       final newConf = Confession(
         id: id,
         title: title,
-        authorName: currentUser.displayName,
-        authorHandle: currentUser.handle,
         authorId: currentUser.id,
-        timestamp: DateFormat('h:mm a').format(now),
+        createdAt: DateTime.now(),
         durationString: _formatDuration(_secondsRecorded),
         durationSeconds: _secondsRecorded == 0 ? 120 : _secondsRecorded,
         waveformData: SampleData.generateWaveform(35),
-        likesCount: 0,
         commentsCount: 0,
         isSaved: false,
-        dateText: DateFormat('yyyy-MM-dd').format(now),
         audioUrl: audioUrl,
       );
 
@@ -229,7 +237,11 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       if (mounted) {
         setState(() => _state = RecordState.recorded);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating),
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }

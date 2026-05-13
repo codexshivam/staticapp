@@ -8,6 +8,8 @@ import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
 import '../services/appwrite/appwrite_db_service.dart';
 import '../services/auth_state_service.dart';
+import '../services/user_cache_service.dart';
+import '../models/user.dart';
 import 'confession_detail_screen.dart';
 import 'settings_screen.dart';
 
@@ -455,12 +457,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  'by ${conf.authorName} • ${conf.authorHandle}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.background.withOpacity(0.6),
-                    fontSize: 12,
-                  ),
+                FutureBuilder<AppUser?>(
+                  future: UserCacheService.instance.getUser(conf.authorId),
+                  builder: (context, snapshot) {
+                    final author = snapshot.data;
+                    final authorName = author?.displayName ?? 'Anonymous';
+                    final authorHandle = author?.handle ?? '';
+
+                    return Text(
+                      'by $authorName • $authorHandle',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.background.withOpacity(0.6),
+                        fontSize: 12,
+                      ),
+                    );
+                  }
                 ),
 
                 const SizedBox(height: 16),

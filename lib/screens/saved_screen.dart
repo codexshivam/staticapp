@@ -95,7 +95,8 @@ class _SavedScreenState extends State<SavedScreen> {
   ) {
     final Map<String, List<Confession>> grouped = {};
     for (var c in confessions) {
-      final dateLabel = _formatDateLabel(c.dateText);
+      final dateStr = DateFormat('yyyy-MM-dd').format(c.createdAt);
+      final dateLabel = _formatDateLabel(dateStr);
       if (!grouped.containsKey(dateLabel)) {
         grouped[dateLabel] = [];
       }

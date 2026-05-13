@@ -1,10 +1,11 @@
 import 'package:appwrite/appwrite.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppwriteConfig {
   AppwriteConfig._();
 
-  static const String endpoint = 'https://cloud.appwrite.io/v1';
-  static const String projectId = 'YOUR_APPWRITE_PROJECT_ID';
+  static String get endpoint => dotenv.env['APPWRITE_ENDPOINT'] ?? 'https://cloud.appwrite.io/v1';
+  static String get projectId => dotenv.env['APPWRITE_PROJECT_ID'] ?? 'YOUR_APPWRITE_PROJECT_ID';
   static const String databaseId = 'confessions_db';
 
   static const String usersCollectionId = 'users';
@@ -14,7 +15,7 @@ class AppwriteConfig {
   static const String audioBucketId = 'confessions_audio';
   static const String imagesBucketId = 'comments_images';
 
-  static final Client client = Client()
+  static Client get client => Client()
     ..setEndpoint(endpoint)
     ..setProject(projectId)
     ..setSelfSigned(status: true);

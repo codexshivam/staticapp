@@ -77,197 +77,157 @@ class SampleData {
     });
   }
 
-  static String _getRelativeDateStr(int daysBack) {
-    final date = DateTime.now().subtract(Duration(days: daysBack));
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  static DateTime _getRelativeDate(int daysBack) {
+    return DateTime.now().subtract(Duration(days: daysBack));
   }
 
   static List<Confession> mockConfessions = [
     Confession(
       id: 'conf_1',
       title: 'I still remember your voice',
-      authorName: 'Aria Mitchell',
-      authorHandle: '@aria_m',
       authorId: 'author_1',
-      timestamp: '10:42 PM',
+      createdAt: _getRelativeDate(0),
       durationString: '3:12',
       durationSeconds: 192,
       waveformData: generateWaveform(35),
-      likesCount: 542,
       commentsCount: 38,
       isSaved: true,
-      dateText: _getRelativeDateStr(0), // Today
     ),
     Confession(
       id: 'conf_2',
       title: 'some nights still hurt',
-      authorName: 'Julian K',
-      authorHandle: '@julian_k',
       authorId: 'author_2',
-      timestamp: '2:15 AM',
+      createdAt: _getRelativeDate(0),
       durationString: '1:45',
       durationSeconds: 105,
       waveformData: generateWaveform(35),
-      likesCount: 184,
       commentsCount: 12,
       isSaved: false,
-      dateText: _getRelativeDateStr(0), // Today
     ),
     Confession(
       id: 'conf_3',
       title: 'I never told her this ❤️',
-      authorName: 'Maya Patel',
-      authorHandle: '@maya_writes',
       authorId: 'author_3',
-      timestamp: 'Yesterday',
+      createdAt: _getRelativeDate(1),
       durationString: '4:20',
       durationSeconds: 260,
       waveformData: generateWaveform(35),
-      likesCount: 1204,
       commentsCount: 84,
       isSaved: true,
-      dateText: _getRelativeDateStr(1), // Yesterday
     ),
     Confession(
       id: 'conf_4',
       title: 'letters that remained inside drawer',
-      authorName: 'Leo Sterling',
-      authorHandle: '@leo_s',
       authorId: 'author_4',
-      timestamp: 'Yesterday',
+      createdAt: _getRelativeDate(1),
       durationString: '2:30',
       durationSeconds: 150,
       waveformData: generateWaveform(35),
-      likesCount: 96,
       commentsCount: 8,
       isSaved: false,
-      dateText: _getRelativeDateStr(1), // Yesterday
     ),
     Confession(
       id: 'conf_5',
       title: 'why did we say goodbye at the train station?',
-      authorName: 'Aria Mitchell',
-      authorHandle: '@aria_m',
       authorId: 'author_1',
-      timestamp: '3 days ago',
+      createdAt: _getRelativeDate(3),
       durationString: '5:04',
       durationSeconds: 304,
       waveformData: generateWaveform(35),
-      likesCount: 832,
       commentsCount: 45,
       isSaved: false,
-      dateText: _getRelativeDateStr(3),
     ),
     Confession(
       id: 'conf_current_user_1',
       title: 'I saw you in my dream again',
-      authorName: 'Shivam Yadav',
-      authorHandle: '@shivamyadav',
       authorId: 'user_current',
-      timestamp: '4 days ago',
+      createdAt: _getRelativeDate(4),
       durationString: '2:15',
       durationSeconds: 135,
       waveformData: generateWaveform(35),
-      likesCount: 34,
       commentsCount: 3,
       isSaved: false,
-      dateText: _getRelativeDateStr(4),
     )
   ];
 
   static Map<String, List<Comment>> mockComments = {
     'conf_1': [
-      const Comment(
+      Comment(
         id: 'comm_1_1',
         confessionId: 'conf_1',
         authorId: 'user_2',
-        authorName: 'Maya Patel',
-        authorAvatar: 'MP',
         content: 'This hits so incredibly close to home. I had to close my eyes while listening.',
-        timestamp: '10m ago',
+        createdAt: DateTime.now().subtract(const Duration(minutes: 10)),
         isAuthor: false,
       ),
-      const Comment(
+      Comment(
         id: 'comm_1_2',
         confessionId: 'conf_1',
         authorId: 'user_3',
-        authorName: 'Aria Mitchell',
-        authorAvatar: 'AM',
         content: 'Thank you for listening... it took me three years to finally voice this ❤️',
-        timestamp: '8m ago',
+        createdAt: DateTime.now().subtract(const Duration(minutes: 8)),
         isAuthor: true, // Original confession author
       ),
-      const Comment(
+      Comment(
         id: 'comm_1_3',
         confessionId: 'conf_1',
         authorId: 'user_4',
-        authorName: 'Julian K',
-        authorAvatar: 'JK',
         content: 'The background rain matches your pacing beautifully. Timeless poetry.',
-        timestamp: '5m ago',
+        createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
         isAuthor: false,
       ),
     ],
     'conf_2': [
-      const Comment(
+      Comment(
         id: 'comm_2_1',
         confessionId: 'conf_2',
         authorId: 'user_5',
-        authorName: 'Leo Sterling',
-        authorAvatar: 'LS',
         content: 'Sleepless nights and these whispers are the perfect companion.',
-        timestamp: '1h ago',
+        createdAt: DateTime.now().subtract(const Duration(hours: 1)),
         isAuthor: false,
       ),
-      const Comment(
+      Comment(
         id: 'comm_2_2',
         confessionId: 'conf_2',
         authorId: 'user_1',
-        authorName: 'Shivam Yadav',
-        authorAvatar: 'SY',
         content: 'I hope sharing this brought you some peace. It sounds like a heavy sigh.',
-        timestamp: '45m ago',
+        createdAt: DateTime.now().subtract(const Duration(minutes: 45)),
         isAuthor: false,
       ),
     ],
     'conf_3': [
-      const Comment(
+      Comment(
         id: 'comm_3_1',
         confessionId: 'conf_3',
         authorId: 'user_3',
-        authorName: 'Aria Mitchell',
-        authorAvatar: 'AM',
         content: '"I never told her this..." Oh my. First love is such a beautiful scar, isn\'t it?',
-        timestamp: '2h ago',
+        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
         isAuthor: false,
       ),
-      const Comment(
+      Comment(
         id: 'comm_3_2',
         confessionId: 'conf_3',
         authorId: 'user_2',
-        authorName: 'Maya Patel',
-        authorAvatar: 'MP',
         content: 'Yes, it remains pristine and untouched by time.',
-        timestamp: '1h ago',
+        createdAt: DateTime.now().subtract(const Duration(hours: 1)),
         isAuthor: true,
       ),
     ],
     'conf_current_user_1': [
-      const Comment(
+      Comment(
         id: 'comm_cur_1',
         confessionId: 'conf_current_user_1',
         authorId: 'user_3',
-        authorName: 'Aria Mitchell',
-        authorAvatar: 'AM',
         content: 'Dreams are where we keep what we couldn\'t save. Such a warm, poetic recording.',
-        timestamp: '1d ago',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
         isAuthor: false,
       ),
     ]
   };
 
   static List<Confession> get last24HoursConfessions {
-    return mockConfessions.where((c) => c.dateText == _getRelativeDateStr(0)).toList();
+    final now = DateTime.now();
+    return mockConfessions.where((c) => now.difference(c.createdAt).inHours < 24).toList();
   }
 
   static List<Confession> get followingConfessions {
@@ -303,17 +263,13 @@ class SampleData {
       return Confession(
         id: forFollowing ? 'conf_gen_f_$index' : 'conf_gen_24h_$index',
         title: titles[titleIndex],
-        authorName: user.displayName,
-        authorHandle: user.handle,
         authorId: user.id,
-        timestamp: '${index + 1}h ago',
+        createdAt: DateTime.now().subtract(Duration(hours: index + 1)),
         durationString: '$durationM:${durationS.toString().padLeft(2, '0')}',
         durationSeconds: durationM * 60 + durationS,
         waveformData: generateWaveform(35),
-        likesCount: 10 + index * 3,
         commentsCount: 2 + index,
         isSaved: index % 7 == 0,
-        dateText: _getRelativeDateStr(0),
       );
     });
   }

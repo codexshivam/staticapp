@@ -2,10 +2,8 @@ class Comment {
   final String id;
   final String confessionId;
   final String authorId;
-  final String authorName;
-  final String authorAvatar;
   final String content;
-  final String timestamp;
+  final DateTime createdAt;
   final String? imageUrl;
   final bool isAuthor;
 
@@ -13,10 +11,8 @@ class Comment {
     required this.id,
     required this.confessionId,
     required this.authorId,
-    required this.authorName,
-    required this.authorAvatar,
     required this.content,
-    required this.timestamp,
+    required this.createdAt,
     this.imageUrl,
     this.isAuthor = false,
   });
@@ -26,10 +22,8 @@ class Comment {
       id: json['\$id'] ?? json['id'] ?? '',
       confessionId: json['confessionId'] ?? '',
       authorId: json['authorId'] ?? '',
-      authorName: json['authorName'] ?? '',
-      authorAvatar: json['authorAvatar'] ?? '',
       content: json['content'] ?? '',
-      timestamp: json['timestamp'] ?? '',
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
       imageUrl: json['imageUrl'],
       isAuthor: json['isAuthor'] ?? false,
     );
@@ -39,10 +33,8 @@ class Comment {
     return {
       'confessionId': confessionId,
       'authorId': authorId,
-      'authorName': authorName,
-      'authorAvatar': authorAvatar,
       'content': content,
-      'timestamp': timestamp,
+      'createdAt': createdAt.toIso8601String(),
       'imageUrl': imageUrl,
       'isAuthor': isAuthor,
     };

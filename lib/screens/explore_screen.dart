@@ -43,7 +43,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       final result = await AppwriteDbService.instance.getConfessionsByDate(date);
       if (mounted) setState(() { _displayedConfessions = result; _isLoading = false; });
     } catch (_) {
-      final fallback = SampleData.mockConfessions.where((c) => c.dateText == date).toList();
+      final fallback = SampleData.mockConfessions.where((c) => _formatDateString(c.createdAt) == date).toList();
       if (mounted) setState(() { _displayedConfessions = fallback; _isLoading = false; });
     }
   }
@@ -65,7 +65,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     } catch (_) {
       final q = query.toLowerCase();
       final fallback = SampleData.mockConfessions.where((c) =>
-        c.title.toLowerCase().contains(q) || c.authorName.toLowerCase().contains(q)).toList();
+        c.title.toLowerCase().contains(q)).toList();
       if (mounted) setState(() { _displayedConfessions = fallback; _isLoading = false; });
     }
   }

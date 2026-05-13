@@ -10,6 +10,8 @@ import '../models/comment.dart';
 import '../mock_data/sample_data.dart';
 import '../services/appwrite/appwrite_db_service.dart';
 import '../services/auth_state_service.dart';
+import '../services/user_cache_service.dart';
+import '../models/user.dart';
 import '../widgets/comment_bubble.dart';
 
 class ConfessionDetailScreen extends StatefulWidget {
@@ -26,8 +28,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
   List<Comment> _comments = [];
   bool _commentsLoading = true;
   late bool _isSaved;
-  late bool _isLiked;
-  late int _likesCount;
   String? _mockSelectedImagePath;
 
   @override
@@ -36,8 +36,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     final currentUser = AuthStateService.instance.currentUser;
     final savedIds = currentUser?.savedConfessionIds ?? [];
     _isSaved = savedIds.contains(widget.confession.id);
-    _isLiked = widget.confession.isLikedBy(currentUser?.id ?? '');
-    _likesCount = widget.confession.likesCount;
 
     _loadComments();
 
@@ -114,36 +112,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     }
   }
 
-  Future<void> _toggleLike() async {
-    final currentUser = AuthStateService.instance.currentUser;
-    if (currentUser == null) return;
 
-    final newLiked = !_isLiked;
-    setState(() {
-      _isLiked = newLiked;
-      _likesCount = newLiked
-          ? _likesCount + 1
-          : (_likesCount - 1).clamp(0, 9999999);
-    });
-
-    try {
-      await AppwriteDbService.instance.toggleLike(
-        confessionId: widget.confession.id,
-        userId: currentUser.id,
-        liked: newLiked,
-        currentLikedBy: widget.confession.likedBy,
-        currentLikesCount: widget.confession.likesCount,
-      );
-    } catch (_) {
-      if (mounted)
-        setState(() {
-          _isLiked = !newLiked;
-          _likesCount = !newLiked
-              ? _likesCount + 1
-              : (_likesCount - 1).clamp(0, 9999999);
-        });
-    }
-  }
 
   Future<void> _addComment() async {
     final text = _commentController.text.trim();
@@ -156,10 +125,8 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
       id: ID.unique(),
       confessionId: widget.confession.id,
       authorId: currentUser.id,
-      authorName: currentUser.displayName,
-      authorAvatar: currentUser.initials,
       content: text.isNotEmpty ? text : 'Shared a visual whisper... 🕯️',
-      timestamp: DateFormat('h:mm a').format(DateTime.now()),
+      createdAt: DateTime.now(),
       imageUrl: _mockSelectedImagePath,
       isAuthor: widget.confession.authorId == currentUser.id,
     );
@@ -278,7 +245,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  widget.confession.timestamp,
+                                  DateFormat('MMM d, h:mm a').format(widget.confession.createdAt),
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
                                         fontSize: 10,
@@ -301,33 +268,40 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                             ),
                             const SizedBox(height: 6),
 
-                            Row(
-                              children: [
-                                Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.background,
-                                    borderRadius: BorderRadius.circular(5.0),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    widget.confession.authorName
-                                        .substring(0, 1)
-                                        .toUpperCase(),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 10,
+                            FutureBuilder<AppUser?>(
+                              future: UserCacheService.instance.getUser(widget.confession.authorId),
+                              builder: (context, snapshot) {
+                                final author = snapshot.data;
+                                final authorName = author?.displayName ?? 'Anonymous';
+                                final initial = authorName.isNotEmpty ? authorName[0].toUpperCase() : 'C';
+
+                                return Row(
+                                  children: [
+                                    Container(
+                                      width: 24,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.background,
+                                        borderRadius: BorderRadius.circular(5.0),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        initial,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'by ${widget.confession.authorName} • ${widget.confession.authorHandle}',
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(fontSize: 12),
-                                ),
-                              ],
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'by $authorName • ${author?.handle ?? ''}',
+                                      style: Theme.of(context).textTheme.bodyMedium
+                                          ?.copyWith(fontSize: 12),
+                                    ),
+                                  ],
+                                );
+                              }
                             ),
 
                             const SizedBox(height: 28),
@@ -498,10 +472,8 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                           itemBuilder: (context, index) {
                             final comment = _comments[index];
                             final showDelete =
-                                comment.authorName ==
-                                    SampleData.currentUser.displayName ||
-                                widget.confession.authorId ==
-                                    SampleData.currentUser.id;
+                                comment.authorId == SampleData.currentUser.id ||
+                                widget.confession.authorId == SampleData.currentUser.id;
 
                             return CommentBubble(
                               comment: comment,
