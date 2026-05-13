@@ -10,6 +10,9 @@ class AppUser {
   final List<String> links;
   final String lastPlaybackDate;
   final int dailyPlaybackCount;
+  final List<String> savedConfessionIds;
+  final List<String> followingIds;
+  final List<String> followerIds;
 
   const AppUser({
     required this.id,
@@ -23,6 +26,9 @@ class AppUser {
     required this.links,
     this.lastPlaybackDate = '',
     this.dailyPlaybackCount = 0,
+    this.savedConfessionIds = const [],
+    this.followingIds = const [],
+    this.followerIds = const [],
   });
 
   String get initials {
@@ -33,6 +39,9 @@ class AppUser {
     }
     return displayName.substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
   }
+
+  bool isFollowing(String userId) => followingIds.contains(userId);
+  bool isFollowedBy(String userId) => followerIds.contains(userId);
 
   AppUser copyWith({
     String? id,
@@ -46,6 +55,9 @@ class AppUser {
     List<String>? links,
     String? lastPlaybackDate,
     int? dailyPlaybackCount,
+    List<String>? savedConfessionIds,
+    List<String>? followingIds,
+    List<String>? followerIds,
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -59,6 +71,9 @@ class AppUser {
       links: links ?? this.links,
       lastPlaybackDate: lastPlaybackDate ?? this.lastPlaybackDate,
       dailyPlaybackCount: dailyPlaybackCount ?? this.dailyPlaybackCount,
+      savedConfessionIds: savedConfessionIds ?? this.savedConfessionIds,
+      followingIds: followingIds ?? this.followingIds,
+      followerIds: followerIds ?? this.followerIds,
     );
   }
 
@@ -75,6 +90,9 @@ class AppUser {
       links: List<String>.from(json['links'] ?? []),
       lastPlaybackDate: json['lastPlaybackDate'] ?? '',
       dailyPlaybackCount: json['dailyPlaybackCount'] ?? 0,
+      savedConfessionIds: List<String>.from(json['savedConfessionIds'] ?? []),
+      followingIds: List<String>.from(json['followingIds'] ?? []),
+      followerIds: List<String>.from(json['followerIds'] ?? []),
     );
   }
 
@@ -90,6 +108,9 @@ class AppUser {
       'links': links,
       'lastPlaybackDate': lastPlaybackDate,
       'dailyPlaybackCount': dailyPlaybackCount,
+      'savedConfessionIds': savedConfessionIds,
+      'followingIds': followingIds,
+      'followerIds': followerIds,
     };
   }
 }

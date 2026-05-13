@@ -6,6 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/settings_tile.dart';
 import '../mock_data/sample_data.dart';
+import '../services/appwrite/appwrite_auth_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
+import '../services/auth_state_service.dart';
 import '../services/subscription_service.dart';
 import 'login_screen.dart';
 import 'legal_document_screen.dart';
@@ -26,8 +29,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _currentHandle = SampleData.currentUser.handle;
-    _currentEmail = 'shivam@diary.com';
+    final currentUser = AuthStateService.instance.currentUser;
+    _currentHandle = currentUser?.handle ?? '@unknown';
+    _currentEmail = AuthStateService.instance.sessionEmail ?? 'unknown@email.com';
     _setupRemoteConfig();
     _loadProStatus();
   }
@@ -111,22 +115,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               errorText = null;
             });
 
-            debounce = Timer(const Duration(milliseconds: 600), () {
-              const takenUsernames = {
-                'dreamer',
-                'admin',
-                'love',
-                'secret',
-                'confessor',
-                'angel',
-              };
-              final isTaken = takenUsernames.contains(text.toLowerCase());
-
-              setDialogState(() {
-                isChecking = false;
-                isAvailable = !isTaken;
-                errorText = isTaken ? 'This username is already taken' : null;
-              });
+            debounce = Timer(const Duration(milliseconds: 600), () async {
+              try {
+                final handle = '@$text';
+                final available = await AppwriteDbService.instance.checkHandleAvailable(handle);
+                setDialogState(() {
+                  isChecking = false;
+                  isAvailable = available;
+                  errorText = available ? null : 'This username is already taken';
+                });
+              } catch (_) {
+                setDialogState(() { isChecking = false; isAvailable = null; errorText = null; });
+              }
             });
           }
 
@@ -176,25 +176,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: (isAvailable == true && !isChecking)
-                    ? () {
+                    onPressed: (isAvailable == true && !isChecking)
+                    ? () async {
                         debounce?.cancel();
                         final raw = controller.text.trim().replaceAll('@', '');
                         final newHandle = '@$raw';
-                        setState(() {
-                          _currentHandle = newHandle;
-                          SampleData.currentUser = SampleData.currentUser.copyWith(
-                            handle: newHandle,
-                          );
-                        });
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Username updated successfully ❤️'),
-                            backgroundColor: AppColors.pureBlack,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                        try {
+                          final currentUser = AuthStateService.instance.currentUser;
+                          if (currentUser != null) {
+                            final updated = currentUser.copyWith(handle: newHandle);
+                            await AppwriteDbService.instance.updateUserProfile(updated);
+                            AuthStateService.instance.updateUser(updated);
+                          }
+                          if (mounted) {
+                            setState(() => _currentHandle = newHandle);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Username updated successfully ❤️'), backgroundColor: AppColors.pureBlack, behavior: SnackBarBehavior.floating));
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
+                          }
+                        }
                       }
                     : null,
                 child: const Text('Save'),
@@ -231,15 +236,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Password reset link sent! Check your inbox ❤️'),
-                  backgroundColor: AppColors.pureBlack,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              try {
+                await AppwriteAuthService.instance.triggerPasswordReset(
+                  email: _currentEmail,
+                  redirectUrl: 'https://confessions.app/reset',
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Password reset link sent! Check your inbox ❤️'), backgroundColor: AppColors.pureBlack, behavior: SnackBarBehavior.floating));
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
+                }
+              }
             },
             child: const Text('Send Link'),
           )
@@ -260,18 +273,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              Navigator.of(context).pushAndRemoveUntil(
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(opacity: animation, child: child);
-                  },
-                  transitionDuration: const Duration(milliseconds: 500),
-                ),
-                (route) => false,
-              );
+              try {
+                await AppwriteAuthService.instance.signOut();
+              } catch (_) {}
+              AuthStateService.instance.clearUser();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                        FadeTransition(opacity: animation, child: child),
+                    transitionDuration: const Duration(milliseconds: 500),
+                  ),
+                  (route) => false,
+                );
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.accentRed),
             child: const Text('Log out'),

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import '../core/theme/app_colors.dart';
+import '../services/appwrite/appwrite_auth_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
+import '../services/auth_state_service.dart';
 import 'legal_document_screen.dart';
 import 'main_navigation_shell.dart';
 
@@ -14,7 +17,7 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _bioController = TextEditingController();
@@ -23,17 +26,19 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isCheckingUsername = false;
   bool? _isUsernameAvailable;
   String? _usernameErrorText;
+  bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
     super.initState();
-    _nameController.addListener(_onUsernameChanged);
+    _usernameController.addListener(_onUsernameChanged);
   }
 
   @override
   void dispose() {
-    _nameController.removeListener(_onUsernameChanged);
-    _nameController.dispose();
+    _usernameController.removeListener(_onUsernameChanged);
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _bioController.dispose();
@@ -42,8 +47,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _onUsernameChanged() {
-    final text = _nameController.text.trim();
-
+    final text = _usernameController.text.trim().replaceAll('@', '');
     _debounceTimer?.cancel();
 
     if (text.isEmpty) {
@@ -64,84 +68,113 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(text)) {
+      setState(() {
+        _isCheckingUsername = false;
+        _isUsernameAvailable = false;
+        _usernameErrorText = 'Only letters, numbers, and underscores allowed';
+      });
+      return;
+    }
+
     setState(() {
       _isCheckingUsername = true;
       _isUsernameAvailable = null;
       _usernameErrorText = null;
     });
 
-    _debounceTimer = Timer(const Duration(milliseconds: 600), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 600), () async {
       if (!mounted) return;
-
-      const takenUsernames = {
-        'dreamer',
-        'admin',
-        'love',
-        'secret',
-        'confessor',
-        'angel',
-      };
-      final isTaken = takenUsernames.contains(text.toLowerCase());
-
-      setState(() {
-        _isCheckingUsername = false;
-        _isUsernameAvailable = !isTaken;
-        _usernameErrorText = isTaken ? 'This username is already taken' : null;
-      });
+      try {
+        final handle = '@$text';
+        final available = await AppwriteDbService.instance.checkHandleAvailable(handle);
+        if (mounted) {
+          setState(() {
+            _isCheckingUsername = false;
+            _isUsernameAvailable = available;
+            _usernameErrorText = available ? null : 'This username is already taken';
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _isCheckingUsername = false;
+            _isUsernameAvailable = null;
+            _usernameErrorText = null;
+          });
+        }
+      }
     });
   }
 
-  void _handleSignup() {
-    final username = _nameController.text.trim();
+  Future<void> _handleSignup() async {
+    final username = _usernameController.text.trim().replaceAll('@', '');
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final bio = _bioController.text.trim();
+
     if (username.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a username'),
-          backgroundColor: AppColors.accentRed,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showSnackBar('Please enter a username', isError: true);
       return;
     }
-
     if (_isCheckingUsername) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Still validating your username...'),
-          backgroundColor: AppColors.pureBlack,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showSnackBar('Still validating your username...', isError: false);
       return;
     }
-
     if (_isUsernameAvailable != true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please choose an available username'),
-          backgroundColor: AppColors.accentRed,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showSnackBar('Please choose an available username', isError: true);
+      return;
+    }
+    if (email.isEmpty) {
+      _showSnackBar('Please enter your email', isError: true);
+      return;
+    }
+    if (password.length < 8) {
+      _showSnackBar('Password must be at least 8 characters', isError: true);
       return;
     }
 
-    Navigator.of(context).pushAndRemoveUntil(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const MainNavigationShell(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 600),
-      ),
-      (route) => false,
-    );
+    setState(() => _isLoading = true);
 
+    try {
+      final newUser = await AppwriteAuthService.instance.signUp(
+        email: email,
+        password: password,
+        displayName: username,
+        username: username,
+        bio: bio,
+      );
+
+      if (newUser == null) throw Exception('Account creation failed');
+
+      final sessionUser = await AppwriteAuthService.instance.getCurrentSessionUser();
+      AuthStateService.instance.setUser(newUser, email: sessionUser?.email ?? email);
+
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const MainNavigationShell(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+            transitionDuration: const Duration(milliseconds: 600),
+          ),
+          (route) => false,
+        );
+        _showSnackBar('Account created successfully! Welcome ❤️');
+      }
+    } catch (e) {
+      _showSnackBar(e.toString(), isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Account created successfully!'),
-        backgroundColor: AppColors.pureBlack,
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.redAccent : AppColors.pureBlack,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -154,30 +187,16 @@ class _SignupScreenState extends State<SignupScreen> {
         child: SizedBox(
           width: 14,
           height: 14,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppColors.pureBlack,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.pureBlack),
         ),
       );
     }
-
     if (_isUsernameAvailable == true) {
-      return const Icon(
-        Icons.check_circle_outline_rounded,
-        color: Colors.green,
-        size: 20,
-      );
+      return const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 20);
     }
-
     if (_isUsernameAvailable == false) {
-      return const Icon(
-        Icons.error_outline_rounded,
-        color: AppColors.accentRed,
-        size: 20,
-      );
+      return const Icon(Icons.error_outline_rounded, color: AppColors.accentRed, size: 20);
     }
-
     return null;
   }
 
@@ -191,12 +210,8 @@ class _SignupScreenState extends State<SignupScreen> {
         elevation: 0,
         leadingWidth: 75.0,
         leading: IconButton(
-          icon: const Icon(
-            Feather.x,
-            size: 30.0,
-            color: Color.fromARGB(255, 71, 71, 71),
-          ),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Feather.x, size: 30.0, color: Color.fromARGB(255, 71, 71, 71)),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
@@ -221,37 +236,27 @@ class _SignupScreenState extends State<SignupScreen> {
                   height: 1.4,
                 ),
               ),
-
               const SizedBox(height: 35),
-
               TextField(
-                controller: _nameController,
+                controller: _usernameController,
+                enabled: !_isLoading,
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  labelText: 'Your unique username',
+                  labelText: 'Your unique @handle',
                   hintText: 'e.g. dreamer',
+                  prefixText: '@',
                   suffixIcon: _buildUsernameSuffix(),
-                  helperText: _isUsernameAvailable == true
-                      ? 'Username is available.'
-                      : null,
-                  helperStyle: const TextStyle(
-                    color: Colors.green,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  helperText: _isUsernameAvailable == true ? 'Username is available.' : null,
+                  helperStyle: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.w500),
                   errorText: _usernameErrorText,
-                  errorStyle: const TextStyle(
-                    color: AppColors.accentRed,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  errorStyle: const TextStyle(color: AppColors.accentRed, fontSize: 11, fontWeight: FontWeight.w500),
                 ),
               ),
               const SizedBox(height: 14),
-
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
+                enabled: !_isLoading,
                 style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
                   labelText: 'Email Address',
@@ -259,51 +264,56 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-
               TextField(
                 controller: _passwordController,
-                obscureText: true,
+                obscureText: _obscurePassword,
+                enabled: !_isLoading,
                 style: const TextStyle(fontSize: 14),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Password',
                   hintText: '••••••••',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
-
               TextField(
                 controller: _bioController,
                 maxLines: 2,
+                enabled: !_isLoading,
                 style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
-                  labelText: 'Short Bio',
+                  labelText: 'Short Bio (optional)',
                   hintText: 'e.g. welcome to my voice confessions diary...',
                 ),
               ),
-
               const SizedBox(height: 16),
-
               _LegalConsentText(context),
-
               const SizedBox(height: 20),
-
               ElevatedButton(
-                onPressed: _handleSignup,
-                child: const Text('SIGN UP'),
+                onPressed: _isLoading ? null : _handleSignup,
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('SIGN UP'),
               ),
-
-              const SizedBox(height: 27.50),
-
+              const SizedBox(height: 27.5),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    "Already have an account?",
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                  Text("Already have an account?", style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(width: 4),
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: _isLoading ? null : () => Navigator.pop(context),
                     child: Text(
                       'Log in',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -327,44 +337,25 @@ Widget _LegalConsentText(BuildContext context) {
   return RichText(
     textAlign: TextAlign.center,
     text: TextSpan(
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: AppColors.textSecondary,
-        height: 1.6,
-      ),
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary, height: 1.6),
       children: [
         const TextSpan(text: 'By signing up, you agree to our\n'),
         TextSpan(
           text: 'Terms of Service',
-          style: const TextStyle(
-            decoration: TextDecoration.underline,
-            color: AppColors.pureBlack,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(decoration: TextDecoration.underline, color: AppColors.pureBlack, fontWeight: FontWeight.w600),
           recognizer: TapGestureRecognizer()
             ..onTap = () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const LegalDocumentScreen(
-                  docType: LegalDocType.termsOfService,
+                  MaterialPageRoute(builder: (_) => const LegalDocumentScreen(docType: LegalDocType.termsOfService)),
                 ),
-              ),
-            ),
         ),
         const TextSpan(text: ' and '),
         TextSpan(
           text: 'Privacy Policy',
-          style: const TextStyle(
-            decoration: TextDecoration.underline,
-            color: AppColors.pureBlack,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(decoration: TextDecoration.underline, color: AppColors.pureBlack, fontWeight: FontWeight.w600),
           recognizer: TapGestureRecognizer()
             ..onTap = () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const LegalDocumentScreen(
-                  docType: LegalDocType.privacyPolicy,
+                  MaterialPageRoute(builder: (_) => const LegalDocumentScreen(docType: LegalDocType.privacyPolicy)),
                 ),
-              ),
-            ),
         ),
         const TextSpan(text: '.'),
       ],

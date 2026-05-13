@@ -1,5 +1,7 @@
 class Comment {
   final String id;
+  final String confessionId;
+  final String authorId;
   final String authorName;
   final String authorAvatar;
   final String content;
@@ -9,6 +11,8 @@ class Comment {
 
   const Comment({
     required this.id,
+    required this.confessionId,
+    required this.authorId,
     required this.authorName,
     required this.authorAvatar,
     required this.content,
@@ -20,6 +24,8 @@ class Comment {
   factory Comment.fromJson(Map<String, dynamic> json) {
     return Comment(
       id: json['\$id'] ?? json['id'] ?? '',
+      confessionId: json['confessionId'] ?? '',
+      authorId: json['authorId'] ?? '',
       authorName: json['authorName'] ?? '',
       authorAvatar: json['authorAvatar'] ?? '',
       content: json['content'] ?? '',
@@ -31,6 +37,8 @@ class Comment {
 
   Map<String, dynamic> toJson() {
     return {
+      'confessionId': confessionId,
+      'authorId': authorId,
       'authorName': authorName,
       'authorAvatar': authorAvatar,
       'content': content,

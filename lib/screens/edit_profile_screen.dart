@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
-import '../mock_data/sample_data.dart';
+import '../services/appwrite/appwrite_auth_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
+import '../services/auth_state_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -14,19 +16,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _bioController;
   late TextEditingController _link1Controller;
   late TextEditingController _link2Controller;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    final user = SampleData.currentUser;
-    _nameController = TextEditingController(text: user.displayName);
-    _bioController = TextEditingController(text: user.bio);
-
-    final l1 = user.links.isNotEmpty ? user.links[0] : '';
-    final l2 = user.links.length > 1 ? user.links[1] : '';
-
-    _link1Controller = TextEditingController(text: l1);
-    _link2Controller = TextEditingController(text: l2);
+    final user = AuthStateService.instance.currentUser;
+    _nameController = TextEditingController(text: user?.displayName ?? '');
+    _bioController = TextEditingController(text: user?.bio ?? '');
+    final links = user?.links ?? [];
+    _link1Controller = TextEditingController(text: links.isNotEmpty ? links[0] : '');
+    _link2Controller = TextEditingController(text: links.length > 1 ? links[1] : '');
   }
 
   @override
@@ -38,7 +38,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _saveProfile() {
+  Future<void> _saveProfile() async {
     final name = _nameController.text.trim();
     final bio = _bioController.text.trim();
     final l1 = _link1Controller.text.trim();
@@ -55,26 +55,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    final List<String> updatedLinks = [];
-    if (l1.isNotEmpty) updatedLinks.add(l1);
-    if (l2.isNotEmpty) updatedLinks.add(l2);
+    final currentUser = AuthStateService.instance.currentUser;
+    if (currentUser == null) return;
 
-    SampleData.currentUser = SampleData.currentUser.copyWith(
-      displayName: name,
-      bio: bio,
-      links: updatedLinks,
-    );
+    setState(() => _isLoading = true);
 
-    Navigator.of(context).pop(true); // Signal profile has changed
+    try {
+      final List<String> updatedLinks = [];
+      if (l1.isNotEmpty) updatedLinks.add(l1);
+      if (l2.isNotEmpty) updatedLinks.add(l2);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile updated successfully ❤️'),
-        duration: Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.pureBlack,
-      ),
-    );
+      final updatedUser = currentUser.copyWith(
+        displayName: name,
+        bio: bio,
+        links: updatedLinks,
+      );
+
+      await AppwriteDbService.instance.updateUserProfile(updatedUser);
+      await AppwriteAuthService.instance.updateName(displayName: name);
+
+      AuthStateService.instance.updateUser(updatedUser);
+
+      if (mounted) {
+        Navigator.of(context).pop(true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully ❤️'),
+            duration: Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.pureBlack,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -86,25 +107,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close_rounded, color: AppColors.pureBlack),
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
         ),
         title: Text(
           'Edit Profile',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
           TextButton(
-            onPressed: _saveProfile,
-            child: const Text(
-              'SAVE',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: AppColors.pureBlack,
-                letterSpacing: 0.5,
-              ),
-            ),
+            onPressed: _isLoading ? null : _saveProfile,
+            child: _isLoading
+                ? const SizedBox(
+                    height: 16,
+                    width: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.pureBlack),
+                  )
+                : const Text(
+                    'SAVE',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.pureBlack, letterSpacing: 0.5),
+                  ),
           ),
           const SizedBox(width: 8),
         ],
@@ -115,41 +136,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 10),
-
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Display Name',
-                hintText: 'Enter your name...',
-              ),
+              enabled: !_isLoading,
+              decoration: const InputDecoration(labelText: 'Display Name', hintText: 'Enter your name...'),
             ),
             const SizedBox(height: 20),
-
             TextField(
               controller: _bioController,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Bio',
-                hintText: 'Tell others about yourself...',
-              ),
+              enabled: !_isLoading,
+              decoration: const InputDecoration(labelText: 'Bio', hintText: 'Tell others about yourself...'),
             ),
             const SizedBox(height: 20),
-
             TextField(
               controller: _link1Controller,
-              decoration: const InputDecoration(
-                labelText: 'Link 01',
-                hintText: 'https://...',
-              ),
+              enabled: !_isLoading,
+              decoration: const InputDecoration(labelText: 'Link 01', hintText: 'https://...'),
             ),
             const SizedBox(height: 20),
-
             TextField(
               controller: _link2Controller,
-              decoration: const InputDecoration(
-                labelText: 'Link 02',
-                hintText: 'https://...',
-              ),
+              enabled: !_isLoading,
+              decoration: const InputDecoration(labelText: 'Link 02', hintText: 'https://...'),
             ),
             const SizedBox(height: 30),
           ],

@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
+import '../services/appwrite/appwrite_auth_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
+import '../services/auth_state_service.dart';
 import 'login_screen.dart';
+import 'main_navigation_shell.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -26,21 +30,43 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     });
 
-    Timer(const Duration(milliseconds: 2800), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const LoginScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-            transitionDuration: const Duration(milliseconds: 850),
-          ),
-        );
-      }
+    Timer(const Duration(milliseconds: 2000), () {
+      _checkSession();
     });
+  }
+
+  Future<void> _checkSession() async {
+    if (!mounted) return;
+
+    final sessionUser = await AppwriteAuthService.instance.getCurrentSessionUser();
+
+    if (!mounted) return;
+
+    if (sessionUser != null) {
+      final profile = await AppwriteDbService.instance.getUserProfile(sessionUser.$id);
+      if (!mounted) return;
+
+      if (profile != null) {
+        AuthStateService.instance.setUser(profile, email: sessionUser.email);
+        _navigateTo(const MainNavigationShell());
+        return;
+      }
+    }
+
+    _navigateTo(const LoginScreen());
+  }
+
+  void _navigateTo(Widget screen) {
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => screen,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 850),
+      ),
+    );
   }
 
   @override

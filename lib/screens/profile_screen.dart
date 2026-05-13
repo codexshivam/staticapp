@@ -6,6 +6,8 @@ import '../models/confession.dart';
 import '../mock_data/sample_data.dart';
 import '../widgets/section_title.dart';
 import '../widgets/confession_card.dart';
+import '../services/appwrite/appwrite_db_service.dart';
+import '../services/auth_state_service.dart';
 import 'followers_screen.dart';
 import 'confession_detail_screen.dart';
 import 'edit_profile_screen.dart';
@@ -24,16 +26,31 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late AppUser _activeUser;
   late bool _isMe;
+  List<Confession> _userConfessions = [];
 
   @override
   void initState() {
     super.initState();
     _loadUserState();
+    _loadUserConfessions();
   }
 
   void _loadUserState() {
-    _activeUser = widget.user ?? SampleData.currentUser;
-    _isMe = _activeUser.id == SampleData.currentUser.id;
+    final currentUser = AuthStateService.instance.currentUser;
+    _activeUser = widget.user ?? currentUser ?? SampleData.currentUser;
+    _isMe = currentUser != null && _activeUser.id == currentUser.id;
+  }
+
+  Future<void> _loadUserConfessions() async {
+    try {
+      final confessions = await AppwriteDbService.instance.getConfessionsByUser(_activeUser.id);
+      if (mounted) setState(() => _userConfessions = confessions);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _userConfessions = SampleData.mockConfessions
+            .where((c) => c.authorId == _activeUser.id).toList());
+      }
+    }
   }
 
   void _openDetail(Confession confession) {
@@ -67,62 +84,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _toggleFollow() {
-    final currentlyFollowing = SampleData.followingList.any(
-      (u) => u.id == _activeUser.id,
-    );
+  Future<void> _toggleFollow() async {
+    final currentUser = AuthStateService.instance.currentUser;
+    if (currentUser == null) return;
+
+    final currentlyFollowing = currentUser.followingIds.contains(_activeUser.id);
+    final newFollowing = !currentlyFollowing;
 
     setState(() {
-      if (currentlyFollowing) {
-        SampleData.followingList.removeWhere((u) => u.id == _activeUser.id);
-        _activeUser = _activeUser.copyWith(
-          followersCount: _activeUser.followersCount - 1,
-        );
-        final idx = SampleData.mockUsers.indexWhere(
-          (u) => u.id == _activeUser.id,
-        );
-        if (idx != -1) {
-          SampleData.mockUsers[idx] = _activeUser;
-        }
-      } else {
-        SampleData.followingList.add(_activeUser);
-        _activeUser = _activeUser.copyWith(
-          followersCount: _activeUser.followersCount + 1,
-        );
-        final idx = SampleData.mockUsers.indexWhere(
-          (u) => u.id == _activeUser.id,
-        );
-        if (idx != -1) {
-          SampleData.mockUsers[idx] = _activeUser;
-        }
-      }
+      _activeUser = _activeUser.copyWith(
+        followersCount: newFollowing
+            ? _activeUser.followersCount + 1
+            : (_activeUser.followersCount - 1).clamp(0, 9999999),
+      );
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          currentlyFollowing
-              ? 'Unfollowed ${_activeUser.displayName}'
-              : 'Following ${_activeUser.displayName}',
+    try {
+      if (newFollowing) {
+        await AppwriteDbService.instance.followUser(
+            currentUserId: currentUser.id, targetUserId: _activeUser.id);
+        AuthStateService.instance.updateUser(currentUser.copyWith(
+          followingIds: [...currentUser.followingIds, _activeUser.id],
+          followingCount: currentUser.followingCount + 1,
+        ));
+      } else {
+        await AppwriteDbService.instance.unfollowUser(
+            currentUserId: currentUser.id, targetUserId: _activeUser.id);
+        AuthStateService.instance.updateUser(currentUser.copyWith(
+          followingIds: currentUser.followingIds.where((id) => id != _activeUser.id).toList(),
+          followingCount: (currentUser.followingCount - 1).clamp(0, 9999999),
+        ));
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _activeUser = _activeUser.copyWith(
+            followersCount: currentlyFollowing
+                ? _activeUser.followersCount + 1
+                : (_activeUser.followersCount - 1).clamp(0, 9999999),
+          );
+        });
+      }
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(newFollowing
+              ? 'Following ${_activeUser.displayName}'
+              : 'Unfollowed ${_activeUser.displayName}'),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.pureBlack,
         ),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.pureBlack,
-      ),
-    );
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final displayUser = _isMe ? SampleData.currentUser : _activeUser;
+    final displayUser = _isMe
+        ? (AuthStateService.instance.currentUser ?? _activeUser)
+        : _activeUser;
 
-    final userConfessions = SampleData.mockConfessions
-        .where((c) => c.authorId == displayUser.id)
-        .toList();
-
-    final isFollowingThisUser = SampleData.followingList.any(
-      (u) => u.id == displayUser.id,
-    );
+    final isFollowingThisUser = AuthStateService.instance.currentUser
+            ?.followingIds
+            .contains(displayUser.id) ??
+        false;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -311,7 +339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildStatColumn(
                         context,
                         'Confessions',
-                        '${userConfessions.length}',
+                        '${_userConfessions.length}',
                       ),
                       _buildVerticalDivider(),
                       GestureDetector(
@@ -404,7 +432,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 14),
 
-            userConfessions.isEmpty
+            _userConfessions.isEmpty
                 ? Container(
                     padding: const EdgeInsets.symmetric(vertical: 40),
                     alignment: Alignment.center,
@@ -420,9 +448,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 : ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: userConfessions.length,
+                    itemCount: _userConfessions.length,
                     itemBuilder: (context, index) {
-                      final conf = userConfessions[index];
+                      final conf = _userConfessions[index];
                       return ConfessionCard(
                         confession: conf,
                         onTap: () => _openDetail(conf),

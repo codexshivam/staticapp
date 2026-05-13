@@ -6,6 +6,8 @@ import '../widgets/section_title.dart';
 import '../widgets/confession_card.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
+import '../services/appwrite/appwrite_db_service.dart';
+import '../services/auth_state_service.dart';
 import 'confession_detail_screen.dart';
 import 'settings_screen.dart';
 
@@ -26,37 +28,54 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Confession> _loaded24Hours = [];
   List<Confession> _loadedFollowing = [];
 
-  late final List<Confession> _all24HoursPool;
-  late final List<Confession> _allFollowingPool;
-
-  int _limit24Hours = 16;
-  int _limitFollowing = 16;
+  int _offset24h = 0;
+  int _offsetFollowing = 0;
+  static const int _pageSize = 16;
 
   bool _isLoadingMore24h = false;
   bool _isLoadingMoreFollowing = false;
-
   bool _hasMore24h = true;
   bool _hasMoreFollowing = true;
+  bool _isInitialLoading = true;
 
   @override
   void initState() {
     super.initState();
-
-    _all24HoursPool = SampleData.generateManyMockConfessions(
-      60,
-      forFollowing: false,
-    );
-    _allFollowingPool = SampleData.generateManyMockConfessions(
-      60,
-      forFollowing: true,
-    );
-
-    _loaded24Hours = _all24HoursPool.take(_limit24Hours).toList();
-    _loadedFollowing = _allFollowingPool.take(_limitFollowing).toList();
-
+    _loadInitialData();
     _mainScrollController.addListener(_onMainScroll);
     _horizontalScrollController.addListener(_onHorizontalScroll);
     _followingScrollController.addListener(_onFollowingScroll);
+  }
+
+  Future<void> _loadInitialData() async {
+    try {
+      final confessions = await AppwriteDbService.instance.getConfessions(limit: _pageSize, offset: 0);
+      final currentUser = AuthStateService.instance.currentUser;
+      List<Confession> following = [];
+      if (currentUser != null && currentUser.followingIds.isNotEmpty) {
+        following = await AppwriteDbService.instance.getFollowingConfessions(
+          currentUser.followingIds, limit: _pageSize, offset: 0);
+      }
+      if (mounted) {
+        setState(() {
+          _loaded24Hours = confessions;
+          _loadedFollowing = following;
+          _offset24h = confessions.length;
+          _offsetFollowing = following.length;
+          _hasMore24h = confessions.length >= _pageSize;
+          _hasMoreFollowing = following.length >= _pageSize;
+          _isInitialLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _loaded24Hours = SampleData.generateManyMockConfessions(16, forFollowing: false);
+          _loadedFollowing = SampleData.generateManyMockConfessions(16, forFollowing: true);
+          _isInitialLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -67,10 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _onMainScroll() {
-    if (_mainScrollController.position.pixels >=
-        _mainScrollController.position.maxScrollExtent - 150) {}
-  }
+  void _onMainScroll() {}
 
   void _onHorizontalScroll() {
     if (_horizontalScrollController.position.pixels >=
@@ -86,50 +102,45 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _lazyLoadMoreFollowing() {
+  Future<void> _lazyLoadMoreFollowing() async {
     if (_isLoadingMoreFollowing || !_hasMoreFollowing) return;
-
-    setState(() {
-      _isLoadingMoreFollowing = true;
-    });
-
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-
-      final nextLimit = _limitFollowing + 8;
-      final hasMore = nextLimit < _allFollowingPool.length;
-      final newItems = _allFollowingPool.take(nextLimit).toList();
-
-      setState(() {
-        _limitFollowing = nextLimit;
-        _loadedFollowing = newItems;
-        _isLoadingMoreFollowing = false;
-        _hasMoreFollowing = hasMore;
-      });
-    });
+    setState(() => _isLoadingMoreFollowing = true);
+    try {
+      final currentUser = AuthStateService.instance.currentUser;
+      List<Confession> more = [];
+      if (currentUser != null && currentUser.followingIds.isNotEmpty) {
+        more = await AppwriteDbService.instance.getFollowingConfessions(
+          currentUser.followingIds, limit: _pageSize, offset: _offsetFollowing);
+      }
+      if (mounted) {
+        setState(() {
+          _loadedFollowing.addAll(more);
+          _offsetFollowing += more.length;
+          _hasMoreFollowing = more.length >= _pageSize;
+          _isLoadingMoreFollowing = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingMoreFollowing = false);
+    }
   }
 
-  void _lazyLoadMore24h() {
+  Future<void> _lazyLoadMore24h() async {
     if (_isLoadingMore24h || !_hasMore24h) return;
-
-    setState(() {
-      _isLoadingMore24h = true;
-    });
-
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-
-      final nextLimit = _limit24Hours + 8;
-      final hasMore = nextLimit < _all24HoursPool.length;
-      final newItems = _all24HoursPool.take(nextLimit).toList();
-
-      setState(() {
-        _limit24Hours = nextLimit;
-        _loaded24Hours = newItems;
-        _isLoadingMore24h = false;
-        _hasMore24h = hasMore;
-      });
-    });
+    setState(() => _isLoadingMore24h = true);
+    try {
+      final more = await AppwriteDbService.instance.getConfessions(limit: _pageSize, offset: _offset24h);
+      if (mounted) {
+        setState(() {
+          _loaded24Hours.addAll(more);
+          _offset24h += more.length;
+          _hasMore24h = more.length >= _pageSize;
+          _isLoadingMore24h = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingMore24h = false);
+    }
   }
 
   void _openDetail(BuildContext context, Confession confession) {

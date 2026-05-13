@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 import 'package:file_picker/file_picker.dart';
@@ -8,6 +9,9 @@ import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
+import '../services/appwrite/appwrite_db_service.dart';
+import '../services/appwrite/appwrite_storage_service.dart';
+import '../services/auth_state_service.dart';
 
 enum RecordState { idle, recording, recorded, publishing, success }
 
@@ -142,7 +146,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
     return '$minutes:$seconds';
   }
 
-  void _publishConfession() {
+  Future<void> _publishConfession() async {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -155,64 +159,80 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
       return;
     }
 
+    final currentUser = AuthStateService.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to publish'), backgroundColor: AppColors.accentRed, behavior: SnackBarBehavior.floating),
+      );
+      return;
+    }
+
     setState(() {
       _state = RecordState.publishing;
       _publishProgress = 0.2;
       _publishingText = 'Processing recording... 🌧️';
     });
 
-    Timer(const Duration(seconds: 1), () {
-      if (mounted) {
+    try {
+      String? audioUrl;
+
+      if (_recordedFilePath != null) {
         setState(() {
           _publishProgress = 0.5;
-          _publishingText = 'Securing account initials... 🔒';
+          _publishingText = 'Uploading audio... ✨';
         });
+        audioUrl = await AppwriteStorageService.instance.uploadConfessionAudio(_recordedFilePath!);
       }
-    });
 
-    Timer(const Duration(seconds: 2), () {
+      setState(() {
+        _publishProgress = 0.8;
+        _publishingText = 'Saving confession... 🔒';
+      });
+
+      final id = ID.unique();
+      final now = DateTime.now();
+      final newConf = Confession(
+        id: id,
+        title: title,
+        authorName: currentUser.displayName,
+        authorHandle: currentUser.handle,
+        authorId: currentUser.id,
+        timestamp: DateFormat('h:mm a').format(now),
+        durationString: _formatDuration(_secondsRecorded),
+        durationSeconds: _secondsRecorded == 0 ? 120 : _secondsRecorded,
+        waveformData: SampleData.generateWaveform(35),
+        likesCount: 0,
+        commentsCount: 0,
+        isSaved: false,
+        dateText: DateFormat('yyyy-MM-dd').format(now),
+        audioUrl: audioUrl,
+      );
+
+      await AppwriteDbService.instance.createConfession(newConf);
+
+      final updatedUser = currentUser.copyWith(
+        confessionCount: currentUser.confessionCount + 1,
+      );
+      await AppwriteDbService.instance.updateUserProfile(updatedUser);
+      AuthStateService.instance.updateUser(updatedUser);
+
       if (mounted) {
-        setState(() {
-          _publishProgress = 0.8;
-          _publishingText = 'Uploading confession... ✨';
-        });
-      }
-    });
-
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        final id = 'conf_user_${DateTime.now().millisecondsSinceEpoch}';
-        final newConf = Confession(
-          id: id,
-          title: title,
-          authorName: SampleData.currentUser.displayName,
-          authorHandle: SampleData.currentUser.handle,
-          authorId: SampleData.currentUser.id,
-          timestamp: 'Just now',
-          durationString: _formatDuration(_secondsRecorded),
-          durationSeconds: _secondsRecorded == 0 ? 120 : _secondsRecorded,
-          waveformData: SampleData.generateWaveform(35),
-          likesCount: 0,
-          commentsCount: 0,
-          isSaved: false,
-          dateText: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-          audioFilePath: _recordedFilePath,
-        );
-
-        SampleData.mockConfessions.insert(0, newConf);
-
         setState(() {
           _publishProgress = 1.0;
           _state = RecordState.success;
         });
-
         Timer(const Duration(milliseconds: 1500), () {
-          if (mounted) {
-            Navigator.of(context).pop();
-          }
+          if (mounted) Navigator.of(context).pop();
         });
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _state = RecordState.recorded);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
   }
 
   @override

@@ -9,6 +9,7 @@ import '../widgets/user_list_tile.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
 import '../models/user.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 import 'confession_detail_screen.dart';
 import 'profile_screen.dart';
 
@@ -22,14 +23,51 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
-  String _selectedDate = '2026-05-12';
+  String _selectedDate = '';
+
+  List<Confession> _displayedConfessions = [];
+  List<AppUser> _displayedUsers = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
-    final anchor = DateTime(2026, 5, 12);
-    _selectedDate = now.isAfter(anchor) ? _formatDateString(now) : '2026-05-12';
+    _selectedDate = _formatDateString(now);
+    _loadConfessionsForDate(_selectedDate);
+  }
+
+  Future<void> _loadConfessionsForDate(String date) async {
+    setState(() => _isLoading = true);
+    try {
+      final result = await AppwriteDbService.instance.getConfessionsByDate(date);
+      if (mounted) setState(() { _displayedConfessions = result; _isLoading = false; });
+    } catch (_) {
+      final fallback = SampleData.mockConfessions.where((c) => c.dateText == date).toList();
+      if (mounted) setState(() { _displayedConfessions = fallback; _isLoading = false; });
+    }
+  }
+
+  Future<void> _performSearch(String query) async {
+    if (query.isEmpty) {
+      _loadConfessionsForDate(_selectedDate);
+      setState(() => _displayedUsers = []);
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final confessions = await AppwriteDbService.instance.searchConfessions(query);
+      final users = SampleData.mockUsers.where((u) {
+        final q = query.toLowerCase();
+        return u.displayName.toLowerCase().contains(q) || u.handle.toLowerCase().contains(q);
+      }).toList();
+      if (mounted) setState(() { _displayedConfessions = confessions; _displayedUsers = users; _isLoading = false; });
+    } catch (_) {
+      final q = query.toLowerCase();
+      final fallback = SampleData.mockConfessions.where((c) =>
+        c.title.toLowerCase().contains(q) || c.authorName.toLowerCase().contains(q)).toList();
+      if (mounted) setState(() { _displayedConfessions = fallback; _isLoading = false; });
+    }
   }
 
   @override
@@ -114,34 +152,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
 
     if (picked != null) {
-      setState(() {
-        _selectedDate = _formatDateString(picked);
-      });
+      final dateStr = _formatDateString(picked);
+      setState(() => _selectedDate = dateStr);
+      _loadConfessionsForDate(dateStr);
     }
   }
 
-  List<Confession> get _filteredConfessions {
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      return SampleData.mockConfessions.where((c) {
-        return c.title.toLowerCase().contains(q) ||
-            c.authorName.toLowerCase().contains(q);
-      }).toList();
-    } else {
-      return SampleData.mockConfessions
-          .where((c) => c.dateText == _selectedDate)
-          .toList();
-    }
-  }
-
-  List<AppUser> get _filteredUsers {
-    if (_searchQuery.isEmpty) return [];
-    final q = _searchQuery.toLowerCase();
-    return SampleData.mockUsers.where((u) {
-      return u.displayName.toLowerCase().contains(q) ||
-          u.handle.toLowerCase().contains(q);
-    }).toList();
-  }
+  List<Confession> get _filteredConfessions => _displayedConfessions;
+  List<AppUser> get _filteredUsers => _displayedUsers;
 
   void _openDetail(Confession confession) {
     Navigator.of(context).push(
@@ -177,14 +195,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 controller: _searchController,
                 hintText: 'Search confessions or usernames...',
                 onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val;
-                  });
+                  setState(() => _searchQuery = val);
+                  _performSearch(val);
                 },
                 onClear: () {
-                  setState(() {
-                    _searchQuery = '';
-                  });
+                  setState(() => _searchQuery = '');
+                  _performSearch('');
                 },
               ),
 
@@ -284,9 +300,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
                               return GestureDetector(
                                 onTap: () {
-                                  setState(() {
-                                    _selectedDate = day['date']!;
-                                  });
+                                  final dateStr = day['date']!;
+                                  setState(() => _selectedDate = dateStr);
+                                  _loadConfessionsForDate(dateStr);
                                 },
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 250),

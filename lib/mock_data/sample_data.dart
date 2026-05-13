@@ -179,6 +179,8 @@ class SampleData {
     'conf_1': [
       const Comment(
         id: 'comm_1_1',
+        confessionId: 'conf_1',
+        authorId: 'user_2',
         authorName: 'Maya Patel',
         authorAvatar: 'MP',
         content: 'This hits so incredibly close to home. I had to close my eyes while listening.',
@@ -187,6 +189,8 @@ class SampleData {
       ),
       const Comment(
         id: 'comm_1_2',
+        confessionId: 'conf_1',
+        authorId: 'user_3',
         authorName: 'Aria Mitchell',
         authorAvatar: 'AM',
         content: 'Thank you for listening... it took me three years to finally voice this ❤️',
@@ -195,6 +199,8 @@ class SampleData {
       ),
       const Comment(
         id: 'comm_1_3',
+        confessionId: 'conf_1',
+        authorId: 'user_4',
         authorName: 'Julian K',
         authorAvatar: 'JK',
         content: 'The background rain matches your pacing beautifully. Timeless poetry.',
@@ -205,6 +211,8 @@ class SampleData {
     'conf_2': [
       const Comment(
         id: 'comm_2_1',
+        confessionId: 'conf_2',
+        authorId: 'user_5',
         authorName: 'Leo Sterling',
         authorAvatar: 'LS',
         content: 'Sleepless nights and these whispers are the perfect companion.',
@@ -213,6 +221,8 @@ class SampleData {
       ),
       const Comment(
         id: 'comm_2_2',
+        confessionId: 'conf_2',
+        authorId: 'user_1',
         authorName: 'Shivam Yadav',
         authorAvatar: 'SY',
         content: 'I hope sharing this brought you some peace. It sounds like a heavy sigh.',
@@ -223,6 +233,8 @@ class SampleData {
     'conf_3': [
       const Comment(
         id: 'comm_3_1',
+        confessionId: 'conf_3',
+        authorId: 'user_3',
         authorName: 'Aria Mitchell',
         authorAvatar: 'AM',
         content: '"I never told her this..." Oh my. First love is such a beautiful scar, isn\'t it?',
@@ -231,6 +243,8 @@ class SampleData {
       ),
       const Comment(
         id: 'comm_3_2',
+        confessionId: 'conf_3',
+        authorId: 'user_2',
         authorName: 'Maya Patel',
         authorAvatar: 'MP',
         content: 'Yes, it remains pristine and untouched by time.',
@@ -241,6 +255,8 @@ class SampleData {
     'conf_current_user_1': [
       const Comment(
         id: 'comm_cur_1',
+        confessionId: 'conf_current_user_1',
+        authorId: 'user_3',
         authorName: 'Aria Mitchell',
         authorAvatar: 'AM',
         content: 'Dreams are where we keep what we couldn\'t save. Such a warm, poetic recording.',

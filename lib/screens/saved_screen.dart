@@ -6,6 +6,8 @@ import '../widgets/confession_card.dart';
 import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
 import '../core/navigation/playback_manager.dart';
+import '../services/appwrite/appwrite_db_service.dart';
+import '../services/auth_state_service.dart';
 import 'confession_detail_screen.dart';
 
 class SavedScreen extends StatefulWidget {
@@ -22,13 +24,28 @@ class _SavedScreenState extends State<SavedScreen> {
   bool _isSelectMode = false;
   final Set<String> _selectedHistoryIds = {};
 
+
+
   @override
   void initState() {
     super.initState();
-    _savedConfessions = SampleData.mockConfessions
-        .where((c) => c.isSaved)
-        .toList();
+    _savedConfessions = [];
+    _loadSavedConfessions();
     _pm.addListener(_onPlaybackChange);
+  }
+
+  Future<void> _loadSavedConfessions() async {
+    final currentUser = AuthStateService.instance.currentUser;
+    if (currentUser == null) {
+      return;
+    }
+    try {
+      final saved = await AppwriteDbService.instance.getSavedConfessions(currentUser.savedConfessionIds);
+      if (mounted) setState(() { _savedConfessions = saved; });
+    } catch (_) {
+      final fallback = SampleData.mockConfessions.where((c) => c.isSaved).toList();
+      if (mounted) setState(() { _savedConfessions = fallback; });
+    }
   }
 
   @override
@@ -38,13 +55,7 @@ class _SavedScreenState extends State<SavedScreen> {
   }
 
   void _onPlaybackChange() {
-    if (mounted) {
-      setState(() {
-        _savedConfessions = SampleData.mockConfessions
-            .where((c) => c.isSaved)
-            .toList();
-      });
-    }
+    if (mounted) setState(() {});
   }
 
   void _openDetail(Confession confession) {

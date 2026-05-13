@@ -12,9 +12,9 @@ class Confession {
   final int commentsCount;
   final bool isSaved;
   final String dateText;
-  
   final String? audioUrl;
   final String? audioFilePath;
+  final List<String> likedBy;
 
   const Confession({
     required this.id,
@@ -32,7 +32,10 @@ class Confession {
     required this.dateText,
     this.audioUrl,
     this.audioFilePath,
+    this.likedBy = const [],
   });
+
+  bool isLikedBy(String userId) => likedBy.contains(userId);
 
   Confession copyWith({
     String? id,
@@ -50,6 +53,7 @@ class Confession {
     String? dateText,
     String? audioUrl,
     String? audioFilePath,
+    List<String>? likedBy,
   }) {
     return Confession(
       id: id ?? this.id,
@@ -67,6 +71,7 @@ class Confession {
       dateText: dateText ?? this.dateText,
       audioUrl: audioUrl ?? this.audioUrl,
       audioFilePath: audioFilePath ?? this.audioFilePath,
+      likedBy: likedBy ?? this.likedBy,
     );
   }
 
@@ -87,6 +92,7 @@ class Confession {
       dateText: json['dateText'] ?? '',
       audioUrl: json['audioUrl'],
       audioFilePath: json['audioFilePath'],
+      likedBy: List<String>.from(json['likedBy'] ?? []),
     );
   }
 
@@ -105,7 +111,7 @@ class Confession {
       'isSaved': isSaved,
       'dateText': dateText,
       'audioUrl': audioUrl,
-      'audioFilePath': audioFilePath,
+      'likedBy': likedBy,
     };
   }
 }
