@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import '../core/theme/app_colors.dart';
+import 'legal_document_screen.dart';
 import 'signup_screen.dart';
 import 'main_navigation_shell.dart';
 
@@ -161,7 +163,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Text('LOG IN'),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
+
+              _LegalConsentText(context),
+
+              const SizedBox(height: 24),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -206,4 +212,53 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
+
+Widget _LegalConsentText(BuildContext context) {
+  return RichText(
+    textAlign: TextAlign.center,
+    text: TextSpan(
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: AppColors.textSecondary,
+        height: 1.6,
+      ),
+      children: [
+        const TextSpan(text: 'By continuing, you agree to our\n'),
+        TextSpan(
+          text: 'Terms of Service',
+          style: const TextStyle(
+            decoration: TextDecoration.underline,
+            color: AppColors.pureBlack,
+            fontWeight: FontWeight.w600,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const LegalDocumentScreen(
+                  docType: LegalDocType.termsOfService,
+                ),
+              ),
+            ),
+        ),
+        const TextSpan(text: ' and '),
+        TextSpan(
+          text: 'Privacy Policy',
+          style: const TextStyle(
+            decoration: TextDecoration.underline,
+            color: AppColors.pureBlack,
+            fontWeight: FontWeight.w600,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const LegalDocumentScreen(
+                  docType: LegalDocType.privacyPolicy,
+                ),
+              ),
+            ),
+        ),
+        const TextSpan(text: '.'),
+      ],
+    ),
+  );
 }

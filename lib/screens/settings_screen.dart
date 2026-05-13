@@ -1,8 +1,12 @@
+import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/settings_tile.dart';
 import '../mock_data/sample_data.dart';
+import '../services/subscription_service.dart';
 import 'login_screen.dart';
 import 'legal_document_screen.dart';
 
@@ -14,15 +18,37 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late String _currentName;
+  late String _currentHandle;
   late String _currentEmail;
+  bool _isPro = false;
 
   @override
   void initState() {
     super.initState();
-    _currentName = SampleData.currentUser.displayName;
-    _currentEmail = 'shivam@diary.com'; // Mock email
+    _currentHandle = SampleData.currentUser.handle;
+    _currentEmail = 'shivam@diary.com';
     _setupRemoteConfig();
+    _loadProStatus();
+  }
+
+  Future<void> _loadProStatus() async {
+    await SubscriptionService.instance.initialize(
+      userId: SampleData.currentUser.id,
+    );
+    if (mounted) {
+      setState(() => _isPro = SubscriptionService.instance.isPro);
+    }
+    SubscriptionService.instance.proStatusStream.listen((isPro) {
+      if (mounted) setState(() => _isPro = isPro);
+    });
+  }
+
+  void _openLegalDocument(LegalDocType docType) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => LegalDocumentScreen(docType: docType),
+      ),
+    );
   }
 
   Future<void> _setupRemoteConfig() async {
@@ -42,45 +68,141 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _editProfileName() {
-    final controller = TextEditingController(text: _currentName);
+  void _editHandle() {
+    final controller = TextEditingController(
+      text: _currentHandle.startsWith('@') ? _currentHandle.substring(1) : _currentHandle,
+    );
+    
+    bool isChecking = false;
+    bool? isAvailable;
+    String? errorText;
+    Timer? debounce;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Username'),
-        content: TextField(
-          controller: controller,
-          cursorColor: AppColors.pureBlack,
-          decoration: const InputDecoration(labelText: 'Username'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final newName = controller.text.trim();
-              if (newName.isNotEmpty) {
-                setState(() {
-                  _currentName = newName;
-                  SampleData.currentUser = SampleData.currentUser.copyWith(displayName: newName);
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Username updated successfully ❤️'),
-                    backgroundColor: AppColors.pureBlack,
-                    behavior: SnackBarBehavior.floating,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          void onTextChanged() {
+            final text = controller.text.trim().replaceAll('@', '');
+            debounce?.cancel();
+
+            if (text.isEmpty) {
+              setDialogState(() {
+                isChecking = false;
+                isAvailable = null;
+                errorText = null;
+              });
+              return;
+            }
+
+            if (text.length < 3) {
+              setDialogState(() {
+                isChecking = false;
+                isAvailable = false;
+                errorText = 'Username must be at least 3 characters';
+              });
+              return;
+            }
+
+            setDialogState(() {
+              isChecking = true;
+              isAvailable = null;
+              errorText = null;
+            });
+
+            debounce = Timer(const Duration(milliseconds: 600), () {
+              const takenUsernames = {
+                'dreamer',
+                'admin',
+                'love',
+                'secret',
+                'confessor',
+                'angel',
+              };
+              final isTaken = takenUsernames.contains(text.toLowerCase());
+
+              setDialogState(() {
+                isChecking = false;
+                isAvailable = !isTaken;
+                errorText = isTaken ? 'This username is already taken' : null;
+              });
+            });
+          }
+
+          return AlertDialog(
+            title: const Text('Edit Username'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: controller,
+                  cursorColor: AppColors.pureBlack,
+                  onChanged: (_) => onTextChanged(),
+                  decoration: InputDecoration(
+                    labelText: 'Username',
+                    prefixText: '@',
+                    errorText: errorText,
+                    helperText: isAvailable == true ? 'Username is available.' : null,
+                    helperStyle: const TextStyle(color: Colors.green),
+                    suffixIcon: isChecking
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.pureBlack,
+                              ),
+                            ),
+                          )
+                        : (isAvailable == true
+                            ? const Icon(Icons.check_circle, color: Colors.green)
+                            : (isAvailable == false
+                                ? const Icon(Icons.error, color: AppColors.accentRed)
+                                : null)),
                   ),
-                );
-              }
-            },
-            child: const Text('Save'),
-          )
-        ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  debounce?.cancel();
+                  Navigator.pop(context);
+                },
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: (isAvailable == true && !isChecking)
+                    ? () {
+                        debounce?.cancel();
+                        final raw = controller.text.trim().replaceAll('@', '');
+                        final newHandle = '@$raw';
+                        setState(() {
+                          _currentHandle = newHandle;
+                          SampleData.currentUser = SampleData.currentUser.copyWith(
+                            handle: newHandle,
+                          );
+                        });
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Username updated successfully ❤️'),
+                            backgroundColor: AppColors.pureBlack,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    : null,
+                child: const Text('Save'),
+              )
+            ],
+          );
+        }
       ),
-    );
+    ).then((_) => debounce?.cancel());
   }
 
   void _editEmail() {
@@ -153,18 +275,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _openLegalDocument(String title, String remoteKey, String assetPath) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => LegalDocumentScreen(
-          title: title,
-          remoteConfigKey: remoteKey,
-          localAssetPath: assetPath,
-        ),
-      ),
-    );
-  }
-
   void _handleLogout() {
     showDialog(
       context: context,
@@ -232,10 +342,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 10),
             SettingsTile(
-              title: 'Edit Username',
-              subtitle: _currentName,
-              leadingIcon: Icons.person_outline,
-              onTap: _editProfileName,
+              title: 'Edit Handle',
+              subtitle: _currentHandle,
+              leadingIcon: Icons.alternate_email_rounded,
+              onTap: _editHandle,
             ),
             SettingsTile(
               title: 'Change Email',
@@ -262,29 +372,91 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            SettingsTile(
-              title: 'Premium Access',
-              subtitle: '₹270 / \$8 per month',
-              leadingIcon: Icons.star_border_rounded,
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.pureBlack,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'UPGRADE',
-                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.cardBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _isPro ? AppColors.accentRed.withValues(alpha: 0.5) : AppColors.divider,
                 ),
               ),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('RevenueCat purchase flow initiated... 🚀'),
-                    behavior: SnackBarBehavior.floating,
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _isPro
+                          ? AppColors.accentRed.withValues(alpha: 0.1)
+                          : AppColors.divider.withValues(alpha: 0.3),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _isPro ? Icons.verified_rounded : Icons.star_border_rounded,
+                      color: _isPro ? AppColors.accentRed : AppColors.textSecondary,
+                      size: 20,
+                    ),
                   ),
-                );
-              },
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isPro ? 'the static Pro' : 'Free Plan',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _isPro
+                              ? 'Your subscription is active'
+                              : 'Upgrade to unlock all features',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () async {
+                      if (_isPro) {
+                        final url = Platform.isIOS
+                            ? 'https://apps.apple.com/account/subscriptions'
+                            : 'https://play.google.com/store/account/subscriptions';
+                        try {
+                          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                        } catch (e) {
+                          debugPrint('Could not launch subscription URL: $e');
+                        }
+                      } else {
+                        final result = await SubscriptionService.instance.showPaywall();
+                        if (result != null && mounted) {
+                          setState(() => _isPro = SubscriptionService.instance.isPro);
+                        }
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.pureBlack,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        _isPro ? 'MANAGE' : 'UPGRADE',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 24),
@@ -302,20 +474,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SettingsTile(
               title: 'Privacy Policy',
               leadingIcon: Icons.policy_outlined,
-              onTap: () => _openLegalDocument(
-                'Privacy Policy', 
-                'privacy_policy_text', 
-                'assets/legal/privacy_policy.md'
-              ),
+              onTap: () => _openLegalDocument(LegalDocType.privacyPolicy),
             ),
             SettingsTile(
               title: 'Terms of Service',
               leadingIcon: Icons.gavel_outlined,
-              onTap: () => _openLegalDocument(
-                'Terms of Service', 
-                'terms_of_service_text', 
-                'assets/legal/terms_of_service.md'
-              ),
+              onTap: () => _openLegalDocument(LegalDocType.termsOfService),
             ),
 
             const SizedBox(height: 32),

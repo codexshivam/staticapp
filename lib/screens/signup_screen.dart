@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import '../core/theme/app_colors.dart';
+import 'legal_document_screen.dart';
 import 'main_navigation_shell.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -279,7 +281,11 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
 
-              const SizedBox(height: 27.50),
+              const SizedBox(height: 16),
+
+              _LegalConsentText(context),
+
+              const SizedBox(height: 20),
 
               ElevatedButton(
                 onPressed: _handleSignup,
@@ -315,4 +321,53 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
     );
   }
+}
+
+Widget _LegalConsentText(BuildContext context) {
+  return RichText(
+    textAlign: TextAlign.center,
+    text: TextSpan(
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: AppColors.textSecondary,
+        height: 1.6,
+      ),
+      children: [
+        const TextSpan(text: 'By signing up, you agree to our\n'),
+        TextSpan(
+          text: 'Terms of Service',
+          style: const TextStyle(
+            decoration: TextDecoration.underline,
+            color: AppColors.pureBlack,
+            fontWeight: FontWeight.w600,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const LegalDocumentScreen(
+                  docType: LegalDocType.termsOfService,
+                ),
+              ),
+            ),
+        ),
+        const TextSpan(text: ' and '),
+        TextSpan(
+          text: 'Privacy Policy',
+          style: const TextStyle(
+            decoration: TextDecoration.underline,
+            color: AppColors.pureBlack,
+            fontWeight: FontWeight.w600,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const LegalDocumentScreen(
+                  docType: LegalDocType.privacyPolicy,
+                ),
+              ),
+            ),
+        ),
+        const TextSpan(text: '.'),
+      ],
+    ),
+  );
 }
