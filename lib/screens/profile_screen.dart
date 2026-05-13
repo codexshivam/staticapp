@@ -54,9 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _navigateToEditProfile() async {
     final updated = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (context) => const EditProfileScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const EditProfileScreen()),
     );
 
     if (updated == true) {
@@ -67,8 +65,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _toggleFollow() {
-    final currentlyFollowing = SampleData.followingList.any((u) => u.id == _activeUser.id);
-    
+    final currentlyFollowing = SampleData.followingList.any(
+      (u) => u.id == _activeUser.id,
+    );
+
     setState(() {
       if (currentlyFollowing) {
         // Unfollow
@@ -77,7 +77,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           followersCount: _activeUser.followersCount - 1,
         );
         // Update in global mockUsers pool to persist selection
-        final idx = SampleData.mockUsers.indexWhere((u) => u.id == _activeUser.id);
+        final idx = SampleData.mockUsers.indexWhere(
+          (u) => u.id == _activeUser.id,
+        );
         if (idx != -1) {
           SampleData.mockUsers[idx] = _activeUser;
         }
@@ -88,7 +90,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           followersCount: _activeUser.followersCount + 1,
         );
         // Update in global mockUsers pool to persist selection
-        final idx = SampleData.mockUsers.indexWhere((u) => u.id == _activeUser.id);
+        final idx = SampleData.mockUsers.indexWhere(
+          (u) => u.id == _activeUser.id,
+        );
         if (idx != -1) {
           SampleData.mockUsers[idx] = _activeUser;
         }
@@ -97,7 +101,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(currentlyFollowing ? 'Unfollowed ${_activeUser.displayName}' : 'Following ${_activeUser.displayName}'),
+        content: Text(
+          currentlyFollowing
+              ? 'Unfollowed ${_activeUser.displayName}'
+              : 'Following ${_activeUser.displayName}',
+        ),
         duration: const Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.pureBlack,
@@ -108,13 +116,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final displayUser = _isMe ? SampleData.currentUser : _activeUser;
-    
+
     // Filter confessions uploaded by this user
     final userConfessions = SampleData.mockConfessions
         .where((c) => c.authorId == displayUser.id)
         .toList();
 
-    final isFollowingThisUser = SampleData.followingList.any((u) => u.id == displayUser.id);
+    final isFollowingThisUser = SampleData.followingList.any(
+      (u) => u.id == displayUser.id,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -128,9 +138,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               )
             : null,
         title: Text(
-          _isMe ? 'My Profile' : '${displayUser.displayName}\'s Profile',
+          _isMe ? 'Profile' : '${displayUser.displayName}\'s Profile',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
+            fontSize: _isMe ? 24 : 19,
           ),
         ),
       ),
@@ -170,12 +181,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         alignment: Alignment.center,
                         child: Text(
                           displayUser.initials,
-                          style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.pureBlack,
-                            letterSpacing: 0.5,
-                          ),
+                          style: Theme.of(context).textTheme.displayLarge
+                              ?.copyWith(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.pureBlack,
+                                letterSpacing: 0.5,
+                              ),
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -185,18 +197,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           children: [
                             Text(
                               displayUser.displayName,
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               displayUser.handle,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 13,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 13,
+                                  ),
                             ),
                           ],
                         ),
@@ -204,7 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Bio Description
                   Text(
                     displayUser.bio,
@@ -225,16 +239,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.only(bottom: 6.0),
                           child: Row(
                             children: [
-                              const Icon(Icons.link, size: 14, color: AppColors.textSecondary),
+                              const Icon(
+                                Icons.link,
+                                size: 14,
+                                color: AppColors.textSecondary,
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
                                   link.replaceFirst('https://', ''),
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontSize: 12,
-                                    color: AppColors.pureBlack,
-                                    decoration: TextDecoration.underline,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        fontSize: 12,
+                                        color: AppColors.pureBlack,
+                                        decoration: TextDecoration.underline,
+                                      ),
                                 ),
                               ),
                             ],
@@ -252,29 +271,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildStatColumn(context, 'Confessions', '${userConfessions.length}'),
+                      _buildStatColumn(
+                        context,
+                        'Confessions',
+                        '${userConfessions.length}',
+                      ),
                       _buildVerticalDivider(),
                       GestureDetector(
                         onTap: () => _openFollowersScreen(true),
-                        child: _buildStatColumn(context, 'Followers', '${displayUser.followersCount}'),
+                        child: _buildStatColumn(
+                          context,
+                          'Followers',
+                          '${displayUser.followersCount}',
+                        ),
                       ),
                       _buildVerticalDivider(),
                       GestureDetector(
                         onTap: () => _openFollowersScreen(false),
-                        child: _buildStatColumn(context, 'Following', '${displayUser.followingCount}'),
+                        child: _buildStatColumn(
+                          context,
+                          'Following',
+                          '${displayUser.followingCount}',
+                        ),
                       ),
                     ],
                   ),
 
                   const SizedBox(height: 18),
-                  
+
                   // Primary Action Button (Edit Profile / Follow-Unfollow)
                   if (_isMe) ...[
                     OutlinedButton(
                       onPressed: _navigateToEditProfile,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        side: const BorderSide(color: AppColors.pureBlack, width: 1.0),
+                        side: const BorderSide(
+                          color: AppColors.pureBlack,
+                          width: 1.0,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5.0),
                         ),
@@ -293,12 +327,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ElevatedButton(
                       onPressed: _toggleFollow,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isFollowingThisUser ? AppColors.background : AppColors.pureBlack,
-                        foregroundColor: isFollowingThisUser ? AppColors.pureBlack : AppColors.cardBg,
+                        backgroundColor: isFollowingThisUser
+                            ? AppColors.background
+                            : AppColors.pureBlack,
+                        foregroundColor: isFollowingThisUser
+                            ? AppColors.pureBlack
+                            : AppColors.cardBg,
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5.0),
-                          side: isFollowingThisUser ? const BorderSide(color: AppColors.divider) : BorderSide.none,
+                          side: isFollowingThisUser
+                              ? const BorderSide(color: AppColors.divider)
+                              : BorderSide.none,
                         ),
                         elevation: 0,
                       ),
@@ -307,7 +347,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: isFollowingThisUser ? AppColors.pureBlack : AppColors.cardBg,
+                          color: isFollowingThisUser
+                              ? AppColors.pureBlack
+                              : AppColors.cardBg,
                           letterSpacing: 1.0,
                         ),
                       ),
@@ -321,8 +363,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // 2. LIST OF USER CONFESSIONS
             SectionTitle(
-              title: _isMe ? 'My Confessions ❤️' : '${displayUser.displayName}\'s Confessions ❤️',
-              subtitle: 'Voice expressions',
+              title: _isMe
+                  ? 'Confessions from You ❤️'
+                  : '${displayUser.displayName}\'s Confessions ❤️',
             ),
             const SizedBox(height: 14),
 
@@ -382,10 +425,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildVerticalDivider() {
-    return Container(
-      width: 1,
-      height: 24,
-      color: AppColors.divider,
-    );
+    return Container(width: 1, height: 24, color: AppColors.divider);
   }
 }
