@@ -38,16 +38,9 @@ class PlaybackManager extends ChangeNotifier {
 
   Future<void> _loadHistory() async {
     try {
-      final historyIds = await DatabaseService.instance.getHistoryIds();
+      final savedConfessions = await DatabaseService.instance.getHistoryConfessions();
       _history.clear();
-      for (final id in historyIds) {
-        final confession = Confession.mockConfessions
-            .cast<Confession?>()
-            .firstWhere((c) => c?.id == id, orElse: () => null);
-        if (confession != null) {
-          _history.add(confession);
-        }
-      }
+      _history.addAll(savedConfessions);
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to load SQLite history: $e');
@@ -98,9 +91,10 @@ class PlaybackManager extends ChangeNotifier {
   List<Confession> get history => _history;
 
   void addToHistory(Confession confession) {
+    final confWithListenTime = confession.copyWith(listenedAt: DateTime.now());
     _history.removeWhere((c) => c.id == confession.id);
-    _history.insert(0, confession);
-    DatabaseService.instance.saveHistoryItem(confession.id);
+    _history.insert(0, confWithListenTime);
+    DatabaseService.instance.saveHistoryItem(confWithListenTime);
     notifyListeners();
   }
 

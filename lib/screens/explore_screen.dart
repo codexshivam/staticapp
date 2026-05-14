@@ -22,6 +22,7 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   final _searchController = TextEditingController();
+  final ScrollController _dateScrollController = ScrollController();
   String _searchQuery = '';
   String _selectedDate = '';
 
@@ -36,6 +37,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final now = DateTime.now();
     _selectedDate = _formatDateString(now);
     _loadConfessionsForDate(_selectedDate);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_dateScrollController.hasClients) {
+        _dateScrollController.animateTo(
+          _dateScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
   }
 
   Future<void> _loadConfessionsForDate(String date) async {
@@ -85,6 +95,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _dateScrollController.dispose();
     super.dispose();
   }
 
@@ -167,6 +178,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
       final dateStr = _formatDateString(picked);
       setState(() => _selectedDate = dateStr);
       _loadConfessionsForDate(dateStr);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_dateScrollController.hasClients) {
+          _dateScrollController.animateTo(
+            _dateScrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
     }
   }
 
@@ -315,6 +335,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     children: [
                       Expanded(
                         child: SingleChildScrollView(
+                          controller: _dateScrollController,
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: _generateCalendarDays().map((day) {

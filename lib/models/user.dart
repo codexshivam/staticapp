@@ -41,13 +41,54 @@ class AppUser {
     email: 'guest@example.com',
     handle: '@guest',
     bio: 'Listening to raw stories and sharing my voice.',
-    followersCount: 0,
-    followingCount: 0,
+    followersCount: 2,
+    followingCount: 2,
     confessionCount: 0,
     upiId: '',
     links: [],
+    followingIds: ['user_1', 'user_2'],
+    followerIds: ['user_2', 'user_3'],
     isPro: false,
   );
+
+  static List<AppUser> mockUsers = [
+    const AppUser(
+      id: 'user_1',
+      displayName: 'Aria Montgomery',
+      email: 'aria@example.com',
+      handle: '@ariamontgomery',
+      bio: 'Lover of rain and midnight thoughts.',
+      followersCount: 142,
+      followingCount: 89,
+      confessionCount: 12,
+      upiId: '',
+      links: ['instagram.com/aria'],
+    ),
+    const AppUser(
+      id: 'user_2',
+      displayName: 'Marcus Vance',
+      email: 'marcus@example.com',
+      handle: '@vance_tales',
+      bio: 'Wandering through echoes of the past.',
+      followersCount: 520,
+      followingCount: 310,
+      confessionCount: 34,
+      upiId: '',
+      links: [],
+    ),
+    const AppUser(
+      id: 'user_3',
+      displayName: 'Elena Rostova',
+      email: 'elena@example.com',
+      handle: '@elena_rostova',
+      bio: 'Seeking truth in whispered confessions.',
+      followersCount: 89,
+      followingCount: 112,
+      confessionCount: 8,
+      upiId: '',
+      links: ['twitter.com/elena'],
+    ),
+  ];
 
   String get initials {
     if (displayName.isEmpty) return '??';

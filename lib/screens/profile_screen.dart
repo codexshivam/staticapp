@@ -85,8 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _toggleFollow() async {
-    final currentUser = AuthStateService.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
 
     final currentlyFollowing = currentUser.followingIds.contains(_activeUser.id);
     final newFollowing = !currentlyFollowing;
@@ -99,31 +98,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     });
 
-    try {
-      if (newFollowing) {
-        await FirebaseDbService.instance.followUser(
-            currentUserId: currentUser.id, targetUserId: _activeUser.id);
-        AuthStateService.instance.updateUser(currentUser.copyWith(
-          followingIds: [...currentUser.followingIds, _activeUser.id],
-          followingCount: currentUser.followingCount + 1,
-        ));
+    if (newFollowing) {
+      final updatedUser = currentUser.copyWith(
+        followingIds: [...currentUser.followingIds, _activeUser.id],
+        followingCount: currentUser.followingCount + 1,
+      );
+      if (AuthStateService.instance.currentUser != null) {
+        AuthStateService.instance.updateUser(updatedUser);
+        try {
+          await FirebaseDbService.instance.followUser(
+              currentUserId: currentUser.id, targetUserId: _activeUser.id);
+        } catch (_) {}
       } else {
-        await FirebaseDbService.instance.unfollowUser(
-            currentUserId: currentUser.id, targetUserId: _activeUser.id);
-        AuthStateService.instance.updateUser(currentUser.copyWith(
-          followingIds: currentUser.followingIds.where((id) => id != _activeUser.id).toList(),
-          followingCount: (currentUser.followingCount - 1).clamp(0, 9999999),
-        ));
+        AppUser.fallbackUser = updatedUser;
       }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _activeUser = _activeUser.copyWith(
-            followersCount: currentlyFollowing
-                ? _activeUser.followersCount + 1
-                : (_activeUser.followersCount - 1).clamp(0, 9999999),
-          );
-        });
+    } else {
+      final updatedUser = currentUser.copyWith(
+        followingIds: currentUser.followingIds.where((id) => id != _activeUser.id).toList(),
+        followingCount: (currentUser.followingCount - 1).clamp(0, 9999999),
+      );
+      if (AuthStateService.instance.currentUser != null) {
+        AuthStateService.instance.updateUser(updatedUser);
+        try {
+          await FirebaseDbService.instance.unfollowUser(
+              currentUserId: currentUser.id, targetUserId: _activeUser.id);
+        } catch (_) {}
+      } else {
+        AppUser.fallbackUser = updatedUser;
       }
     }
 
@@ -143,17 +144,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final displayUser = _isMe
-        ? (AuthStateService.instance.currentUser ?? _activeUser)
-        : _activeUser;
+    return ListenableBuilder(
+      listenable: AuthStateService.instance,
+      builder: (context, _) {
+        final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+        final displayUser = _isMe
+            ? currentUser
+            : _activeUser;
 
-    final isFollowingThisUser = AuthStateService.instance.currentUser
-            ?.followingIds
-            .contains(displayUser.id) ??
-        false;
+        final isFollowingThisUser = currentUser.followingIds.contains(displayUser.id);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
+        return Scaffold(
+          backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -464,6 +466,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  },
+);
   }
 
   Widget _buildStatColumn(BuildContext context, String label, String value) {

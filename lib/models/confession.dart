@@ -10,6 +10,7 @@ class Confession {
   final bool isSaved;
   final String? audioUrl;
   final String? audioFilePath;
+  final DateTime? listenedAt;
 
   const Confession({
     required this.id,
@@ -23,6 +24,7 @@ class Confession {
     required this.isSaved,
     this.audioUrl,
     this.audioFilePath,
+    this.listenedAt,
   });
 
   static List<double> generateWaveform(int count) {
@@ -76,6 +78,7 @@ class Confession {
     bool? isSaved,
     String? audioUrl,
     String? audioFilePath,
+    DateTime? listenedAt,
   }) {
     return Confession(
       id: id ?? this.id,
@@ -89,6 +92,7 @@ class Confession {
       isSaved: isSaved ?? this.isSaved,
       audioUrl: audioUrl ?? this.audioUrl,
       audioFilePath: audioFilePath ?? this.audioFilePath,
+      listenedAt: listenedAt ?? this.listenedAt,
     );
   }
 

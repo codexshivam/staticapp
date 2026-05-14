@@ -35,12 +35,22 @@ class _SavedScreenState extends State<SavedScreen> {
   }
 
   Future<void> _loadSavedConfessions() async {
-    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+    final currentUser = AuthStateService.instance.currentUser;
+    if (currentUser == null || currentUser.savedConfessionIds.isEmpty) {
+      if (mounted) setState(() { _savedConfessions = []; });
+      return;
+    }
     try {
       final saved = await FirebaseDbService.instance.getSavedConfessions(currentUser.savedConfessionIds);
-      if (mounted) setState(() { _savedConfessions = saved.isNotEmpty ? saved : Confession.mockConfessions.where((c) => currentUser.savedConfessionIds.contains(c.id) || c.isSaved).toList(); });
+      if (mounted) {
+        setState(() {
+          _savedConfessions = saved.isNotEmpty
+              ? saved
+              : Confession.mockConfessions.where((c) => currentUser.savedConfessionIds.contains(c.id)).toList();
+        });
+      }
     } catch (_) {
-      final fallback = Confession.mockConfessions.where((c) => currentUser.savedConfessionIds.contains(c.id) || c.isSaved).toList();
+      final fallback = Confession.mockConfessions.where((c) => currentUser.savedConfessionIds.contains(c.id)).toList();
       if (mounted) setState(() { _savedConfessions = fallback; });
     }
   }
@@ -103,7 +113,8 @@ class _SavedScreenState extends State<SavedScreen> {
   ) {
     final Map<String, List<Confession>> grouped = {};
     for (var c in confessions) {
-      final dateStr = DateFormat('yyyy-MM-dd').format(c.createdAt);
+      final listenTime = c.listenedAt ?? c.createdAt;
+      final dateStr = DateFormat('yyyy-MM-dd').format(listenTime);
       final dateLabel = _formatDateLabel(dateStr);
       if (!grouped.containsKey(dateLabel)) {
         grouped[dateLabel] = [];

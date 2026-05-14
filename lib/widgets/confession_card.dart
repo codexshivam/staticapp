@@ -160,7 +160,7 @@ class ConfessionCard extends StatelessWidget {
         builder: (context, snapshot) {
           final author = snapshot.data;
           final authorName = author?.displayName ?? 'Anonymous';
-          final timeAgo = _getRelativeTime(confession.createdAt);
+          final timeAgo = _getRelativeTime(confession.listenedAt ?? confession.createdAt);
 
           return Container(
             margin: const EdgeInsets.symmetric(vertical: 4.0),

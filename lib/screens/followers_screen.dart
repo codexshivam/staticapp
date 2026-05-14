@@ -44,13 +44,19 @@ class _FollowersScreenState extends State<FollowersScreen> {
       );
       if (mounted) {
         setState(() {
-          _followers = followers;
-          _following = following;
+          _followers = followers.isNotEmpty ? followers : AppUser.mockUsers.where((u) => widget.user.followerIds.contains(u.id)).toList();
+          _following = following.isNotEmpty ? following : AppUser.mockUsers.where((u) => widget.user.followingIds.contains(u.id)).toList();
           _isLoading = false;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _followers = AppUser.mockUsers.where((u) => widget.user.followerIds.contains(u.id)).toList();
+          _following = AppUser.mockUsers.where((u) => widget.user.followingIds.contains(u.id)).toList();
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -61,9 +67,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
   }
 
   void _toggleFollowUser(AppUser otherUser, int index, bool isFollowersTab) async {
-    final currentUser = AuthStateService.instance.currentUser;
-    if (currentUser == null) return;
-
+    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
     final isCurrentlyFollowing = currentUser.followingIds.contains(otherUser.id);
 
     if (isCurrentlyFollowing) {
@@ -72,14 +76,22 @@ class _FollowersScreenState extends State<FollowersScreen> {
           _following.removeWhere((u) => u.id == otherUser.id);
         }
       });
-      try {
-        await FirebaseDbService.instance.unfollowUser(
-          currentUserId: currentUser.id, targetUserId: otherUser.id);
-        AuthStateService.instance.updateUser(currentUser.copyWith(
-          followingIds: currentUser.followingIds.where((id) => id != otherUser.id).toList(),
-          followingCount: (currentUser.followingCount - 1).clamp(0, 999999),
-        ));
-      } catch (_) {}
+      final updatedFollowingIds = currentUser.followingIds.where((id) => id != otherUser.id).toList();
+      final updatedUser = currentUser.copyWith(
+        followingIds: updatedFollowingIds,
+        followingCount: (currentUser.followingCount - 1).clamp(0, 999999),
+      );
+
+      if (AuthStateService.instance.currentUser != null) {
+        AuthStateService.instance.updateUser(updatedUser);
+        try {
+          await FirebaseDbService.instance.unfollowUser(
+            currentUserId: currentUser.id, targetUserId: otherUser.id);
+        } catch (_) {}
+      } else {
+        AppUser.fallbackUser = updatedUser;
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -96,14 +108,22 @@ class _FollowersScreenState extends State<FollowersScreen> {
           _following.add(otherUser);
         }
       });
-      try {
-        await FirebaseDbService.instance.followUser(
-          currentUserId: currentUser.id, targetUserId: otherUser.id);
-        AuthStateService.instance.updateUser(currentUser.copyWith(
-          followingIds: [...currentUser.followingIds, otherUser.id],
-          followingCount: currentUser.followingCount + 1,
-        ));
-      } catch (_) {}
+      final updatedFollowingIds = [...currentUser.followingIds, otherUser.id];
+      final updatedUser = currentUser.copyWith(
+        followingIds: updatedFollowingIds,
+        followingCount: currentUser.followingCount + 1,
+      );
+
+      if (AuthStateService.instance.currentUser != null) {
+        AuthStateService.instance.updateUser(updatedUser);
+        try {
+          await FirebaseDbService.instance.followUser(
+            currentUserId: currentUser.id, targetUserId: otherUser.id);
+        } catch (_) {}
+      } else {
+        AppUser.fallbackUser = updatedUser;
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -224,19 +244,24 @@ class _FollowersScreenState extends State<FollowersScreen> {
                     )
                   : activeList.isEmpty
                   ? _buildEmptyState()
-                  : ListView.builder(
-                      itemCount: activeList.length,
-                      itemBuilder: (context, index) {
-                        final u = activeList[index];
-                        final currentUser = AuthStateService.instance.currentUser;
-                        final isFollowing = currentUser?.followingIds.contains(u.id) ?? false;
+                  : ListenableBuilder(
+                      listenable: AuthStateService.instance,
+                      builder: (context, _) {
+                        return ListView.builder(
+                          itemCount: activeList.length,
+                          itemBuilder: (context, index) {
+                            final u = activeList[index];
+                            final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+                            final isFollowing = currentUser.followingIds.contains(u.id);
 
-                        return UserListTile(
-                          user: u,
-                          isFollowing: isFollowing,
-                          onTap: () => _navigateToProfile(u),
-                          onActionTap: () =>
-                              _toggleFollowUser(u, index, _showFollowers),
+                            return UserListTile(
+                              user: u,
+                              isFollowing: isFollowing,
+                              onTap: () => _navigateToProfile(u),
+                              onActionTap: () =>
+                                  _toggleFollowUser(u, index, _showFollowers),
+                            );
+                          },
                         );
                       },
                     ),
