@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../core/theme/app_colors.dart';
 import '../services/subscription_service.dart';
@@ -163,7 +164,7 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
           statusBarBrightness: Brightness.light,
         ),
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: AppColors.pureBlack, size: 24),
+          icon: const Icon(Feather.x, color: AppColors.pureBlack, size: 24),
           onPressed: () => Navigator.pop(context, false),
         ),
         actions: [
@@ -187,7 +188,7 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                         color: AppColors.pureBlack,
                         borderRadius: BorderRadius.circular(20.0),
                       ),
-                      child: const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 40),
+                      child: const Icon(Feather.award, color: Colors.amber, size: 40),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -214,11 +215,11 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                   const SizedBox(height: 36),
 
                   // Feature Checklist
-                  _buildFeatureRow(Icons.all_inclusive_rounded, 'Unlimited Audio Whispers', 'Listen to endless voice confessions without daily caps.'),
+                  _buildFeatureRow(Feather.heart, 'Support an Individual Developer', 'Directly support the journey of an independent developer building and maintaining this platform.'),
                   const SizedBox(height: 16),
-                  _buildFeatureRow(Icons.image_rounded, 'Exclusive Visual Attachments', 'View full-size photo attachments shared in whisper chats.'),
+                  _buildFeatureRow(Feather.shield, 'Zero Intrusive Ads', 'Enjoy a clean, focused, and beautifully crafted authentic audio experience with absolutely no ads.'),
                   const SizedBox(height: 16),
-                  _buildFeatureRow(Icons.security_rounded, 'Priority Anonymous Listening', 'Highest level encryption and absolute anonymity guaranteed.'),
+                  _buildFeatureRow(Feather.zap, 'Fund Future Innovation', 'Help fuel the creation of new features, better audio rendering, and advanced privacy controls.'),
                   
                   const SizedBox(height: 36),
                   const Text(
@@ -322,7 +323,7 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
         child: Row(
           children: [
             Icon(
-              isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+              isSelected ? Feather.check_circle : Feather.circle,
               color: isSelected ? AppColors.pureBlack : Colors.grey.shade400,
               size: 22,
             ),
@@ -372,7 +373,7 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
         child: Row(
           children: [
             Icon(
-              isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+              isSelected ? Feather.check_circle : Feather.circle,
               color: isSelected ? AppColors.pureBlack : Colors.grey.shade400,
               size: 22,
             ),

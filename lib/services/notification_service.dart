@@ -31,7 +31,7 @@ class NotificationService {
 
     // 3. Initialize Local Notifications (for foreground banners)
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_notification');
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
@@ -78,7 +78,7 @@ class NotificationService {
               channel.id,
               channel.name,
               channelDescription: channel.description,
-              icon: android.smallIcon ?? '@mipmap/ic_launcher',
+              icon: android.smallIcon ?? '@drawable/ic_notification',
             ),
           ),
         );
