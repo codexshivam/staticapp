@@ -14,6 +14,9 @@ import 'legal_document_screen.dart';
 import 'change_email_screen.dart';
 import 'change_username_screen.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/firebase/firebase_db_service.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -21,7 +24,7 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
   late String _currentHandle;
   late String _currentEmail;
   bool _isPro = false;
@@ -34,6 +37,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _currentEmail = AuthStateService.instance.sessionEmail ?? 'unknown@email.com';
     _setupRemoteConfig();
     _loadProStatus();
+    WidgetsBinding.instance.addObserver(this);
+    _checkEmailStatus();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkEmailStatus();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _checkEmailStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      await user.reload();
+      final updatedUser = FirebaseAuth.instance.currentUser;
+      if (updatedUser != null && updatedUser.email != null) {
+        final newEmail = updatedUser.email!;
+        final currentSessionUser = AuthStateService.instance.currentUser;
+        if (currentSessionUser != null && currentSessionUser.email != newEmail) {
+          final updatedProfile = currentSessionUser.copyWith(email: newEmail);
+          await FirebaseDbService.instance.updateUserProfile(updatedProfile);
+          AuthStateService.instance.setUser(updatedProfile, email: newEmail);
+          if (mounted) {
+            setState(() {
+              _currentEmail = newEmail;
+            });
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadProStatus() async {
@@ -103,17 +144,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _changePassword() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Change Password'),
         content: const Text('We will send a password reset link to your email address.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               try {
                 await FirebaseAuthService.instance.triggerPasswordReset(
                   email: _currentEmail,
@@ -140,22 +181,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _handleLogout() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Log out? ❤️'),
         content: const Text('Are you sure you want to log out?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               try {
                 await FirebaseAuthService.instance.signOut();
               } catch (_) {}
               AuthStateService.instance.clearUser();
-              if (context.mounted) {
+              if (mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
                   PageRouteBuilder(
                     pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),

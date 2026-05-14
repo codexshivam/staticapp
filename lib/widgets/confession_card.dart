@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../core/theme/app_colors.dart';
 import '../core/navigation/playback_manager.dart';
 import '../models/confession.dart';
@@ -42,52 +43,56 @@ class ConfessionCard extends StatelessWidget {
         ? author!.displayName[0].toUpperCase()
         : 'C';
 
-    return Container(
+    return Skeleton.replace(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: AppColors.pureBlack,
-        borderRadius: BorderRadius.circular(5.0),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1F000000),
-            blurRadius: 4,
-            offset: Offset(0, 2),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: AppColors.pureBlack,
+          borderRadius: BorderRadius.circular(5.0),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1F000000),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF232526), Color(0xFF414345)],
           ),
-        ],
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF232526), Color(0xFF414345)],
         ),
-      ),
-      alignment: Alignment.center,
-      child: Stack(
         alignment: Alignment.center,
-        children: [
-          Text(
-            initial,
-            style: TextStyle(
-              fontFamily: 'Playfair Display',
-              fontSize: size * 0.4,
-              fontWeight: FontWeight.bold,
-              color: Colors.white.withOpacity(0.85),
-            ),
-          ),
-          if (isPlaying)
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(5.0),
-              ),
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.volume_up_rounded,
-                color: Colors.white,
-                size: 20,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Text(
+              initial,
+              style: TextStyle(
+                fontFamily: 'Playfair Display',
+                fontSize: size * 0.4,
+                fontWeight: FontWeight.bold,
+                color: Colors.white.withValues(alpha: 0.85),
               ),
             ),
-        ],
+            if (isPlaying)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(5.0),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.volume_up_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

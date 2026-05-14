@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../core/theme/app_colors.dart';
 import '../models/comment.dart';
 import '../models/user.dart';
@@ -8,7 +10,7 @@ import '../services/firebase/firebase_db_service.dart';
 
 class CommentBubble extends StatelessWidget {
   final Comment comment;
-  final VoidCallback? onDelete;
+  final void Function(Comment)? onDelete;
 
   const CommentBubble({
     super.key,
@@ -24,6 +26,33 @@ class CommentBubble extends StatelessWidget {
         duration: Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.pureBlack,
+      ),
+    );
+  }
+
+  Widget _buildFallbackImagePlaceholder(BuildContext context, String text) {
+    return Container(
+      height: 150,
+      width: double.infinity,
+      color: AppColors.background,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.image_outlined,
+            color: AppColors.textSecondary,
+            size: 28,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -112,9 +141,34 @@ class CommentBubble extends StatelessWidget {
                     ),
                   ),
                   if (onDelete != null) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 16),
                     GestureDetector(
-                      onTap: onDelete,
+                      onTap: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: AppColors.cardBg,
+                            title: const Text('Delete Comment?'),
+                            content: const Text(
+                              'Are you sure you want to delete this whisper comment?',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel', style: TextStyle(color: AppColors.pureBlack)),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Delete', style: TextStyle(color: AppColors.accentRed, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          onDelete!(comment);
+                        }
+                      },
                       child: const Icon(
                         Icons.delete_outline,
                         size: 14,
@@ -135,55 +189,70 @@ class CommentBubble extends StatelessWidget {
               ),
               if (comment.imageUrl != null) ...[
                 const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(5.0),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        height: 150,
-                        width: double.infinity,
-                        color: AppColors.background,
-                        alignment: Alignment.center,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.image_outlined,
-                              color: AppColors.textSecondary,
-                              size: 28,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FullScreenPhotoScreen(imageUrl: comment.imageUrl!),
+                      ),
+                    );
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(5.0),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (comment.imageUrl!.startsWith('http'))
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 320),
+                            child: CachedNetworkImage(
+                              imageUrl: comment.imageUrl!,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                height: 150,
+                                width: double.infinity,
+                                color: AppColors.background,
+                                alignment: Alignment.center,
+                                child: const CircularProgressIndicator(color: AppColors.pureBlack),
+                              ),
+                              errorWidget: (context, url, error) => _buildFallbackImagePlaceholder(context, comment.imageUrl!),
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              comment.imageUrl!,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
+                          )
+                        else if (comment.imageUrl!.startsWith('/'))
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 320),
+                            child: Image.file(
+                              File(comment.imageUrl!),
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => _buildFallbackImagePlaceholder(context, comment.imageUrl!),
+                            ),
+                          )
+                        else
+                          _buildFallbackImagePlaceholder(context, comment.imageUrl!),
+                        Positioned(
+                          bottom: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.pureBlack.withValues(alpha: 0.7),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                            child: const Text(
+                              'Attached Whisper Photo',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                letterSpacing: 0.5,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppColors.pureBlack.withValues(alpha: 0.7),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: const Text(
-                            'Attached Whisper Photo',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              letterSpacing: 0.5,
-                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -208,5 +277,52 @@ class CommentBubble extends StatelessWidget {
     } else {
       return 'Just now';
     }
+  }
+}
+
+class FullScreenPhotoScreen extends StatelessWidget {
+  final String imageUrl;
+
+  const FullScreenPhotoScreen({super.key, required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.pureBlack,
+      appBar: AppBar(
+        backgroundColor: AppColors.pureBlack,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white, size: 24),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Whisper Photo',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          panEnabled: true,
+          minScale: 0.5,
+          maxScale: 4.0,
+          child: imageUrl.startsWith('http')
+              ? CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => const CircularProgressIndicator(color: Colors.white),
+                  errorWidget: (context, url, error) => const Icon(Icons.image, size: 100, color: Colors.white),
+                )
+              : imageUrl.startsWith('/')
+                  ? Image.file(File(imageUrl), fit: BoxFit.contain)
+                  : const Icon(Icons.image, size: 100, color: Colors.white),
+        ),
+      ),
+    );
   }
 }

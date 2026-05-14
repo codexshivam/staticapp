@@ -305,36 +305,48 @@ class _SavedScreenState extends State<SavedScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
-          child: _savedConfessions.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  itemCount: _savedConfessions.length,
-                  itemBuilder: (context, index) {
-                    final conf = _savedConfessions[index];
-                    return Dismissible(
-                      key: Key(conf.id),
-                      direction: DismissDirection.endToStart,
-                      onDismissed: (dir) => _unsaveConfession(index, conf),
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        margin: const EdgeInsets.only(bottom: 14),
-                        decoration: BoxDecoration(
-                          color: AppColors.accentRed.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(5),
+          child: RefreshIndicator(
+            color: AppColors.pureBlack,
+            backgroundColor: AppColors.cardBg,
+            onRefresh: _loadSavedConfessions,
+            child: _savedConfessions.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      const SizedBox(height: 100),
+                      _buildEmptyState(),
+                    ],
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: _savedConfessions.length,
+                    itemBuilder: (context, index) {
+                      final conf = _savedConfessions[index];
+                      return Dismissible(
+                        key: Key(conf.id),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (dir) => _unsaveConfession(index, conf),
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          margin: const EdgeInsets.only(bottom: 14),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentRed.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: AppColors.accentRed,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.delete_outline,
-                          color: AppColors.accentRed,
+                        child: ConfessionCard(
+                          confession: conf,
+                          onTap: () => _openDetail(conf),
                         ),
-                      ),
-                      child: ConfessionCard(
-                        confession: conf,
-                        onTap: () => _openDetail(conf),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  ),
+          ),
         ),
       ],
     );

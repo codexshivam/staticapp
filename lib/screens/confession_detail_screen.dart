@@ -1,12 +1,16 @@
 // ignore_for_file: unused_element
 
 import 'package:flutter/material.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:image_picker/image_picker.dart';
 import '../core/theme/app_colors.dart';
 import '../core/navigation/playback_manager.dart';
 import '../models/confession.dart';
 import '../models/comment.dart';
 import '../services/firebase/firebase_db_service.dart';
+import '../services/firebase/firebase_storage_service.dart';
 import '../services/auth_state_service.dart';
 import '../models/user.dart';
 import '../widgets/comment_bubble.dart';
@@ -22,22 +26,34 @@ class ConfessionDetailScreen extends StatefulWidget {
 
 class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
   final _commentController = TextEditingController();
+  final _scrollController = ScrollController();
   List<Comment> _comments = [];
   bool _commentsLoading = true;
   late bool _isSaved;
   String? _mockSelectedImagePath;
+  bool _isUploadingImage = false;
+  bool _isPlayerCollapsed = false;
 
   @override
   void initState() {
     super.initState();
-    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+    final currentUser =
+        AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
     final savedIds = currentUser.savedConfessionIds;
-    _isSaved = savedIds.contains(widget.confession.id) || widget.confession.isSaved;
+    _isSaved =
+        savedIds.contains(widget.confession.id) || widget.confession.isSaved;
 
     _loadComments();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      PlaybackManager().play(widget.confession, context: context);
+    PlaybackManager().play(widget.confession, context: context, reset: true);
+
+    _scrollController.addListener(() {
+      final collapsed = _scrollController.offset > 240;
+      if (collapsed != _isPlayerCollapsed) {
+        setState(() {
+          _isPlayerCollapsed = collapsed;
+        });
+      }
     });
   }
 
@@ -46,29 +62,34 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
       final comments = await FirebaseDbService.instance.getComments(
         widget.confession.id,
       );
-      if (mounted)
+      comments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      if (mounted) {
         setState(() {
           _comments = comments;
           _commentsLoading = false;
         });
+      }
     } catch (_) {
       final fallback = <Comment>[];
-      if (mounted)
+      if (mounted) {
         setState(() {
           _comments = fallback;
           _commentsLoading = false;
         });
+      }
     }
   }
 
   @override
   void dispose() {
     _commentController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   Future<void> _toggleSave() async {
-    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+    final currentUser =
+        AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
 
     final newSaved = !_isSaved;
     setState(() => _isSaved = newSaved);
@@ -76,7 +97,8 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     try {
       final savedIds = List<String>.from(currentUser.savedConfessionIds);
       if (newSaved) {
-        if (!savedIds.contains(widget.confession.id)) savedIds.add(widget.confession.id);
+        if (!savedIds.contains(widget.confession.id))
+          savedIds.add(widget.confession.id);
       } else {
         savedIds.remove(widget.confession.id);
       }
@@ -110,8 +132,6 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     }
   }
 
-
-
   Future<void> _addComment() async {
     final text = _commentController.text.trim();
     if (text.isEmpty && _mockSelectedImagePath == null) return;
@@ -119,20 +139,38 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     final currentUser = AuthStateService.instance.currentUser;
     if (currentUser == null) return;
 
+    setState(() => _isUploadingImage = true);
+
+    String? finalImageUrl;
+    if (_mockSelectedImagePath != null) {
+      if (!_mockSelectedImagePath!.startsWith('http') &&
+          !_mockSelectedImagePath!.startsWith('journal_snapshot')) {
+        try {
+          finalImageUrl = await FirebaseStorageService.instance
+              .uploadCommentImage(_mockSelectedImagePath!);
+        } catch (_) {
+          finalImageUrl = _mockSelectedImagePath;
+        }
+      } else {
+        finalImageUrl = _mockSelectedImagePath;
+      }
+    }
+
     final newComment = Comment(
       id: 'comment_${DateTime.now().millisecondsSinceEpoch}',
       confessionId: widget.confession.id,
       authorId: currentUser.id,
       content: text.isNotEmpty ? text : 'Shared a visual whisper... 🕯️',
       createdAt: DateTime.now(),
-      imageUrl: _mockSelectedImagePath,
+      imageUrl: finalImageUrl,
       isAuthor: widget.confession.authorId == currentUser.id,
     );
 
     setState(() {
-      _comments.add(newComment);
+      _comments.insert(0, newComment);
       _commentController.clear();
       _mockSelectedImagePath = null;
+      _isUploadingImage = false;
     });
     FocusScope.of(context).unfocus();
 
@@ -145,7 +183,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     } catch (_) {}
   }
 
-  void _deleteComment(int index) {
+  Future<void> _deleteComment(Comment comment, int index) async {
     setState(() {
       _comments.removeAt(index);
     });
@@ -157,19 +195,152 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
         backgroundColor: AppColors.pureBlack,
       ),
     );
+    try {
+      if (comment.imageUrl != null && comment.imageUrl!.startsWith('http')) {
+        await FirebaseStorageService.instance.deleteImageFile(comment.imageUrl!);
+      }
+      await FirebaseDbService.instance.deleteComment(comment.id);
+      await FirebaseDbService.instance.decrementCommentsCount(widget.confession.id);
+    } catch (_) {}
   }
 
-  void _simulatePickImage() {
-    setState(() {
-      _mockSelectedImagePath = 'journal_snapshot_0${_comments.length + 1}.png';
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Photo attached to the confession room ❤️'),
-        duration: Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.pureBlack,
+  Future<void> _deleteConfession() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cardBg,
+        title: const Text('Delete Confession Room?'),
+        content: const Text(
+          'Are you sure you want to permanently delete this confession room? All audio whispers, visual attachments, and comments will be erased.',
+          style: TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.pureBlack)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: AppColors.accentRed, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
+    );
+
+    if (confirmed != true) return;
+
+    if (mounted) {
+      Navigator.pop(context);
+    }
+
+    try {
+      if (widget.confession.audioUrl != null && widget.confession.audioUrl!.startsWith('http')) {
+        await FirebaseStorageService.instance.deleteAudioFile(widget.confession.audioUrl!);
+      }
+      final comments = await FirebaseDbService.instance.getComments(widget.confession.id);
+      for (final c in comments) {
+        if (c.imageUrl != null && c.imageUrl!.startsWith('http')) {
+          await FirebaseStorageService.instance.deleteImageFile(c.imageUrl!);
+        }
+        await FirebaseDbService.instance.deleteComment(c.id);
+      }
+      await FirebaseDbService.instance.deleteConfession(widget.confession.id);
+    } catch (_) {}
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final picker = ImagePicker();
+      final result = await picker.pickImage(source: ImageSource.gallery);
+      if (result != null) {
+        setState(() {
+          _mockSelectedImagePath = result.path;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Photo attached! ❤️'),
+              duration: Duration(seconds: 1),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.pureBlack,
+            ),
+          );
+        }
+      }
+    } catch (_) {}
+  }
+
+  Widget _buildMiniPlayer(PlaybackManager pm) {
+    return ListenableBuilder(
+      listenable: pm,
+      builder: (context, _) {
+        final isActive = pm.activeConfession?.id == widget.confession.id;
+        final isPlaying = isActive && pm.isPlaying;
+        final progress = isActive ? pm.progress : 0.0;
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          decoration: BoxDecoration(
+            color: AppColors.pureBlack,
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(4.0),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(Feather.music, size: 18, color: AppColors.pureBlack),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.confession.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: AppColors.textSecondary.withValues(alpha: 0.3),
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                      minHeight: 2,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              IconButton(
+                icon: Icon(
+                  isPlaying ? Icons.pause : Icons.play_arrow,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                onPressed: () => pm.togglePlay(widget.confession, context: context),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -183,7 +354,11 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.pureBlack, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.pureBlack,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -203,13 +378,21 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
             ),
             onPressed: _toggleSave,
           ),
+          if (widget.confession.authorId == (AuthStateService.instance.currentUser?.id ?? AppUser.fallbackUser.id))
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppColors.accentRed),
+              onPressed: _deleteConfession,
+            ),
           const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
+          if (_isPlayerCollapsed)
+            _buildMiniPlayer(pm),
           Expanded(
             child: SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
                 vertical: 8.0,
@@ -246,7 +429,9 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  DateFormat('MMM d, h:mm a').format(widget.confession.createdAt),
+                                  DateFormat(
+                                    'MMM d, h:mm a',
+                                  ).format(widget.confession.createdAt),
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
                                         fontSize: 10,
@@ -270,11 +455,16 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                             const SizedBox(height: 6),
 
                             FutureBuilder<AppUser?>(
-                              future: FirebaseDbService.instance.getUserProfile(widget.confession.authorId),
+                              future: FirebaseDbService.instance.getUserProfile(
+                                widget.confession.authorId,
+                              ),
                               builder: (context, snapshot) {
                                 final author = snapshot.data;
-                                final authorName = author?.displayName ?? 'Anonymous';
-                                final initial = authorName.isNotEmpty ? authorName[0].toUpperCase() : 'C';
+                                final authorName =
+                                    author?.displayName ?? 'Anonymous';
+                                final initial = authorName.isNotEmpty
+                                    ? authorName[0].toUpperCase()
+                                    : 'C';
 
                                 return Row(
                                   children: [
@@ -283,7 +473,9 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                                       height: 24,
                                       decoration: BoxDecoration(
                                         color: AppColors.background,
-                                        borderRadius: BorderRadius.circular(5.0),
+                                        borderRadius: BorderRadius.circular(
+                                          5.0,
+                                        ),
                                       ),
                                       alignment: Alignment.center,
                                       child: Text(
@@ -297,12 +489,14 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                                     const SizedBox(width: 8),
                                     Text(
                                       'by $authorName • ${author?.handle ?? ''}',
-                                      style: Theme.of(context).textTheme.bodyMedium
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
                                           ?.copyWith(fontSize: 12),
                                     ),
                                   ],
                                 );
-                              }
+                              },
                             ),
 
                             const SizedBox(height: 28),
@@ -322,8 +516,8 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                                 thumbShape: const RoundSliderThumbShape(
                                   enabledThumbRadius: 5.0,
                                 ),
-                                overlayColor: AppColors.pureBlack.withOpacity(
-                                  0.1,
+                                overlayColor: AppColors.pureBlack.withValues(
+                                  alpha: 0.1,
                                 ),
                               ),
                               child: Slider(
@@ -372,10 +566,11 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                                 IconButton(
                                   icon: const Icon(Icons.replay_10, size: 28),
                                   onPressed: () {
-                                    if (isActive)
+                                    if (isActive) {
                                       pm.seek(
                                         (progress - 0.05).clamp(0.0, 1.0),
                                       );
+                                    }
                                   },
                                 ),
                                 const SizedBox(width: 14),
@@ -391,23 +586,34 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                                       color: AppColors.pureBlack,
                                       borderRadius: BorderRadius.circular(5.0),
                                     ),
-                                    child: Icon(
-                                      isPlaying
-                                          ? Icons.pause
-                                          : Icons.play_arrow,
-                                      color: AppColors.cardBg,
-                                      size: 32,
-                                    ),
+                                    alignment: Alignment.center,
+                                    child: pm.isBuffering && isActive
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : Icon(
+                                            isPlaying
+                                                ? Icons.pause
+                                                : Icons.play_arrow,
+                                            color: AppColors.cardBg,
+                                            size: 32,
+                                          ),
                                   ),
                                 ),
                                 const SizedBox(width: 14),
                                 IconButton(
                                   icon: const Icon(Icons.forward_10, size: 28),
                                   onPressed: () {
-                                    if (isActive)
+                                    if (isActive) {
                                       pm.seek(
                                         (progress + 0.05).clamp(0.0, 1.0),
                                       );
+                                    }
                                   },
                                 ),
                               ],
@@ -452,8 +658,26 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  _comments.isEmpty
-                      ? Container(
+                  Builder(
+                    builder: (context) {
+                      final displayComments =
+                          _commentsLoading && _comments.isEmpty
+                          ? List.generate(
+                              3,
+                              (i) => Comment(
+                                id: 'mock_$i',
+                                confessionId: widget.confession.id,
+                                authorId: 'user_guest',
+                                content:
+                                    'This is a mock whisper comment for skeleton layout loading...',
+                                createdAt: DateTime.now(),
+                                isAuthor: false,
+                              ),
+                            )
+                          : _comments;
+
+                      if (displayComments.isEmpty) {
+                        return Container(
                           padding: const EdgeInsets.symmetric(vertical: 40),
                           alignment: Alignment.center,
                           child: Text(
@@ -465,25 +689,36 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                                   fontSize: 12,
                                 ),
                           ),
-                        )
-                      : ListView.builder(
+                        );
+                      }
+
+                      return Skeletonizer(
+                        enabled: _commentsLoading,
+                        containersColor: AppColors.cardBg,
+                        effect: const ShimmerEffect(
+                          baseColor: Color(0xFFDFDAD4),
+                          highlightColor: Color(0xFFF0EDE9),
+                        ),
+                        child: ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _comments.length,
+                          itemCount: displayComments.length,
                           itemBuilder: (context, index) {
-                            final comment = _comments[index];
-                            final showDelete =
-                                comment.authorId == AppUser.fallbackUser.id ||
-                                widget.confession.authorId == AppUser.fallbackUser.id;
+                            final comment = displayComments[index];
+                            final currentUserId = AuthStateService.instance.currentUser?.id ?? AppUser.fallbackUser.id;
+                            final showDelete = comment.authorId == currentUserId || widget.confession.authorId == currentUserId;
 
                             return CommentBubble(
                               comment: comment,
-                              onDelete: showDelete
-                                  ? () => _deleteComment(index)
+                              onDelete: showDelete && !_commentsLoading
+                                  ? (c) => _deleteComment(c, index)
                                   : null,
                             );
                           },
                         ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -521,14 +756,14 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                           child: Row(
                             children: [
                               const Icon(
-                                Icons.image_outlined,
+                                Feather.image,
                                 size: 14,
                                 color: AppColors.pureBlack,
                               ),
                               const SizedBox(width: 6),
-                              Text(
-                                _mockSelectedImagePath!,
-                                style: const TextStyle(
+                              const Text(
+                                'Image',
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -554,11 +789,12 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                 Row(
                   children: [
                     if (widget.confession.authorId ==
-                        AppUser.fallbackUser.id) ...[
+                        (AuthStateService.instance.currentUser?.id ??
+                            AppUser.fallbackUser.id)) ...[
                       GestureDetector(
-                        onTap: _simulatePickImage,
+                        onTap: _isUploadingImage ? null : _pickImage,
                         child: const Icon(
-                          Icons.add_photo_alternate_outlined,
+                          Feather.image,
                           color: AppColors.textSecondary,
                           size: 24,
                         ),
@@ -592,18 +828,29 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: _addComment,
+                      onTap: _isUploadingImage ? null : _addComment,
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: AppColors.pureBlack,
                           borderRadius: BorderRadius.circular(5),
                         ),
-                        child: const Icon(
-                          Icons.arrow_upward,
-                          color: Colors.white,
-                          size: 18,
-                        ),
+                        child: _isUploadingImage
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const Icon(
+                                Icons.arrow_upward,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                       ),
                     ),
                   ],

@@ -8,6 +8,10 @@ import 'saved_screen.dart';
 import 'profile_screen.dart';
 import 'create_confession_screen.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/auth_state_service.dart';
+import '../services/firebase/firebase_db_service.dart';
+
 class MainNavigationShell extends StatefulWidget {
   final int initialTab;
   const MainNavigationShell({super.key, this.initialTab = 0});
@@ -16,13 +20,46 @@ class MainNavigationShell extends StatefulWidget {
   State<MainNavigationShell> createState() => _MainNavigationShellState();
 }
 
-class _MainNavigationShellState extends State<MainNavigationShell> {
+class _MainNavigationShellState extends State<MainNavigationShell> with WidgetsBindingObserver {
   late int _currentIndex;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialTab;
+    WidgetsBinding.instance.addObserver(this);
+    _checkEmailStatus();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkEmailStatus();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _checkEmailStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      await user.reload();
+      final updatedUser = FirebaseAuth.instance.currentUser;
+      if (updatedUser != null && updatedUser.email != null) {
+        final newEmail = updatedUser.email!;
+        final currentSessionUser = AuthStateService.instance.currentUser;
+        if (currentSessionUser != null && currentSessionUser.email != newEmail) {
+          final updatedProfile = currentSessionUser.copyWith(email: newEmail);
+          await FirebaseDbService.instance.updateUserProfile(updatedProfile);
+          AuthStateService.instance.setUser(updatedProfile, email: newEmail);
+        }
+      }
+    } catch (_) {}
   }
 
   final List<Widget> _tabs = [

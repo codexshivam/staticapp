@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 import '../services/firebase/firebase_auth_service.dart';
+import '../services/firebase/firebase_db_service.dart';
+import '../services/auth_state_service.dart';
 
 class ChangeEmailScreen extends StatefulWidget {
   final String currentEmail;
@@ -41,10 +43,17 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
         password: password,
       );
 
+      final currentUser = AuthStateService.instance.currentUser;
+      if (currentUser != null) {
+        final updatedUser = currentUser.copyWith(email: newEmail);
+        await FirebaseDbService.instance.updateUserProfile(updatedUser);
+        AuthStateService.instance.setUser(updatedUser, email: newEmail);
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Email updated successfully! Please use this new email to log in next time. ❤️'),
+          SnackBar(
+            content: Text('A verification link has been sent to $newEmail. Please click the link in your email to verify and update your login credentials! ❤️'),
             backgroundColor: AppColors.pureBlack,
             behavior: SnackBarBehavior.floating,
           ),
@@ -125,7 +134,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Changing your email address will immediately affect how you sign in. This will be your new login email for Firebase authentication.',
+                              'Changing your email address will immediately affect how you sign in. This will be your new login email for your account.',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.amber.shade900,

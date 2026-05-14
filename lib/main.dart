@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 
@@ -14,6 +15,17 @@ import 'services/remote_config_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+
+  try {
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'com.confessions.app.channel.audio',
+      androidNotificationChannelName: 'Audio Playback',
+      androidNotificationOngoing: true,
+      androidStopForegroundOnPause: true,
+      androidNotificationIcon: 'mipmap/ic_launcher',
+      notificationColor: const Color(0xFF111111),
+    );
+  } catch (_) {}
 
   try {
     await Firebase.initializeApp(

@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:audio_session/audio_session.dart';
 import '../../models/confession.dart';
 import '../../services/database_service.dart';
 import '../../services/subscription_service.dart';
+import '../../services/auth_state_service.dart';
 
 class PlaybackManager extends ChangeNotifier {
   static final PlaybackManager _instance = PlaybackManager._internal();
@@ -15,6 +17,7 @@ class PlaybackManager extends ChangeNotifier {
 
   Confession? _activeConfession;
   bool _isPlaying = false;
+  bool _isBuffering = false;
   double _progress = 0.0;
   Duration _elapsed = Duration.zero;
   bool _hasIncrementedForCurrentConfession = false;
@@ -67,7 +70,9 @@ class PlaybackManager extends ChangeNotifier {
     });
 
     _playerStateSubscription = _audioPlayer.playerStateStream.listen((state) {
-      _isPlaying = state.playing;
+      _isPlaying = state.playing && state.processingState != ProcessingState.completed;
+      _isBuffering = state.processingState == ProcessingState.loading ||
+          state.processingState == ProcessingState.buffering;
       if (state.processingState == ProcessingState.completed) {
         _isPlaying = false;
         _progress = 0.0;
@@ -80,6 +85,7 @@ class PlaybackManager extends ChangeNotifier {
 
   Confession? get activeConfession => _activeConfession;
   bool get isPlaying => _isPlaying;
+  bool get isBuffering => _isBuffering;
   double get progress => _progress;
   Duration get elapsed => _elapsed;
 
@@ -116,7 +122,7 @@ class PlaybackManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> play(Confession confession, {BuildContext? context}) async {
+  Future<void> play(Confession confession, {BuildContext? context, bool reset = false}) async {
     try {
       final canPlay = await SubscriptionService.instance.canPlayConfession();
       if (!canPlay) {
@@ -124,21 +130,50 @@ class PlaybackManager extends ChangeNotifier {
         return;
       }
 
-      if (_activeConfession?.id != confession.id) {
+      if (_activeConfession?.id != confession.id || reset) {
+        final isDifferent = _activeConfession?.id != confession.id;
         _activeConfession = confession;
         _progress = 0.0;
         _elapsed = Duration.zero;
         _hasIncrementedForCurrentConfession = false;
-        notifyListeners();
 
-        if (confession.audioFilePath != null &&
-            confession.audioFilePath!.isNotEmpty) {
-          await _audioPlayer.setFilePath(confession.audioFilePath!);
-        } else if (confession.audioUrl != null &&
-            confession.audioUrl!.isNotEmpty) {
-          await _audioPlayer.setUrl(confession.audioUrl!);
+        if (isDifferent) {
+          _isBuffering = true;
+          notifyListeners();
+
+          final currentUser = AuthStateService.instance.currentUser;
+          final artistName = currentUser != null
+              ? '${currentUser.displayName} (${currentUser.handle})'
+              : 'Confessions Journal';
+
+          final mediaItem = MediaItem(
+            id: confession.id,
+            title: confession.title,
+            artist: artistName,
+            artUri: Uri.parse('asset:///assets/logo.png'),
+          );
+
+          if (confession.audioFilePath != null &&
+              confession.audioFilePath!.isNotEmpty) {
+            final source = AudioSource.uri(
+              Uri.file(confession.audioFilePath!),
+              tag: mediaItem,
+            );
+            await _audioPlayer.setAudioSource(source);
+          } else if (confession.audioUrl != null &&
+              confession.audioUrl!.isNotEmpty) {
+            final source = AudioSource.uri(
+              Uri.parse(confession.audioUrl!),
+              tag: mediaItem,
+            );
+            await _audioPlayer.setAudioSource(source);
+          } else {
+            _isBuffering = false;
+            debugPrint('No real audio source provided for this confession.');
+          }
         } else {
-          debugPrint('No real audio source provided for this confession.');
+          await _audioPlayer.seek(Duration.zero);
+          notifyListeners();
         }
       }
 
@@ -158,6 +193,8 @@ class PlaybackManager extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
+      _isBuffering = false;
+      notifyListeners();
       debugPrint('Error playing audio: $e');
     }
   }

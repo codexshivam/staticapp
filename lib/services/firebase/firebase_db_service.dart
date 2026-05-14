@@ -314,6 +314,18 @@ class FirebaseDbService {
     });
   }
 
+  Future<void> decrementCommentsCount(String confessionId) async {
+    try {
+      final doc = await _firestore.collection('confessions').doc(confessionId).get();
+      if (doc.exists && doc.data() != null) {
+        final count = doc.data()!['commentsCount'] as int? ?? 1;
+        await _firestore.collection('confessions').doc(confessionId).update({
+          'commentsCount': (count - 1).clamp(0, 99999),
+        });
+      }
+    } catch (_) {}
+  }
+
   Future<void> deleteConfession(String id) async {
     await _firestore.collection('confessions').doc(id).delete();
   }
@@ -325,6 +337,10 @@ class FirebaseDbService {
         .collection('comments')
         .doc(comment.id)
         .set(comment.toJson());
+  }
+
+  Future<void> deleteComment(String id) async {
+    await _firestore.collection('comments').doc(id).delete();
   }
 
   Future<List<Comment>> getComments(String confessionId) async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../core/theme/app_colors.dart';
 import '../core/navigation/playback_manager.dart';
 import '../widgets/section_title.dart';
@@ -49,12 +50,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadInitialData() async {
     try {
-      final confessions = await FirebaseDbService.instance.getConfessions(limit: _pageSize, offset: 0);
+      final confessions = await FirebaseDbService.instance.getConfessions(
+        limit: _pageSize,
+        offset: 0,
+      );
       final currentUser = AuthStateService.instance.currentUser;
       List<Confession> following = [];
       if (currentUser != null && currentUser.followingIds.isNotEmpty) {
         following = await FirebaseDbService.instance.getFollowingConfessions(
-          currentUser.followingIds, limit: _pageSize, offset: 0);
+          currentUser.followingIds,
+          limit: _pageSize,
+          offset: 0,
+        );
       }
       if (mounted) {
         setState(() {
@@ -70,8 +77,14 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          _loaded24Hours = Confession.generateManyMockConfessions(16, forFollowing: false);
-          _loadedFollowing = Confession.generateManyMockConfessions(16, forFollowing: true);
+          _loaded24Hours = Confession.generateManyMockConfessions(
+            16,
+            forFollowing: false,
+          );
+          _loadedFollowing = Confession.generateManyMockConfessions(
+            16,
+            forFollowing: true,
+          );
           _isInitialLoading = false;
         });
       }
@@ -110,7 +123,10 @@ class _HomeScreenState extends State<HomeScreen> {
       List<Confession> more = [];
       if (currentUser != null && currentUser.followingIds.isNotEmpty) {
         more = await FirebaseDbService.instance.getFollowingConfessions(
-          currentUser.followingIds, limit: _pageSize, offset: _offsetFollowing);
+          currentUser.followingIds,
+          limit: _pageSize,
+          offset: _offsetFollowing,
+        );
       }
       if (mounted) {
         setState(() {
@@ -129,7 +145,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isLoadingMore24h || !_hasMore24h) return;
     setState(() => _isLoadingMore24h = true);
     try {
-      final more = await FirebaseDbService.instance.getConfessions(limit: _pageSize, offset: _offset24h);
+      final more = await FirebaseDbService.instance.getConfessions(
+        limit: _pageSize,
+        offset: _offset24h,
+      );
       if (mounted) {
         setState(() {
           _loaded24Hours.addAll(more);
@@ -232,49 +251,64 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
             SizedBox(
               height: 300,
-              child: Builder(
-                builder: (context) {
-                  final chunks = _chunkList(_loaded24Hours, 4);
+              child: Skeletonizer(
+                enabled: _isInitialLoading,
+                containersColor: AppColors.cardBg,
+                effect: const ShimmerEffect(
+                  baseColor: Color(0xFFDFDAD4),
+                  highlightColor: Color(0xFFF0EDE9),
+                ),
+                child: Builder(
+                  builder: (context) {
+                    final displayList =
+                        _isInitialLoading && _loaded24Hours.isEmpty
+                        ? Confession.generateManyMockConfessions(
+                            8,
+                            forFollowing: false,
+                          )
+                        : _loaded24Hours;
+                    final chunks = _chunkList(displayList, 4);
 
-                  return ListView.separated(
-                    controller: _horizontalScrollController,
-                    scrollDirection: Axis.horizontal,
-                    itemCount: chunks.length + (_isLoadingMore24h ? 1 : 0),
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(width: 14),
-                    itemBuilder: (context, index) {
-                      if (index == chunks.length) {
-                        return Container(
-                          width: 80,
-                          alignment: Alignment.center,
-                          child: const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.pureBlack,
+                    return ListView.separated(
+                      controller: _horizontalScrollController,
+                      scrollDirection: Axis.horizontal,
+                      itemCount: chunks.length + (_isLoadingMore24h ? 1 : 0),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 14),
+                      itemBuilder: (context, index) {
+                        if (index == chunks.length) {
+                          return Container(
+                            width: 80,
+                            alignment: Alignment.center,
+                            child: const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.pureBlack,
+                              ),
                             ),
+                          );
+                        }
+
+                        final chunk = chunks[index];
+                        return SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.85,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: chunk.map((conf) {
+                              return ConfessionCard(
+                                confession: conf,
+                                isHorizontal: false,
+                                onTap: () => _openDetail(context, conf),
+                              );
+                            }).toList(),
                           ),
                         );
-                      }
-
-                      final chunk = chunks[index];
-                      return SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.85,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: chunk.map((conf) {
-                            return ConfessionCard(
-                              confession: conf,
-                              isHorizontal: false,
-                              onTap: () => _openDetail(context, conf),
-                            );
-                          }).toList(),
-                        ),
-                      );
-                    },
-                  );
-                },
+                      },
+                    );
+                  },
+                ),
               ),
             ),
 
@@ -285,54 +319,70 @@ class _HomeScreenState extends State<HomeScreen> {
               subtitle: 'Confessions from people you follow',
             ),
             const SizedBox(height: 12),
-            _loadedFollowing.isEmpty
+            _loadedFollowing.isEmpty && !_isInitialLoading
                 ? _buildEmptyFollowingState(context)
                 : SizedBox(
                     height: 300,
-                    child: Builder(
-                      builder: (context) {
-                        final chunks = _chunkList(_loadedFollowing, 4);
+                    child: Skeletonizer(
+                      enabled: _isInitialLoading,
+                      containersColor: AppColors.cardBg,
+                      effect: const ShimmerEffect(
+                        baseColor: Color(0xFFDFDAD4),
+                        highlightColor: Color(0xFFF0EDE9),
+                      ),
+                      child: Builder(
+                        builder: (context) {
+                          final displayList =
+                              _isInitialLoading && _loadedFollowing.isEmpty
+                              ? Confession.generateManyMockConfessions(
+                                  8,
+                                  forFollowing: true,
+                                )
+                              : _loadedFollowing;
+                          final chunks = _chunkList(displayList, 4);
 
-                        return ListView.separated(
-                          controller: _followingScrollController,
-                          scrollDirection: Axis.horizontal,
-                          itemCount:
-                              chunks.length + (_isLoadingMoreFollowing ? 1 : 0),
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(width: 14),
-                          itemBuilder: (context, index) {
-                            if (index == chunks.length) {
-                              return Container(
-                                width: 80,
-                                alignment: Alignment.center,
-                                child: const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.pureBlack,
+                          return ListView.separated(
+                            controller: _followingScrollController,
+                            scrollDirection: Axis.horizontal,
+                            itemCount:
+                                chunks.length +
+                                (_isLoadingMoreFollowing ? 1 : 0),
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(width: 14),
+                            itemBuilder: (context, index) {
+                              if (index == chunks.length) {
+                                return Container(
+                                  width: 80,
+                                  alignment: Alignment.center,
+                                  child: const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.pureBlack,
+                                    ),
                                   ),
+                                );
+                              }
+
+                              final chunk = chunks[index];
+                              return SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.85,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: chunk.map((conf) {
+                                    return ConfessionCard(
+                                      confession: conf,
+                                      isHorizontal: false,
+                                      onTap: () => _openDetail(context, conf),
+                                    );
+                                  }).toList(),
                                 ),
                               );
-                            }
-
-                            final chunk = chunks[index];
-                            return SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.85,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: chunk.map((conf) {
-                                  return ConfessionCard(
-                                    confession: conf,
-                                    isHorizontal: false,
-                                    onTap: () => _openDetail(context, conf),
-                                  );
-                                }).toList(),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                            },
+                          );
+                        },
+                      ),
                     ),
                   ),
 
@@ -455,7 +505,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 2),
                 FutureBuilder<AppUser?>(
-                  future: FirebaseDbService.instance.getUserProfile(conf.authorId),
+                  future: FirebaseDbService.instance.getUserProfile(
+                    conf.authorId,
+                  ),
                   builder: (context, snapshot) {
                     final author = snapshot.data;
                     final authorName = author?.displayName ?? 'Anonymous';
@@ -468,7 +520,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontSize: 12,
                       ),
                     );
-                  }
+                  },
                 ),
 
                 const SizedBox(height: 16),
@@ -623,14 +675,10 @@ class _HomeScreenState extends State<HomeScreen> {
       alignment: Alignment.center,
       child: Column(
         children: [
-          const Icon(
-            Icons.people_outline_rounded,
-            color: AppColors.textSecondary,
-            size: 32,
-          ),
+          const Icon(Feather.users, color: AppColors.textSecondary, size: 32),
           const SizedBox(height: 12),
           Text(
-            "Your feed is quiet...",
+            "Your feed is quiet.",
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -639,7 +687,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            "Follow other users to listen to their voice stories late at night.",
+            "Follow other users to listen to their voice stories",
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontSize: 12,

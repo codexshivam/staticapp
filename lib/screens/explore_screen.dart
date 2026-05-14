@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/search_field.dart';
 import '../widgets/section_title.dart';
@@ -27,6 +28,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<Confession> _displayedConfessions = [];
   List<AppUser> _displayedUsers = [];
   bool _isLoading = false;
+  final Map<String, List<Confession>> _dateCache = {};
 
   @override
   void initState() {
@@ -37,10 +39,24 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _loadConfessionsForDate(String date) async {
+    if (_dateCache.containsKey(date)) {
+      setState(() {
+        _displayedConfessions = _dateCache[date]!;
+        _isLoading = false;
+      });
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final result = await FirebaseDbService.instance.getConfessionsByDate(date);
-      if (mounted) setState(() { _displayedConfessions = result; _isLoading = false; });
+      if (mounted) {
+        setState(() {
+          _displayedConfessions = result;
+          _dateCache[date] = result;
+          _isLoading = false;
+        });
+      }
     } catch (_) {
       final fallback = Confession.mockConfessions.where((c) => _formatDateString(c.createdAt) == date).toList();
       if (mounted) setState(() { _displayedConfessions = fallback; _isLoading = false; });
@@ -154,7 +170,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
-  List<Confession> get _filteredConfessions => _displayedConfessions;
+  List<Confession> get _filteredConfessions => _isLoading && _displayedConfessions.isEmpty
+      ? Confession.generateManyMockConfessions(8, forFollowing: false)
+      : _displayedConfessions;
   List<AppUser> get _filteredUsers => _displayedUsers;
 
   void _openDetail(Confession confession) {
@@ -238,33 +256,41 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       )
                     : SizedBox(
                         height: 300,
-                        child: Builder(
-                          builder: (context) {
-                            final chunks = _chunkList(_filteredConfessions, 4);
-                            return ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: chunks.length,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(width: 14),
-                              itemBuilder: (context, index) {
-                                final chunk = chunks[index];
-                                return SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.85,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: chunk.map((conf) {
-                                      return ConfessionCard(
-                                        confession: conf,
-                                        isHorizontal: false,
-                                        onTap: () => _openDetail(conf),
-                                      );
-                                    }).toList(),
-                                  ),
-                                );
-                              },
-                            );
-                          },
+                        child: Skeletonizer(
+                          enabled: _isLoading,
+                          containersColor: AppColors.cardBg,
+                          effect: const ShimmerEffect(
+                            baseColor: Color(0xFFDFDAD4),
+                            highlightColor: Color(0xFFF0EDE9),
+                          ),
+                          child: Builder(
+                            builder: (context) {
+                              final chunks = _chunkList(_filteredConfessions, 4);
+                              return ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: chunks.length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(width: 14),
+                                itemBuilder: (context, index) {
+                                  final chunk = chunks[index];
+                                  return SizedBox(
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.85,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: chunk.map((conf) {
+                                        return ConfessionCard(
+                                          confession: conf,
+                                          isHorizontal: false,
+                                          onTap: () => _openDetail(conf),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
                         ),
                       ),
               ] else ...[
@@ -376,33 +402,41 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     ? _buildEmptyState('No confessions shared on this day.')
                     : SizedBox(
                         height: 300,
-                        child: Builder(
-                          builder: (context) {
-                            final chunks = _chunkList(_filteredConfessions, 4);
-                            return ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: chunks.length,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(width: 14),
-                              itemBuilder: (context, index) {
-                                final chunk = chunks[index];
-                                return SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.85,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: chunk.map((conf) {
-                                      return ConfessionCard(
-                                        confession: conf,
-                                        isHorizontal: false,
-                                        onTap: () => _openDetail(conf),
-                                      );
-                                    }).toList(),
-                                  ),
-                                );
-                              },
-                            );
-                          },
+                        child: Skeletonizer(
+                          enabled: _isLoading,
+                          containersColor: AppColors.cardBg,
+                          effect: const ShimmerEffect(
+                            baseColor: Color(0xFFDFDAD4),
+                            highlightColor: Color(0xFFF0EDE9),
+                          ),
+                          child: Builder(
+                            builder: (context) {
+                              final chunks = _chunkList(_filteredConfessions, 4);
+                              return ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: chunks.length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(width: 14),
+                                itemBuilder: (context, index) {
+                                  final chunk = chunks[index];
+                                  return SizedBox(
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.85,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: chunk.map((conf) {
+                                        return ConfessionCard(
+                                          confession: conf,
+                                          isHorizontal: false,
+                                          onTap: () => _openDetail(conf),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
                         ),
                       ),
               ],

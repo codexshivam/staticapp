@@ -151,16 +151,15 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
   }
 
   Future<void> _publishConfession() async {
-    final title = _titleController.text.trim();
+    String title = _titleController.text.trim();
     if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a title for your confession ❤️'),
-          backgroundColor: AppColors.accentRed,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
+      final now = DateTime.now();
+      final monthNames = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      final month = monthNames[now.month - 1];
+      title = 'Confession made on ${now.day} $month';
     }
 
     final currentUser = AuthStateService.instance.currentUser;

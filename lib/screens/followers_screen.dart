@@ -35,8 +35,12 @@ class _FollowersScreenState extends State<FollowersScreen> {
   Future<void> _loadUsers() async {
     setState(() => _isLoading = true);
     try {
-      final followers = await FirebaseDbService.instance.getUsersByIds(widget.user.followerIds);
-      final following = await FirebaseDbService.instance.getUsersByIds(widget.user.followingIds);
+      final followers = await FirebaseDbService.instance.getUsersByIds(
+        widget.user.followerIds,
+      );
+      final following = await FirebaseDbService.instance.getUsersByIds(
+        widget.user.followingIds,
+      );
       if (mounted) {
         setState(() {
           _followers = followers;
@@ -51,9 +55,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
 
   void _navigateToProfile(AppUser otherUser) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ProfileScreen(user: otherUser),
-      ),
+      MaterialPageRoute(builder: (context) => ProfileScreen(user: otherUser)),
     );
   }
 
@@ -95,7 +97,11 @@ class _FollowersScreenState extends State<FollowersScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.pureBlack, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.pureBlack,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -114,7 +120,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 10),
-            
+
             Container(
               height: 48,
               padding: const EdgeInsets.all(4),
@@ -131,7 +137,9 @@ class _FollowersScreenState extends State<FollowersScreen> {
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: _showFollowers ? AppColors.pureBlack : Colors.transparent,
+                          color: _showFollowers
+                              ? AppColors.pureBlack
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(5.0),
                         ),
                         child: Text(
@@ -139,7 +147,9 @@ class _FollowersScreenState extends State<FollowersScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: _showFollowers ? Colors.white : AppColors.textSecondary,
+                            color: _showFollowers
+                                ? Colors.white
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -151,7 +161,9 @@ class _FollowersScreenState extends State<FollowersScreen> {
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: !_showFollowers ? AppColors.pureBlack : Colors.transparent,
+                          color: !_showFollowers
+                              ? AppColors.pureBlack
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(5.0),
                         ),
                         child: Text(
@@ -159,7 +171,9 @@ class _FollowersScreenState extends State<FollowersScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: !_showFollowers ? Colors.white : AppColors.textSecondary,
+                            color: !_showFollowers
+                                ? Colors.white
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -173,23 +187,30 @@ class _FollowersScreenState extends State<FollowersScreen> {
 
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.pureBlack))
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.pureBlack,
+                      ),
+                    )
                   : activeList.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                          itemCount: activeList.length,
-                          itemBuilder: (context, index) {
-                            final u = activeList[index];
-                            final isFollowing = _following.any((user) => user.id == u.id);
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      itemCount: activeList.length,
+                      itemBuilder: (context, index) {
+                        final u = activeList[index];
+                        final isFollowing = _following.any(
+                          (user) => user.id == u.id,
+                        );
 
-                            return UserListTile(
-                              user: u,
-                              isFollowing: isFollowing,
-                              onTap: () => _navigateToProfile(u),
-                              onActionTap: () => _toggleFollowUser(u, index, _showFollowers),
-                            );
-                          },
-                        ),
+                        return UserListTile(
+                          user: u,
+                          isFollowing: isFollowing,
+                          onTap: () => _navigateToProfile(u),
+                          onActionTap: () =>
+                              _toggleFollowUser(u, index, _showFollowers),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -202,7 +223,11 @@ class _FollowersScreenState extends State<FollowersScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.people_outline, color: AppColors.textSecondary, size: 36),
+          const Icon(
+            Icons.people_outline,
+            color: AppColors.textSecondary,
+            size: 36,
+          ),
           const SizedBox(height: 12),
           Text(
             _showFollowers ? 'no followers yet.' : 'not following anyone yet.',
@@ -213,8 +238,8 @@ class _FollowersScreenState extends State<FollowersScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            _showFollowers 
-                ? 'some voices take time to attract listeners.' 
+            _showFollowers
+                ? 'some voices take time to attract listeners.'
                 : 'explore diaries and follow pages that touch you.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
