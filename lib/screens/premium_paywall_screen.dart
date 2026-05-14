@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/app_colors.dart';
+import '../services/remote_config_service.dart';
 import '../services/subscription_service.dart';
 
 class PremiumPaywallScreen extends StatefulWidget {
@@ -46,7 +48,8 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
   Future<void> _fetchOfferings() async {
     try {
       final offerings = await Purchases.getOfferings();
-      if (offerings.current != null && offerings.current!.availablePackages.isNotEmpty) {
+      if (offerings.current != null &&
+          offerings.current!.availablePackages.isNotEmpty) {
         _packages = offerings.current!.availablePackages;
         _selectedPackage = _packages.firstWhere(
           (pkg) => pkg.packageType == PackageType.annual,
@@ -54,7 +57,9 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
         );
       }
     } catch (e) {
-      debugPrint('No live RevenueCat offerings found, using rich mock packages: $e');
+      debugPrint(
+        'No live RevenueCat offerings found, using rich mock packages: $e',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -81,7 +86,9 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('🎉 Welcome to TheStatic Pro! All unlimited features unlocked.'),
+            content: Text(
+              '🎉 Welcome to TheStatic Pro! All unlimited features unlocked.',
+            ),
             backgroundColor: AppColors.pureBlack,
             behavior: SnackBarBehavior.floating,
           ),
@@ -92,7 +99,7 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Purchase canceled / failed: $e'),
+            content: Text('Purchase canceled / failed'),
             backgroundColor: AppColors.accentRed,
             behavior: SnackBarBehavior.floating,
           ),
@@ -151,6 +158,20 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
     }
   }
 
+  Future<void> _launchRefundPolicy() async {
+    final url = RemoteConfigService.instance.refundPolicyUrl;
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open refund policy url')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,14 +191,25 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
         actions: [
           TextButton(
             onPressed: _isPurchasing ? null : _handleRestore,
-            child: const Text('Restore', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Restore',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.pureBlack))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.pureBlack),
+            )
           : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 12.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -188,7 +220,11 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                         color: AppColors.pureBlack,
                         borderRadius: BorderRadius.circular(20.0),
                       ),
-                      child: const Icon(Feather.award, color: Colors.amber, size: 40),
+                      child: const Icon(
+                        Feather.award,
+                        color: Colors.amber,
+                        size: 40,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -204,7 +240,7 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Elevate your listening experience with limitless access to all anonymous whisper rooms and attached visual confessions.',
+                    'Elevate your listening experience with limitless access to all confessions.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -215,12 +251,24 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                   const SizedBox(height: 36),
 
                   // Feature Checklist
-                  _buildFeatureRow(Feather.heart, 'Support an Individual Developer', 'Directly support the journey of an independent developer building and maintaining this platform.'),
+                  _buildFeatureRow(
+                    Feather.heart,
+                    'Support Us',
+                    'Directly support the journey us on building and maintaining this platform.',
+                  ),
                   const SizedBox(height: 16),
-                  _buildFeatureRow(Feather.shield, 'Zero Intrusive Ads', 'Enjoy a clean, focused, and beautifully crafted authentic audio experience with absolutely no ads.'),
+                  _buildFeatureRow(
+                    Feather.shield,
+                    'Zero Intrusive Ads',
+                    'Enjoy a clean, focused, and beautifully crafted authentic audio experience with absolutely no ads.',
+                  ),
                   const SizedBox(height: 16),
-                  _buildFeatureRow(Feather.zap, 'Fund Future Innovation', 'Help fuel the creation of new features, better audio rendering, and advanced privacy controls.'),
-                  
+                  _buildFeatureRow(
+                    Feather.zap,
+                    'Fund Future Innovation',
+                    'Help fuel the creation of new features, better audio rendering, and advanced privacy controls.',
+                  ),
+
                   const SizedBox(height: 36),
                   const Text(
                     'Choose Your Plan',
@@ -256,18 +304,46 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                         ? const SizedBox(
                             height: 22,
                             width: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2.5, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
                           )
                         : const Text(
                             'Continue & Subscribe',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
                     'Subscriptions renew automatically. Cancel anytime in your App Store settings prior to renewal.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: GestureDetector(
+                      onTap: _launchRefundPolicy,
+                      child: const Text(
+                        'Refund & Cancellation Policy',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.pureBlack,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 32),
                 ],
@@ -285,7 +361,13 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
           decoration: BoxDecoration(
             color: AppColors.cardBg,
             borderRadius: BorderRadius.circular(10.0),
-            boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 4, offset: Offset(0, 2))],
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
           child: Icon(icon, color: AppColors.pureBlack, size: 22),
         ),
@@ -294,9 +376,23 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.pureBlack)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.pureBlack,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(subtitle, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.3)),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                  height: 1.3,
+                ),
+              ),
             ],
           ),
         ),
@@ -318,7 +414,15 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
             color: isSelected ? AppColors.pureBlack : Colors.grey.shade300,
             width: isSelected ? 2.0 : 1.0,
           ),
-          boxShadow: isSelected ? [const BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: Offset(0, 4))] : [],
+          boxShadow: isSelected
+              ? [
+                  const BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ]
+              : [],
         ),
         child: Row(
           children: [
@@ -333,20 +437,33 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    pkg.packageType == PackageType.annual ? 'Annual VIP' : 'Monthly Pass',
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.pureBlack),
+                    pkg.packageType == PackageType.annual
+                        ? 'Annual VIP'
+                        : 'Monthly Pass',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.pureBlack,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     pkg.storeProduct.description,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
             Text(
               pkg.storeProduct.priceString,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.pureBlack),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.pureBlack,
+              ),
             ),
           ],
         ),
@@ -368,7 +485,15 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
             color: isSelected ? AppColors.pureBlack : Colors.grey.shade300,
             width: isSelected ? 2.0 : 1.0,
           ),
-          boxShadow: isSelected ? [const BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: Offset(0, 4))] : [],
+          boxShadow: isSelected
+              ? [
+                  const BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ]
+              : [],
         ),
         child: Row(
           children: [
@@ -384,12 +509,19 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
                 children: [
                   Text(
                     pkg['title']!,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.pureBlack),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.pureBlack,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     pkg['description']!,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -399,11 +531,18 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
               children: [
                 Text(
                   pkg['price']!,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.pureBlack),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.pureBlack,
+                  ),
                 ),
                 Text(
                   pkg['period']!,
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),

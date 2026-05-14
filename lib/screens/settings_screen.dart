@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/settings_tile.dart';
@@ -340,7 +341,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                         }
                       } else {
                         final result = await SubscriptionService.instance.showPaywall();
-                        if (result != null && mounted) {
+                        if (result == PaywallResult.purchased && mounted) {
                           setState(() => _isPro = SubscriptionService.instance.isPro);
                         }
                       }

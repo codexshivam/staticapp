@@ -36,14 +36,14 @@ class LegalDocumentScreen extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
         child: docType == LegalDocType.privacyPolicy
-            ? _PrivacyPolicyContent(context)
-            : _TermsOfServiceContent(context),
+            ? _privacyPolicyContent(context)
+            : _termsOfServiceContent(context),
       ),
     );
   }
 }
 
-Widget _PrivacyPolicyContent(BuildContext context) {
+Widget _privacyPolicyContent(BuildContext context) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -92,7 +92,7 @@ Widget _PrivacyPolicyContent(BuildContext context) {
   );
 }
 
-Widget _TermsOfServiceContent(BuildContext context) {
+Widget _termsOfServiceContent(BuildContext context) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [

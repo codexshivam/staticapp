@@ -97,8 +97,9 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     try {
       final savedIds = List<String>.from(currentUser.savedConfessionIds);
       if (newSaved) {
-        if (!savedIds.contains(widget.confession.id))
+        if (!savedIds.contains(widget.confession.id)) {
           savedIds.add(widget.confession.id);
+        }
       } else {
         savedIds.remove(widget.confession.id);
       }
@@ -172,7 +173,9 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
       _mockSelectedImagePath = null;
       _isUploadingImage = false;
     });
-    FocusScope.of(context).unfocus();
+    if (mounted) {
+      FocusScope.of(context).unfocus();
+    }
 
     try {
       await FirebaseDbService.instance.createComment(newComment);

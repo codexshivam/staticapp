@@ -91,10 +91,7 @@ class SubscriptionService {
     } catch (_) {}
   }
 
-  bool get isPro {
-    if (!RemoteConfigService.instance.isSubscriptionEnabled) return true;
-    return _isPro;
-  }
+  bool get isPro => _isPro;
 
   Stream<bool> get proStatusStream => _proStatusController.stream;
 

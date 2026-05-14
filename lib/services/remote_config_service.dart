@@ -16,6 +16,7 @@ class RemoteConfigService {
       ));
       await _remoteConfig.setDefaults(const {
         'is_subscription_enabled': true,
+        'refund_policy_url': 'https://support.google.com/googleplay/answer/2479637',
       });
       await _remoteConfig.fetchAndActivate();
       debugPrint('RemoteConfigService initialized');
@@ -29,6 +30,15 @@ class RemoteConfigService {
       return _remoteConfig.getBool('is_subscription_enabled');
     } catch (_) {
       return true;
+    }
+  }
+
+  String get refundPolicyUrl {
+    try {
+      final url = _remoteConfig.getString('refund_policy_url');
+      return url.isNotEmpty ? url : 'https://support.google.com/googleplay/answer/2479637';
+    } catch (_) {
+      return 'https://support.google.com/googleplay/answer/2479637';
     }
   }
 
