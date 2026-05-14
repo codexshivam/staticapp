@@ -33,6 +33,19 @@ class AppUser {
     this.followerIds = const [],
   });
 
+  static AppUser fallbackUser = const AppUser(
+    id: 'user_guest',
+    displayName: 'Guest User',
+    email: 'guest@example.com',
+    handle: '@guest',
+    bio: 'Listening to raw stories and sharing my voice.',
+    followersCount: 0,
+    followingCount: 0,
+    confessionCount: 0,
+    upiId: '',
+    links: [],
+  );
+
   String get initials {
     if (displayName.isEmpty) return '??';
     final parts = displayName.trim().split(' ');

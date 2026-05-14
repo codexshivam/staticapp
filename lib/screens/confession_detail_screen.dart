@@ -6,10 +6,8 @@ import '../core/theme/app_colors.dart';
 import '../core/navigation/playback_manager.dart';
 import '../models/confession.dart';
 import '../models/comment.dart';
-import '../mock_data/sample_data.dart';
 import '../services/firebase/firebase_db_service.dart';
 import '../services/auth_state_service.dart';
-import '../services/user_cache_service.dart';
 import '../models/user.dart';
 import '../widgets/comment_bubble.dart';
 
@@ -32,9 +30,9 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
   @override
   void initState() {
     super.initState();
-    final currentUser = AuthStateService.instance.currentUser;
-    final savedIds = currentUser?.savedConfessionIds ?? [];
-    _isSaved = savedIds.contains(widget.confession.id);
+    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+    final savedIds = currentUser.savedConfessionIds;
+    _isSaved = savedIds.contains(widget.confession.id) || widget.confession.isSaved;
 
     _loadComments();
 
@@ -54,9 +52,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
           _commentsLoading = false;
         });
     } catch (_) {
-      final fallback = List<Comment>.from(
-        SampleData.mockComments[widget.confession.id] ?? [],
-      );
+      final fallback = <Comment>[];
       if (mounted)
         setState(() {
           _comments = fallback;
@@ -72,8 +68,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
   }
 
   Future<void> _toggleSave() async {
-    final currentUser = AuthStateService.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
 
     final newSaved = !_isSaved;
     setState(() => _isSaved = newSaved);
@@ -81,16 +76,20 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     try {
       final savedIds = List<String>.from(currentUser.savedConfessionIds);
       if (newSaved) {
-        savedIds.add(widget.confession.id);
+        if (!savedIds.contains(widget.confession.id)) savedIds.add(widget.confession.id);
       } else {
         savedIds.remove(widget.confession.id);
       }
       final updatedUser = currentUser.copyWith(savedConfessionIds: savedIds);
-      await FirebaseDbService.instance.updateSavedConfessions(
-        currentUser.id,
-        savedIds,
-      );
-      AuthStateService.instance.updateUser(updatedUser);
+      if (AuthStateService.instance.currentUser != null) {
+        await FirebaseDbService.instance.updateSavedConfessions(
+          currentUser.id,
+          savedIds,
+        );
+        AuthStateService.instance.updateUser(updatedUser);
+      } else {
+        AppUser.fallbackUser = updatedUser;
+      }
     } catch (_) {
       if (mounted) setState(() => _isSaved = !newSaved);
     }
@@ -268,7 +267,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                             const SizedBox(height: 6),
 
                             FutureBuilder<AppUser?>(
-                              future: UserCacheService.instance.getUser(widget.confession.authorId),
+                              future: FirebaseDbService.instance.getUserProfile(widget.confession.authorId),
                               builder: (context, snapshot) {
                                 final author = snapshot.data;
                                 final authorName = author?.displayName ?? 'Anonymous';
@@ -471,8 +470,8 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                           itemBuilder: (context, index) {
                             final comment = _comments[index];
                             final showDelete =
-                                comment.authorId == SampleData.currentUser.id ||
-                                widget.confession.authorId == SampleData.currentUser.id;
+                                comment.authorId == AppUser.fallbackUser.id ||
+                                widget.confession.authorId == AppUser.fallbackUser.id;
 
                             return CommentBubble(
                               comment: comment,
@@ -552,7 +551,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                 Row(
                   children: [
                     if (widget.confession.authorId ==
-                        SampleData.currentUser.id) ...[
+                        AppUser.fallbackUser.id) ...[
                       GestureDetector(
                         onTap: _simulatePickImage,
                         child: const Icon(

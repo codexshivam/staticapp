@@ -3,7 +3,7 @@ import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/confession_card.dart';
-import '../mock_data/sample_data.dart';
+import '../models/user.dart';
 import '../models/confession.dart';
 import '../core/navigation/playback_manager.dart';
 import '../services/firebase/firebase_db_service.dart';
@@ -35,15 +35,12 @@ class _SavedScreenState extends State<SavedScreen> {
   }
 
   Future<void> _loadSavedConfessions() async {
-    final currentUser = AuthStateService.instance.currentUser;
-    if (currentUser == null) {
-      return;
-    }
+    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
     try {
       final saved = await FirebaseDbService.instance.getSavedConfessions(currentUser.savedConfessionIds);
-      if (mounted) setState(() { _savedConfessions = saved; });
+      if (mounted) setState(() { _savedConfessions = saved.isNotEmpty ? saved : Confession.mockConfessions.where((c) => currentUser.savedConfessionIds.contains(c.id) || c.isSaved).toList(); });
     } catch (_) {
-      final fallback = SampleData.mockConfessions.where((c) => c.isSaved).toList();
+      final fallback = Confession.mockConfessions.where((c) => currentUser.savedConfessionIds.contains(c.id) || c.isSaved).toList();
       if (mounted) setState(() { _savedConfessions = fallback; });
     }
   }
@@ -70,13 +67,24 @@ class _SavedScreenState extends State<SavedScreen> {
     setState(() {
       _savedConfessions.removeAt(index);
 
-      final idxInGlobal = SampleData.mockConfessions.indexWhere(
+      final idxInGlobal = Confession.mockConfessions.indexWhere(
         (c) => c.id == conf.id,
       );
       if (idxInGlobal != -1) {
-        SampleData.mockConfessions[idxInGlobal] = SampleData
+        Confession.mockConfessions[idxInGlobal] = Confession
             .mockConfessions[idxInGlobal]
             .copyWith(isSaved: false);
+      }
+
+      final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+      final savedIds = List<String>.from(currentUser.savedConfessionIds);
+      savedIds.remove(conf.id);
+      final updatedUser = currentUser.copyWith(savedConfessionIds: savedIds);
+      if (AuthStateService.instance.currentUser != null) {
+        AuthStateService.instance.updateUser(updatedUser);
+        FirebaseDbService.instance.updateSavedConfessions(currentUser.id, savedIds);
+      } else {
+        AppUser.fallbackUser = updatedUser;
       }
     });
 

@@ -3,7 +3,6 @@ import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import '../core/theme/app_colors.dart';
 import '../models/user.dart';
 import '../models/confession.dart';
-import '../mock_data/sample_data.dart';
 import '../widgets/section_title.dart';
 import '../widgets/confession_card.dart';
 import '../services/firebase/firebase_db_service.dart';
@@ -37,17 +36,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _loadUserState() {
     final currentUser = AuthStateService.instance.currentUser;
-    _activeUser = widget.user ?? currentUser ?? SampleData.currentUser;
+    _activeUser = widget.user ?? currentUser ?? AppUser.fallbackUser;
     _isMe = currentUser != null && _activeUser.id == currentUser.id;
   }
 
   Future<void> _loadUserConfessions() async {
+    if (_activeUser.id.isEmpty) return;
     try {
       final confessions = await FirebaseDbService.instance.getConfessionsByUser(_activeUser.id);
       if (mounted) setState(() => _userConfessions = confessions);
     } catch (_) {
       if (mounted) {
-        setState(() => _userConfessions = SampleData.mockConfessions
+        setState(() => _userConfessions = Confession.mockConfessions
             .where((c) => c.authorId == _activeUser.id).toList());
       }
     }
@@ -65,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => FollowersScreen(
-          user: _isMe ? SampleData.currentUser : _activeUser,
+          user: _isMe ? AppUser.fallbackUser : _activeUser,
           initialShowFollowers: showFollowers,
         ),
       ),

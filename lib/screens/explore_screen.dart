@@ -6,7 +6,6 @@ import '../widgets/search_field.dart';
 import '../widgets/section_title.dart';
 import '../widgets/confession_card.dart';
 import '../widgets/user_list_tile.dart';
-import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
 import '../models/user.dart';
 import '../services/firebase/firebase_db_service.dart';
@@ -43,7 +42,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       final result = await FirebaseDbService.instance.getConfessionsByDate(date);
       if (mounted) setState(() { _displayedConfessions = result; _isLoading = false; });
     } catch (_) {
-      final fallback = SampleData.mockConfessions.where((c) => _formatDateString(c.createdAt) == date).toList();
+      final fallback = Confession.mockConfessions.where((c) => _formatDateString(c.createdAt) == date).toList();
       if (mounted) setState(() { _displayedConfessions = fallback; _isLoading = false; });
     }
   }
@@ -57,14 +56,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
     setState(() => _isLoading = true);
     try {
       final confessions = await FirebaseDbService.instance.searchConfessions(query);
-      final users = SampleData.mockUsers.where((u) {
+      final users = [AppUser.fallbackUser].where((u) {
         final q = query.toLowerCase();
         return u.displayName.toLowerCase().contains(q) || u.handle.toLowerCase().contains(q);
       }).toList();
       if (mounted) setState(() { _displayedConfessions = confessions; _displayedUsers = users; _isLoading = false; });
     } catch (_) {
       final q = query.toLowerCase();
-      final fallback = SampleData.mockConfessions.where((c) =>
+      final fallback = Confession.mockConfessions.where((c) =>
         c.title.toLowerCase().contains(q)).toList();
       if (mounted) setState(() { _displayedConfessions = fallback; _isLoading = false; });
     }

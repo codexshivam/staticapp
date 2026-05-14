@@ -5,7 +5,6 @@ import 'package:record/record.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../core/theme/app_colors.dart';
-import '../mock_data/sample_data.dart';
 import '../models/confession.dart';
 import '../services/firebase/firebase_db_service.dart';
 import '../services/firebase/firebase_storage_service.dart';
@@ -209,7 +208,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
         createdAt: DateTime.now(),
         durationString: _formatDuration(_secondsRecorded),
         durationSeconds: _secondsRecorded == 0 ? 120 : _secondsRecorded,
-        waveformData: SampleData.generateWaveform(35),
+        waveformData: Confession.generateWaveform(35),
         commentsCount: 0,
         isSaved: false,
         audioUrl: audioUrl,

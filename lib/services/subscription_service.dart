@@ -72,7 +72,7 @@ class SubscriptionService {
       return null;
     }
     try {
-      final paywallResult = await RevenueCatUI.presentPaywallIfNeeded('TheStatic Pro');
+      final paywallResult = await RevenueCatUI.presentPaywall();
       await _checkCustomerInfo();
       return paywallResult;
     } catch (e) {
@@ -120,23 +120,39 @@ class SubscriptionService {
       final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
       if (profile.lastPlaybackDate == currentDate) {
-        if (profile.dailyPlaybackCount >= 1) {
-          return false;
-        } else {
-          final updated = profile.copyWith(dailyPlaybackCount: 1);
-          AuthStateService.instance.updateUser(updated);
-          await FirebaseDbService.instance.updateUserProfile(updated);
-          return true;
-        }
+        return profile.dailyPlaybackCount < 1;
       } else {
-        final updated = profile.copyWith(lastPlaybackDate: currentDate, dailyPlaybackCount: 1);
-        AuthStateService.instance.updateUser(updated);
-        await FirebaseDbService.instance.updateUserProfile(updated);
         return true;
       }
     } catch (e) {
       debugPrint('Offline/Error limit bypass grace: $e');
       return true;
+    }
+  }
+
+  Future<void> incrementDailyPlaybackCount() async {
+    if (isPro || !RemoteConfigService.instance.isSubscriptionEnabled) return;
+
+    try {
+      final currentUser = AuthStateService.instance.currentUser;
+      if (currentUser == null) return;
+
+      AppUser? profile = await FirebaseDbService.instance.getUserProfile(currentUser.id);
+      profile ??= currentUser;
+
+      final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      if (profile.lastPlaybackDate == currentDate) {
+        final updated = profile.copyWith(dailyPlaybackCount: profile.dailyPlaybackCount + 1);
+        AuthStateService.instance.updateUser(updated);
+        await FirebaseDbService.instance.updateUserProfile(updated);
+      } else {
+        final updated = profile.copyWith(lastPlaybackDate: currentDate, dailyPlaybackCount: 1);
+        AuthStateService.instance.updateUser(updated);
+        await FirebaseDbService.instance.updateUserProfile(updated);
+      }
+    } catch (e) {
+      debugPrint('Error incrementing playback count: $e');
     }
   }
 

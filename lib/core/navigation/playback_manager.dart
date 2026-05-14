@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
 import '../../models/confession.dart';
-import '../../mock_data/sample_data.dart';
 import '../../services/database_service.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/premium_paywall_dialog.dart';
@@ -19,6 +18,7 @@ class PlaybackManager extends ChangeNotifier {
   bool _isPlaying = false;
   double _progress = 0.0;
   Duration _elapsed = Duration.zero;
+  bool _hasIncrementedForCurrentConfession = false;
 
   StreamSubscription? _positionSubscription;
   StreamSubscription? _playerStateSubscription;
@@ -39,7 +39,7 @@ class PlaybackManager extends ChangeNotifier {
       final historyIds = await DatabaseService.instance.getHistoryIds();
       _history.clear();
       for (final id in historyIds) {
-        final confession = SampleData.mockConfessions
+        final confession = Confession.mockConfessions
             .cast<Confession?>()
             .firstWhere((c) => c?.id == id, orElse: () => null);
         if (confession != null) {
@@ -59,6 +59,10 @@ class PlaybackManager extends ChangeNotifier {
           _audioPlayer.duration!.inMilliseconds > 0) {
         _progress =
             position.inMilliseconds / _audioPlayer.duration!.inMilliseconds;
+      }
+      if (!_hasIncrementedForCurrentConfession && position.inSeconds >= 10) {
+        _hasIncrementedForCurrentConfession = true;
+        SubscriptionService.instance.incrementDailyPlaybackCount();
       }
       notifyListeners();
     });
@@ -127,6 +131,7 @@ class PlaybackManager extends ChangeNotifier {
         _activeConfession = confession;
         _progress = 0.0;
         _elapsed = Duration.zero;
+        _hasIncrementedForCurrentConfession = false;
         notifyListeners();
 
         if (confession.audioFilePath != null &&
@@ -145,6 +150,12 @@ class PlaybackManager extends ChangeNotifier {
         _audioPlayer.play();
       } else {
         _isPlaying = true;
+        Future.delayed(const Duration(seconds: 10), () {
+          if (_isPlaying && _activeConfession?.id == confession.id && !_hasIncrementedForCurrentConfession) {
+            _hasIncrementedForCurrentConfession = true;
+            SubscriptionService.instance.incrementDailyPlaybackCount();
+          }
+        });
         notifyListeners();
       }
     } catch (e) {

@@ -5,7 +5,7 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/settings_tile.dart';
-import '../mock_data/sample_data.dart';
+import '../models/user.dart';
 import '../services/firebase/firebase_auth_service.dart';
 import '../services/auth_state_service.dart';
 import '../services/subscription_service.dart';
@@ -37,8 +37,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadProStatus() async {
+    final currentUser = AuthStateService.instance.currentUser;
     await SubscriptionService.instance.initialize(
-      userId: SampleData.currentUser.id,
+      userId: currentUser?.id ?? AppUser.fallbackUser.id,
     );
     if (mounted) {
       setState(() => _isPro = SubscriptionService.instance.isPro);

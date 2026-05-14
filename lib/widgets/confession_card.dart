@@ -4,7 +4,7 @@ import '../core/theme/app_colors.dart';
 import '../core/navigation/playback_manager.dart';
 import '../models/confession.dart';
 import '../models/user.dart';
-import '../services/user_cache_service.dart';
+import '../services/firebase/firebase_db_service.dart';
 
 class ConfessionCard extends StatelessWidget {
   final Confession confession;
@@ -101,7 +101,7 @@ class ConfessionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: FutureBuilder<AppUser?>(
-        future: UserCacheService.instance.getUser(confession.authorId),
+        future: FirebaseDbService.instance.getUserProfile(confession.authorId),
         builder: (context, snapshot) {
           final author = snapshot.data;
           final authorName = author?.displayName ?? 'Anonymous';
@@ -151,7 +151,7 @@ class ConfessionCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(5.0),
       child: FutureBuilder<AppUser?>(
-        future: UserCacheService.instance.getUser(confession.authorId),
+        future: FirebaseDbService.instance.getUserProfile(confession.authorId),
         builder: (context, snapshot) {
           final author = snapshot.data;
           final authorName = author?.displayName ?? 'Anonymous';

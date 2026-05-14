@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/user.dart';
 import '../../models/confession.dart';
@@ -7,7 +8,10 @@ class FirebaseDbService {
   static final FirebaseDbService instance = FirebaseDbService._init();
   FirebaseDbService._init();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instanceFor(
+    app: Firebase.app(),
+    databaseId: 'default',
+  );
 
   // ─── USER PROFILES ────────────────────────────────────────────────────────
 
@@ -19,17 +23,19 @@ class FirebaseDbService {
     try {
       final doc = await _firestore.collection('users').doc(userId).get();
       if (!doc.exists || doc.data() == null) return null;
-      return AppUser.fromJson(doc.data()!);
+      final data = doc.data()!;
+      data['id'] = doc.id;
+      return AppUser.fromJson(data);
     } catch (_) {
       return null;
     }
   }
 
   Future<void> updateUserProfile(AppUser user) async {
-    await _firestore.collection('users').doc(user.id).set(
-      user.toJson(),
-      SetOptions(merge: true),
-    );
+    await _firestore
+        .collection('users')
+        .doc(user.id)
+        .set(user.toJson(), SetOptions(merge: true));
   }
 
   Future<bool> checkHandleAvailable(String handle) async {
@@ -41,7 +47,10 @@ class FirebaseDbService {
     return snapshot.docs.isEmpty;
   }
 
-  Future<void> updateSavedConfessions(String userId, List<String> savedIds) async {
+  Future<void> updateSavedConfessions(
+    String userId,
+    List<String> savedIds,
+  ) async {
     await _firestore.collection('users').doc(userId).update({
       'savedConfessionIds': savedIds,
     });
@@ -51,8 +60,14 @@ class FirebaseDbService {
     required String currentUserId,
     required String targetUserId,
   }) async {
-    final currentDoc = await _firestore.collection('users').doc(currentUserId).get();
-    final targetDoc = await _firestore.collection('users').doc(targetUserId).get();
+    final currentDoc = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .get();
+    final targetDoc = await _firestore
+        .collection('users')
+        .doc(targetUserId)
+        .get();
 
     if (!currentDoc.exists || !targetDoc.exists) return;
 
@@ -76,8 +91,14 @@ class FirebaseDbService {
     required String currentUserId,
     required String targetUserId,
   }) async {
-    final currentDoc = await _firestore.collection('users').doc(currentUserId).get();
-    final targetDoc = await _firestore.collection('users').doc(targetUserId).get();
+    final currentDoc = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .get();
+    final targetDoc = await _firestore
+        .collection('users')
+        .doc(targetUserId)
+        .get();
 
     if (!currentDoc.exists || !targetDoc.exists) return;
 
@@ -85,11 +106,15 @@ class FirebaseDbService {
     final targetUser = AppUser.fromJson(targetDoc.data()!);
 
     await _firestore.collection('users').doc(currentUserId).update({
-      'followingIds': currentUser.followingIds.where((id) => id != targetUserId).toList(),
+      'followingIds': currentUser.followingIds
+          .where((id) => id != targetUserId)
+          .toList(),
       'followingCount': (currentUser.followingCount - 1).clamp(0, 9999),
     });
     await _firestore.collection('users').doc(targetUserId).update({
-      'followerIds': targetUser.followerIds.where((id) => id != currentUserId).toList(),
+      'followerIds': targetUser.followerIds
+          .where((id) => id != currentUserId)
+          .toList(),
       'followersCount': (targetUser.followersCount - 1).clamp(0, 9999),
     });
   }
@@ -103,19 +128,30 @@ class FirebaseDbService {
         .set(confession.toJson());
   }
 
-  Future<List<Confession>> getConfessions({int limit = 25, int offset = 0}) async {
+  Future<List<Confession>> getConfessions({
+    int limit = 25,
+    int offset = 0,
+  }) async {
     final snapshot = await _firestore
         .collection('confessions')
         .orderBy('createdAt', descending: true)
         .limit(limit + offset)
         .get();
 
-    final all = snapshot.docs.map((doc) => Confession.fromJson(doc.data())).toList();
+    final all = snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return Confession.fromJson(data);
+    }).toList();
     if (offset >= all.length) return [];
     return all.sublist(offset);
   }
 
-  Future<List<Confession>> getConfessionsByUser(String userId, {int limit = 50}) async {
+  Future<List<Confession>> getConfessionsByUser(
+    String userId, {
+    int limit = 50,
+  }) async {
+    if (userId.isEmpty) return [];
     final snapshot = await _firestore
         .collection('confessions')
         .where('authorId', isEqualTo: userId)
@@ -123,33 +159,49 @@ class FirebaseDbService {
         .limit(limit)
         .get();
 
-    return snapshot.docs.map((doc) => Confession.fromJson(doc.data())).toList();
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return Confession.fromJson(data);
+    }).toList();
   }
 
-  Future<List<Confession>> getConfessionsByDate(String dateText, {int limit = 50, int offset = 0}) async {
+  Future<List<Confession>> getConfessionsByDate(
+    String dateText, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
     final snapshot = await _firestore
         .collection('confessions')
         .orderBy('createdAt', descending: true)
         .limit(100) // Filter in memory for robust dateText handling
         .get();
 
-    final all = snapshot.docs
-        .map((doc) => Confession.fromJson(doc.data()))
-        // Assuming dateText formatting logic if stored, or just returning recent
-        .toList();
+    final all = snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return Confession.fromJson(data);
+    }).toList();
 
     if (offset >= all.length) return [];
     return all.sublist(offset).take(limit).toList();
   }
 
-  Future<List<Confession>> searchConfessions(String query, {int limit = 30}) async {
+  Future<List<Confession>> searchConfessions(
+    String query, {
+    int limit = 30,
+  }) async {
     final snapshot = await _firestore
         .collection('confessions')
         .orderBy('createdAt', descending: true)
         .limit(100)
         .get();
 
-    final all = snapshot.docs.map((doc) => Confession.fromJson(doc.data())).toList();
+    final all = snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return Confession.fromJson(data);
+    }).toList();
     if (query.trim().isEmpty) return all.take(limit).toList();
 
     final q = query.toLowerCase();
@@ -170,24 +222,43 @@ class FirebaseDbService {
           .collection('confessions')
           .where('id', whereIn: chunk)
           .get();
-      results.addAll(snapshot.docs.map((doc) => Confession.fromJson(doc.data())));
+      results.addAll(
+        snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return Confession.fromJson(data);
+        }),
+      );
     }
     return results;
   }
 
-  Future<List<Confession>> getFollowingConfessions(List<String> authorIds, {int limit = 25, int offset = 0}) async {
+  Future<List<Confession>> getFollowingConfessions(
+    List<String> authorIds, {
+    int limit = 25,
+    int offset = 0,
+  }) async {
     if (authorIds.isEmpty) return [];
 
     final List<Confession> results = [];
     for (var i = 0; i < authorIds.length; i += 10) {
-      final chunk = authorIds.sublist(i, i + 10 > authorIds.length ? authorIds.length : i + 10);
+      final chunk = authorIds.sublist(
+        i,
+        i + 10 > authorIds.length ? authorIds.length : i + 10,
+      );
       final snapshot = await _firestore
           .collection('confessions')
           .where('authorId', whereIn: chunk)
           .orderBy('createdAt', descending: true)
           .limit(limit + offset)
           .get();
-      results.addAll(snapshot.docs.map((doc) => Confession.fromJson(doc.data())));
+      results.addAll(
+        snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return Confession.fromJson(data);
+        }),
+      );
     }
 
     results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -195,7 +266,10 @@ class FirebaseDbService {
     return results.sublist(offset).take(limit).toList();
   }
 
-  Future<void> incrementCommentsCount(String confessionId, int currentCount) async {
+  Future<void> incrementCommentsCount(
+    String confessionId,
+    int currentCount,
+  ) async {
     await _firestore.collection('confessions').doc(confessionId).update({
       'commentsCount': currentCount + 1,
     });
@@ -208,7 +282,10 @@ class FirebaseDbService {
   // ─── COMMENTS ─────────────────────────────────────────────────────────────
 
   Future<void> createComment(Comment comment) async {
-    await _firestore.collection('comments').doc(comment.id).set(comment.toJson());
+    await _firestore
+        .collection('comments')
+        .doc(comment.id)
+        .set(comment.toJson());
   }
 
   Future<List<Comment>> getComments(String confessionId) async {

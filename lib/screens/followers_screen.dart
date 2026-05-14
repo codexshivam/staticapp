@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 import '../models/user.dart';
 import '../widgets/user_list_tile.dart';
-import '../mock_data/sample_data.dart';
 import 'profile_screen.dart';
 
 class FollowersScreen extends StatefulWidget {
@@ -28,9 +27,9 @@ class _FollowersScreenState extends State<FollowersScreen> {
   void initState() {
     super.initState();
     _showFollowers = widget.initialShowFollowers;
-    
-    _followers = List.from(SampleData.followersList);
-    _following = List.from(SampleData.followingList);
+
+    _followers = [AppUser.fallbackUser];
+    _following = [AppUser.fallbackUser];
   }
 
   void _navigateToProfile(AppUser otherUser) {
