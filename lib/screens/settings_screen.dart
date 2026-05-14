@@ -129,16 +129,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 
   void _editEmail() async {
-    final result = await Navigator.of(context).push<String>(
+    await Navigator.of(context).push<String>(
       MaterialPageRoute(
         builder: (context) => ChangeEmailScreen(currentEmail: _currentEmail),
       ),
     );
-    if (result != null && result.isNotEmpty) {
-      setState(() {
-        _currentEmail = result;
-      });
-    }
   }
 
   void _changePassword() {

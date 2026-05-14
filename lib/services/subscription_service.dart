@@ -9,10 +9,13 @@ import 'firebase/firebase_db_service.dart';
 import 'auth_state_service.dart';
 import 'remote_config_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../screens/premium_paywall_screen.dart';
 
 class SubscriptionService {
   static final SubscriptionService instance = SubscriptionService._init();
   SubscriptionService._init();
+
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   bool _initialized = false;
   bool _isPro = false;
@@ -45,11 +48,20 @@ class SubscriptionService {
     }
   }
 
-  void _onCustomerInfoUpdated(CustomerInfo customerInfo) {
-    final hasPro = customerInfo.entitlements.active.containsKey('TheStatic Pro');
+  void _onCustomerInfoUpdated(CustomerInfo customerInfo) async {
+    final hasPro = customerInfo.entitlements.active.containsKey('TheStatic Pro') || customerInfo.entitlements.active.isNotEmpty;
     if (_isPro != hasPro) {
       _isPro = hasPro;
       _proStatusController.add(_isPro);
+
+      try {
+        final currentUser = AuthStateService.instance.currentUser;
+        if (currentUser != null) {
+          final updated = currentUser.copyWith(isPro: _isPro);
+          AuthStateService.instance.updateUser(updated);
+          await FirebaseDbService.instance.updateUserProfile(updated);
+        }
+      } catch (_) {}
     }
   }
 
@@ -62,11 +74,43 @@ class SubscriptionService {
     }
   }
 
-  bool get isPro => _isPro;
+  Future<void> checkCustomerInfoNow() async {
+    await _checkCustomerInfo();
+  }
+
+  Future<void> grantProStatusMock() async {
+    _isPro = true;
+    _proStatusController.add(true);
+    try {
+      final currentUser = AuthStateService.instance.currentUser;
+      if (currentUser != null) {
+        final updated = currentUser.copyWith(isPro: true);
+        AuthStateService.instance.updateUser(updated);
+        await FirebaseDbService.instance.updateUserProfile(updated);
+      }
+    } catch (_) {}
+  }
+
+  bool get isPro {
+    if (!RemoteConfigService.instance.isSubscriptionEnabled) return true;
+    return _isPro;
+  }
 
   Stream<bool> get proStatusStream => _proStatusController.stream;
 
-  Future<PaywallResult?> showPaywall() async {
+  Future<PaywallResult?> showPaywall({BuildContext? context}) async {
+    final targetContext = context ?? navigatorKey.currentContext;
+    if (targetContext != null && targetContext.mounted) {
+      final result = await Navigator.push(
+        targetContext,
+        MaterialPageRoute(builder: (context) => const PremiumPaywallScreen()),
+      );
+      if (result == true) {
+        return PaywallResult.purchased;
+      }
+      return PaywallResult.cancelled;
+    }
+
     if (!_initialized) {
       debugPrint('RevenueCat not initialized, cannot show paywall');
       return null;

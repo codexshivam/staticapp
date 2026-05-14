@@ -23,7 +23,7 @@ void main() async {
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,
       androidNotificationIcon: 'mipmap/ic_launcher',
-      notificationColor: const Color(0xFF111111),
+      notificationColor: const Color(0xFFE8E4DF),
     );
   } catch (_) {}
 
@@ -57,6 +57,7 @@ class ConfessionsApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: SubscriptionService.navigatorKey,
       title: 'the static',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,

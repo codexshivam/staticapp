@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 import '../services/firebase/firebase_auth_service.dart';
-import '../services/firebase/firebase_db_service.dart';
-import '../services/auth_state_service.dart';
 
 class ChangeEmailScreen extends StatefulWidget {
   final String currentEmail;
@@ -43,17 +41,12 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
         password: password,
       );
 
-      final currentUser = AuthStateService.instance.currentUser;
-      if (currentUser != null) {
-        final updatedUser = currentUser.copyWith(email: newEmail);
-        await FirebaseDbService.instance.updateUserProfile(updatedUser);
-        AuthStateService.instance.setUser(updatedUser, email: newEmail);
-      }
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('A verification link has been sent to $newEmail. Please click the link in your email to verify and update your login credentials! ❤️'),
+            content: Text(
+              'A verification link has been sent to $newEmail. Please click the link in your email to verify and update your login credentials! ❤️',
+            ),
             backgroundColor: AppColors.pureBlack,
             behavior: SnackBarBehavior.floating,
           ),
@@ -87,7 +80,11 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.pureBlack, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.pureBlack,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -113,12 +110,19 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                   decoration: BoxDecoration(
                     color: Colors.amber.shade50,
                     borderRadius: BorderRadius.circular(16.0),
-                    border: Border.all(color: Colors.amber.shade200, width: 1.5),
+                    border: Border.all(
+                      color: Colors.amber.shade200,
+                      width: 1.5,
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.warning_amber_rounded, color: Colors.amber.shade800, size: 24),
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.amber.shade800,
+                        size: 24,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -158,7 +162,10 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                 ),
                 const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 14.0,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(12.0),
@@ -166,10 +173,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                   ),
                   child: Text(
                     widget.currentEmail,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.black54,
-                    ),
+                    style: const TextStyle(fontSize: 15, color: Colors.black54),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -189,25 +193,37 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                   style: const TextStyle(fontSize: 15),
                   decoration: InputDecoration(
                     hintText: 'Enter your new email address',
-                    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    hintStyle: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontSize: 14,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
                       borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: const BorderSide(color: AppColors.pureBlack, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: AppColors.pureBlack,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter a new email address';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value.trim())) {
                       return 'Please enter a valid email address';
                     }
-                    if (value.trim().toLowerCase() == widget.currentEmail.toLowerCase()) {
+                    if (value.trim().toLowerCase() ==
+                        widget.currentEmail.toLowerCase()) {
                       return 'New email cannot be the same as current email';
                     }
                     return null;
@@ -230,15 +246,24 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                   style: const TextStyle(fontSize: 15),
                   decoration: InputDecoration(
                     hintText: 'Enter your current password to authorize',
-                    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    hintStyle: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontSize: 14,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                         color: Colors.grey,
                         size: 20,
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
@@ -246,7 +271,10 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: const BorderSide(color: AppColors.pureBlack, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: AppColors.pureBlack,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                   validator: (value) {
@@ -277,12 +305,17 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : const Text(
                           'Update Email',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ],

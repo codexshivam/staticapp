@@ -14,6 +14,7 @@ class AppUser {
   final List<String> savedConfessionIds;
   final List<String> followingIds;
   final List<String> followerIds;
+  final bool isPro;
 
   const AppUser({
     required this.id,
@@ -31,6 +32,7 @@ class AppUser {
     this.savedConfessionIds = const [],
     this.followingIds = const [],
     this.followerIds = const [],
+    this.isPro = false,
   });
 
   static AppUser fallbackUser = const AppUser(
@@ -44,6 +46,7 @@ class AppUser {
     confessionCount: 0,
     upiId: '',
     links: [],
+    isPro: false,
   );
 
   String get initials {
@@ -74,6 +77,7 @@ class AppUser {
     List<String>? savedConfessionIds,
     List<String>? followingIds,
     List<String>? followerIds,
+    bool? isPro,
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -91,6 +95,7 @@ class AppUser {
       savedConfessionIds: savedConfessionIds ?? this.savedConfessionIds,
       followingIds: followingIds ?? this.followingIds,
       followerIds: followerIds ?? this.followerIds,
+      isPro: isPro ?? this.isPro,
     );
   }
 
@@ -111,6 +116,7 @@ class AppUser {
       savedConfessionIds: List<String>.from(json['savedConfessionIds'] ?? []),
       followingIds: List<String>.from(json['followingIds'] ?? []),
       followerIds: List<String>.from(json['followerIds'] ?? []),
+      isPro: json['isPro'] ?? false,
     );
   }
 
@@ -130,6 +136,7 @@ class AppUser {
       'savedConfessionIds': savedConfessionIds,
       'followingIds': followingIds,
       'followerIds': followerIds,
+      'isPro': isPro,
     };
   }
 }
