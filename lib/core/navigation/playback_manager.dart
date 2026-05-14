@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../models/confession.dart';
 import '../../services/database_service.dart';
 import '../../services/subscription_service.dart';
@@ -148,7 +151,8 @@ class PlaybackManager extends ChangeNotifier {
           );
 
           if (confession.audioFilePath != null &&
-              confession.audioFilePath!.isNotEmpty) {
+              confession.audioFilePath!.isNotEmpty &&
+              File(confession.audioFilePath!).existsSync()) {
             final source = AudioSource.uri(
               Uri.file(confession.audioFilePath!),
               tag: mediaItem,
@@ -156,8 +160,27 @@ class PlaybackManager extends ChangeNotifier {
             await _audioPlayer.setAudioSource(source);
           } else if (confession.audioUrl != null &&
               confession.audioUrl!.isNotEmpty) {
+            String? cachedFilePath;
+            try {
+              final tempDir = await getTemporaryDirectory();
+              final file = File('${tempDir.path}/cached_audio_${confession.id}.m4a');
+              if (file.existsSync()) {
+                cachedFilePath = file.path;
+              } else {
+                final request = await HttpClient().getUrl(Uri.parse(confession.audioUrl!));
+                final response = await request.close();
+                if (response.statusCode == 200) {
+                  final bytes = await consolidateHttpClientResponseBytes(response);
+                  await file.writeAsBytes(bytes);
+                  cachedFilePath = file.path;
+                }
+              }
+            } catch (e) {
+              debugPrint('Audio cache error: $e');
+            }
+
             final source = AudioSource.uri(
-              Uri.parse(confession.audioUrl!),
+              cachedFilePath != null ? Uri.file(cachedFilePath) : Uri.parse(confession.audioUrl!),
               tag: mediaItem,
             );
             await _audioPlayer.setAudioSource(source);
@@ -165,10 +188,10 @@ class PlaybackManager extends ChangeNotifier {
             _isBuffering = false;
             debugPrint('No real audio source provided for this confession.');
           }
-        } else {
-          await _audioPlayer.seek(Duration.zero);
-          notifyListeners();
         }
+      } else {
+        await _audioPlayer.seek(Duration.zero);
+        notifyListeners();
       }
 
       addToHistory(confession);

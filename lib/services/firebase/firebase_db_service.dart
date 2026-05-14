@@ -13,6 +13,31 @@ class FirebaseDbService {
     databaseId: 'default',
   );
 
+  Future<void> initialize() async {
+    try {
+      _firestore.settings = const Settings(
+        persistenceEnabled: true,
+        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+      );
+    } catch (_) {}
+
+    try {
+      // Establish low-cost real-time listeners to keep cache perfectly updated
+      _firestore
+          .collection('confessions')
+          .orderBy('createdAt', descending: true)
+          .limit(300)
+          .snapshots()
+          .listen((_) {});
+
+      _firestore
+          .collection('users')
+          .limit(200)
+          .snapshots()
+          .listen((_) {});
+    } catch (_) {}
+  }
+
   // ─── USER PROFILES ────────────────────────────────────────────────────────
 
   Future<void> createUserProfile(AppUser user) async {
