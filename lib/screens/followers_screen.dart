@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 import '../models/user.dart';
 import '../widgets/user_list_tile.dart';
+import '../services/firebase/firebase_db_service.dart';
 import 'profile_screen.dart';
 
 class FollowersScreen extends StatefulWidget {
@@ -20,16 +21,32 @@ class FollowersScreen extends StatefulWidget {
 
 class _FollowersScreenState extends State<FollowersScreen> {
   late bool _showFollowers;
-  late List<AppUser> _followers;
-  late List<AppUser> _following;
+  List<AppUser> _followers = [];
+  List<AppUser> _following = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _showFollowers = widget.initialShowFollowers;
+    _loadUsers();
+  }
 
-    _followers = [AppUser.fallbackUser];
-    _following = [AppUser.fallbackUser];
+  Future<void> _loadUsers() async {
+    setState(() => _isLoading = true);
+    try {
+      final followers = await FirebaseDbService.instance.getUsersByIds(widget.user.followerIds);
+      final following = await FirebaseDbService.instance.getUsersByIds(widget.user.followingIds);
+      if (mounted) {
+        setState(() {
+          _followers = followers;
+          _following = following;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _navigateToProfile(AppUser otherUser) {
@@ -73,20 +90,23 @@ class _FollowersScreenState extends State<FollowersScreen> {
     final activeList = _showFollowers ? _followers : _following;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.pureBlack),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.pureBlack, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           widget.user.displayName,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          style: const TextStyle(
+            color: AppColors.pureBlack,
             fontWeight: FontWeight.bold,
+            fontSize: 18,
           ),
         ),
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -115,7 +135,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                           borderRadius: BorderRadius.circular(5.0),
                         ),
                         child: Text(
-                          'Followers (${_followers.length})',
+                          'Followers (${_isLoading ? '...' : _followers.length})',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -135,7 +155,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                           borderRadius: BorderRadius.circular(5.0),
                         ),
                         child: Text(
-                          'Following (${_following.length})',
+                          'Following (${_isLoading ? '...' : _following.length})',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -152,22 +172,24 @@ class _FollowersScreenState extends State<FollowersScreen> {
             const SizedBox(height: 20),
 
             Expanded(
-              child: activeList.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      itemCount: activeList.length,
-                      itemBuilder: (context, index) {
-                        final u = activeList[index];
-                        final isFollowing = _following.any((user) => user.id == u.id);
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.pureBlack))
+                  : activeList.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                          itemCount: activeList.length,
+                          itemBuilder: (context, index) {
+                            final u = activeList[index];
+                            final isFollowing = _following.any((user) => user.id == u.id);
 
-                        return UserListTile(
-                          user: u,
-                          isFollowing: isFollowing,
-                          onTap: () => _navigateToProfile(u),
-                          onActionTap: () => _toggleFollowUser(u, index, _showFollowers),
-                        );
-                      },
-                    ),
+                            return UserListTile(
+                              user: u,
+                              isFollowing: isFollowing,
+                              onTap: () => _navigateToProfile(u),
+                              onActionTap: () => _toggleFollowUser(u, index, _showFollowers),
+                            );
+                          },
+                        ),
             ),
           ],
         ),

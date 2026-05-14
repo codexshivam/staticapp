@@ -72,7 +72,7 @@ class SubscriptionService {
       return null;
     }
     try {
-      final paywallResult = await RevenueCatUI.presentPaywall();
+      final paywallResult = await RevenueCatUI.presentPaywall(displayCloseButton: true);
       await _checkCustomerInfo();
       return paywallResult;
     } catch (e) {

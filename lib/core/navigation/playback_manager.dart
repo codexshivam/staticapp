@@ -5,7 +5,6 @@ import 'package:audio_session/audio_session.dart';
 import '../../models/confession.dart';
 import '../../services/database_service.dart';
 import '../../services/subscription_service.dart';
-import '../../widgets/premium_paywall_dialog.dart';
 
 class PlaybackManager extends ChangeNotifier {
   static final PlaybackManager _instance = PlaybackManager._internal();
@@ -121,9 +120,7 @@ class PlaybackManager extends ChangeNotifier {
     try {
       final canPlay = await SubscriptionService.instance.canPlayConfession();
       if (!canPlay) {
-        if (context != null) {
-          PremiumPaywallDialog.show(context);
-        }
+        SubscriptionService.instance.showPaywall();
         return;
       }
 
@@ -151,7 +148,9 @@ class PlaybackManager extends ChangeNotifier {
       } else {
         _isPlaying = true;
         Future.delayed(const Duration(seconds: 10), () {
-          if (_isPlaying && _activeConfession?.id == confession.id && !_hasIncrementedForCurrentConfession) {
+          if (_isPlaying &&
+              _activeConfession?.id == confession.id &&
+              !_hasIncrementedForCurrentConfession) {
             _hasIncrementedForCurrentConfession = true;
             SubscriptionService.instance.incrementDailyPlaybackCount();
           }

@@ -56,10 +56,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     setState(() => _isLoading = true);
     try {
       final confessions = await FirebaseDbService.instance.searchConfessions(query);
-      final users = [AppUser.fallbackUser].where((u) {
-        final q = query.toLowerCase();
-        return u.displayName.toLowerCase().contains(q) || u.handle.toLowerCase().contains(q);
-      }).toList();
+      final users = await FirebaseDbService.instance.searchUsers(query);
       if (mounted) setState(() { _displayedConfessions = confessions; _displayedUsers = users; _isLoading = false; });
     } catch (_) {
       final q = query.toLowerCase();

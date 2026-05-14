@@ -31,6 +31,40 @@ class FirebaseDbService {
     }
   }
 
+  Future<List<AppUser>> searchUsers(String query, {int limit = 20}) async {
+    if (query.trim().isEmpty) return [];
+    try {
+      final snapshot = await _firestore.collection('users').limit(100).get();
+      final q = query.toLowerCase();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return AppUser.fromJson(data);
+      }).where((u) => u.displayName.toLowerCase().contains(q) || u.handle.toLowerCase().contains(q)).take(limit).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<AppUser>> getUsersByIds(List<String> userIds) async {
+    if (userIds.isEmpty) return [];
+    try {
+      final List<AppUser> results = [];
+      for (var i = 0; i < userIds.length; i += 10) {
+        final chunk = userIds.sublist(i, i + 10 > userIds.length ? userIds.length : i + 10);
+        final snapshot = await _firestore.collection('users').where(FieldPath.documentId, whereIn: chunk).get();
+        results.addAll(snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return AppUser.fromJson(data);
+        }));
+      }
+      return results;
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<void> updateUserProfile(AppUser user) async {
     await _firestore
         .collection('users')
@@ -174,7 +208,7 @@ class FirebaseDbService {
     final snapshot = await _firestore
         .collection('confessions')
         .orderBy('createdAt', descending: true)
-        .limit(100) // Filter in memory for robust dateText handling
+        .limit(200)
         .get();
 
     final all = snapshot.docs.map((doc) {
@@ -183,8 +217,13 @@ class FirebaseDbService {
       return Confession.fromJson(data);
     }).toList();
 
-    if (offset >= all.length) return [];
-    return all.sublist(offset).take(limit).toList();
+    final filtered = all.where((c) {
+      final str = '${c.createdAt.year}-${c.createdAt.month.toString().padLeft(2, '0')}-${c.createdAt.day.toString().padLeft(2, '0')}';
+      return str == dateText;
+    }).toList();
+
+    if (offset >= filtered.length) return [];
+    return filtered.sublist(offset).take(limit).toList();
   }
 
   Future<List<Confession>> searchConfessions(
@@ -194,7 +233,7 @@ class FirebaseDbService {
     final snapshot = await _firestore
         .collection('confessions')
         .orderBy('createdAt', descending: true)
-        .limit(100)
+        .limit(500)
         .get();
 
     final all = snapshot.docs.map((doc) {
@@ -220,7 +259,7 @@ class FirebaseDbService {
       final chunk = ids.sublist(i, i + 10 > ids.length ? ids.length : i + 10);
       final snapshot = await _firestore
           .collection('confessions')
-          .where('id', whereIn: chunk)
+          .where(FieldPath.documentId, whereIn: chunk)
           .get();
       results.addAll(
         snapshot.docs.map((doc) {

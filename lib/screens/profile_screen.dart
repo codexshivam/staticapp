@@ -153,30 +153,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
         false;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: !_isMe
             ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.pureBlack),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.pureBlack, size: 20),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
         title: Text(
           _isMe ? 'Profile' : '${displayUser.displayName}\'s Profile',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          style: const TextStyle(
+            color: AppColors.pureBlack,
             fontWeight: FontWeight.bold,
-            fontSize: _isMe ? 24 : 19,
+            fontSize: 18,
           ),
         ),
+        centerTitle: true,
         actions: _isMe
             ? [
                 IconButton(
                   icon: const Icon(
                     Feather.menu,
                     color: AppColors.pureBlack,
-                    size: 21.50,
+                    size: 20,
                   ),
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(
