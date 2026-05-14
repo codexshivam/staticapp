@@ -38,33 +38,10 @@ class Confession {
   }
 
   static List<Confession> generateManyMockConfessions(int count, {bool forFollowing = false}) {
-    final List<String> titles = [
-      'I still think about our late night talks',
-      'I wish I had the courage to say sorry',
-      'To the stranger I met in the coffee shop',
-      'Some memories never fade away',
-    ];
-
-    return List.generate(count, (index) {
-      final titleIndex = index % titles.length;
-      final durationM = 1 + (index % 4);
-      final durationS = 10 + (index * 13) % 49;
-
-      return Confession(
-        id: forFollowing ? 'conf_gen_f_$index' : 'conf_gen_24h_$index',
-        title: titles[titleIndex],
-        authorId: 'user_guest',
-        createdAt: DateTime.now().subtract(Duration(hours: index + 1)),
-        durationString: '$durationM:${durationS.toString().padLeft(2, '0')}',
-        durationSeconds: durationM * 60 + durationS,
-        waveformData: generateWaveform(35),
-        commentsCount: 2 + index,
-        isSaved: index % 7 == 0,
-      );
-    });
+    return [];
   }
 
-  static List<Confession> mockConfessions = generateManyMockConfessions(10);
+  static List<Confession> mockConfessions = [];
 
   Confession copyWith({
     String? id,

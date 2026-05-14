@@ -35,25 +35,31 @@ class _FollowersScreenState extends State<FollowersScreen> {
 
   Future<void> _loadUsers() async {
     setState(() => _isLoading = true);
+    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+    final isMe = widget.user.id == currentUser.id;
+    final targetUser = isMe ? currentUser : widget.user;
+
     try {
-      final followers = await FirebaseDbService.instance.getUsersByIds(
-        widget.user.followerIds,
-      );
-      final following = await FirebaseDbService.instance.getUsersByIds(
-        widget.user.followingIds,
-      );
+      final followers = await FirebaseDbService.instance.getUsersByIds(targetUser.followerIds);
+      final following = await FirebaseDbService.instance.getUsersByIds(targetUser.followingIds);
+
+      if (targetUser.followerIds.contains(currentUser.id) && !followers.any((u) => u.id == currentUser.id)) {
+        followers.insert(0, currentUser);
+      }
+      if (targetUser.followingIds.contains(currentUser.id) && !following.any((u) => u.id == currentUser.id)) {
+        following.insert(0, currentUser);
+      }
+
       if (mounted) {
         setState(() {
-          _followers = followers.isNotEmpty ? followers : AppUser.mockUsers.where((u) => widget.user.followerIds.contains(u.id)).toList();
-          _following = following.isNotEmpty ? following : AppUser.mockUsers.where((u) => widget.user.followingIds.contains(u.id)).toList();
+          _followers = followers;
+          _following = following;
           _isLoading = false;
         });
       }
     } catch (_) {
       if (mounted) {
         setState(() {
-          _followers = AppUser.mockUsers.where((u) => widget.user.followerIds.contains(u.id)).toList();
-          _following = AppUser.mockUsers.where((u) => widget.user.followingIds.contains(u.id)).toList();
           _isLoading = false;
         });
       }
@@ -258,7 +264,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                               user: u,
                               isFollowing: isFollowing,
                               onTap: () => _navigateToProfile(u),
-                              onActionTap: () =>
+                              onActionTap: u.id == currentUser.id ? null : () =>
                                   _toggleFollowUser(u, index, _showFollowers),
                             );
                           },

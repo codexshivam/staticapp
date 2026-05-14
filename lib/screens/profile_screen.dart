@@ -35,20 +35,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _loadUserState() {
-    final currentUser = AuthStateService.instance.currentUser;
-    _activeUser = widget.user ?? currentUser ?? AppUser.fallbackUser;
-    _isMe = currentUser != null && _activeUser.id == currentUser.id;
+    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+    var user = widget.user ?? currentUser;
+    if (user.id != currentUser.id && currentUser.followingIds.contains(user.id)) {
+      if (!user.followerIds.contains(currentUser.id)) {
+        user = user.copyWith(
+          followerIds: [...user.followerIds, currentUser.id],
+          followersCount: user.followersCount + 1,
+        );
+      }
+    }
+    _activeUser = user;
+    _isMe = _activeUser.id == currentUser.id;
   }
 
   Future<void> _loadUserConfessions() async {
     if (_activeUser.id.isEmpty) return;
     try {
-      final confessions = await FirebaseDbService.instance.getConfessionsByUser(_activeUser.id);
+      final confessions = await FirebaseDbService.instance.getConfessionsByUser(
+        _activeUser.id,
+      );
       if (mounted) setState(() => _userConfessions = confessions);
     } catch (_) {
       if (mounted) {
-        setState(() => _userConfessions = Confession.mockConfessions
-            .where((c) => c.authorId == _activeUser.id).toList());
+        setState(
+          () => _userConfessions = Confession.mockConfessions
+              .where((c) => c.authorId == _activeUser.id)
+              .toList(),
+        );
       }
     }
   }
@@ -62,10 +76,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _openFollowersScreen(bool showFollowers) {
+    final userToPass = _isMe
+        ? (AuthStateService.instance.currentUser ?? _activeUser)
+        : _activeUser;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => FollowersScreen(
-          user: _isMe ? AppUser.fallbackUser : _activeUser,
+          user: userToPass,
           initialShowFollowers: showFollowers,
         ),
       ),
@@ -85,13 +102,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _toggleFollow() async {
-    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+    final currentUser =
+        AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
 
-    final currentlyFollowing = currentUser.followingIds.contains(_activeUser.id);
+    final currentlyFollowing = currentUser.followingIds.contains(
+      _activeUser.id,
+    );
     final newFollowing = !currentlyFollowing;
+
+    final newFollowerIds = newFollowing
+        ? [..._activeUser.followerIds, currentUser.id]
+        : _activeUser.followerIds.where((id) => id != currentUser.id).toList();
 
     setState(() {
       _activeUser = _activeUser.copyWith(
+        followerIds: newFollowerIds,
         followersCount: newFollowing
             ? _activeUser.followersCount + 1
             : (_activeUser.followersCount - 1).clamp(0, 9999999),
@@ -107,21 +132,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
         AuthStateService.instance.updateUser(updatedUser);
         try {
           await FirebaseDbService.instance.followUser(
-              currentUserId: currentUser.id, targetUserId: _activeUser.id);
+            currentUserId: currentUser.id,
+            targetUserId: _activeUser.id,
+          );
         } catch (_) {}
       } else {
         AppUser.fallbackUser = updatedUser;
       }
     } else {
       final updatedUser = currentUser.copyWith(
-        followingIds: currentUser.followingIds.where((id) => id != _activeUser.id).toList(),
+        followingIds: currentUser.followingIds
+            .where((id) => id != _activeUser.id)
+            .toList(),
         followingCount: (currentUser.followingCount - 1).clamp(0, 9999999),
       );
       if (AuthStateService.instance.currentUser != null) {
         AuthStateService.instance.updateUser(updatedUser);
         try {
           await FirebaseDbService.instance.unfollowUser(
-              currentUserId: currentUser.id, targetUserId: _activeUser.id);
+            currentUserId: currentUser.id,
+            targetUserId: _activeUser.id,
+          );
         } catch (_) {}
       } else {
         AppUser.fallbackUser = updatedUser;
@@ -131,9 +162,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(newFollowing
-              ? 'Following ${_activeUser.displayName}'
-              : 'Unfollowed ${_activeUser.displayName}'),
+          content: Text(
+            newFollowing
+                ? 'Following ${_activeUser.displayName}'
+                : 'Unfollowed ${_activeUser.displayName}',
+          ),
           duration: const Duration(seconds: 1),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.pureBlack,
@@ -147,327 +180,343 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ListenableBuilder(
       listenable: AuthStateService.instance,
       builder: (context, _) {
-        final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
-        final displayUser = _isMe
-            ? currentUser
-            : _activeUser;
+        final currentUser =
+            AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+        final displayUser = _isMe ? currentUser : _activeUser;
 
-        final isFollowingThisUser = currentUser.followingIds.contains(displayUser.id);
+        final isFollowingThisUser = currentUser.followingIds.contains(
+          displayUser.id,
+        );
 
         return Scaffold(
           backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: !_isMe
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.pureBlack, size: 20),
-                onPressed: () => Navigator.pop(context),
-              )
-            : null,
-        title: Text(
-          _isMe ? 'Profile' : '${displayUser.displayName}\'s Profile',
-          style: const TextStyle(
-            color: AppColors.pureBlack,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-        actions: _isMe
-            ? [
-                IconButton(
-                  icon: const Icon(
-                    Feather.menu,
-                    color: AppColors.pureBlack,
-                    size: 20,
-                  ),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsScreen(),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: !_isMe
+                ? IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: AppColors.pureBlack,
+                      size: 20,
                     ),
-                  ),
-                ),
-              ]
-            : null,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20.0),
-              decoration: BoxDecoration(
-                color: AppColors.cardBg,
-                borderRadius: BorderRadius.circular(5.0),
-                border: Border.all(color: AppColors.divider),
-                boxShadow: const [
-                  BoxShadow(
-                    color: AppColors.shadow,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
+                    onPressed: () => Navigator.pop(context),
+                  )
+                : null,
+            title: Text(
+              _isMe ? 'Profile' : '${displayUser.displayName}\'s Profile',
+              style: const TextStyle(
+                color: AppColors.pureBlack,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: AppColors.background,
-                          borderRadius: BorderRadius.circular(5.0),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          displayUser.initials,
-                          style: Theme.of(context).textTheme.displayLarge
-                              ?.copyWith(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.pureBlack,
-                                letterSpacing: 0.5,
-                              ),
+            ),
+            centerTitle: true,
+            actions: _isMe
+                ? [
+                    IconButton(
+                      icon: const Icon(
+                        Feather.menu,
+                        color: AppColors.pureBlack,
+                        size: 20,
+                      ),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              displayUser.displayName,
-                              style: Theme.of(context).textTheme.titleLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              displayUser.handle,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 13,
-                                  ),
-                            ),
-                          ],
-                        ),
+                    ),
+                  ]
+                : null,
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20.0),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBg,
+                    borderRadius: BorderRadius.circular(5.0),
+                    border: Border.all(color: AppColors.divider),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: AppColors.shadow,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-
-                  Text(
-                    displayUser.bio,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: 14,
-                      color: AppColors.textPrimary,
-                      height: 1.4,
-                    ),
-                  ),
-
-                  if (displayUser.links.isNotEmpty) ...[
-                    const SizedBox(height: 14),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: displayUser.links.map((link) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 6.0),
-                          child: GestureDetector(
-                            onTap: () async {
-                              final url = Uri.parse(
-                                link.startsWith('http')
-                                    ? link
-                                    : 'https://$link',
-                              );
-                              if (await canLaunchUrl(url)) {
-                                await launchUrl(
-                                  url,
-                                  mode: LaunchMode.externalApplication,
-                                );
-                              } else {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Could not launch $link'),
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.link,
-                                  size: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    link.replaceFirst(
-                                      RegExp(r'^https?://'),
-                                      '',
-                                    ),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          fontSize: 12,
-                                          color: AppColors.pureBlack,
-                                          decoration: TextDecoration.underline,
-                                        ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(5.0),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              displayUser.initials,
+                              style: Theme.of(context).textTheme.displayLarge
+                                  ?.copyWith(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.pureBlack,
+                                    letterSpacing: 0.5,
                                   ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  displayUser.displayName,
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  displayUser.handle,
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 13,
+                                      ),
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-
-                  const SizedBox(height: 16),
-                  const Divider(),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStatColumn(
-                        context,
-                        'Confessions',
-                        '${_userConfessions.length}',
+                        ],
                       ),
-                      _buildVerticalDivider(),
-                      GestureDetector(
-                        onTap: () => _openFollowersScreen(true),
-                        child: _buildStatColumn(
-                          context,
-                          'Followers',
-                          '${displayUser.followersCount}',
+                      const SizedBox(height: 16),
+
+                      Text(
+                        displayUser.bio,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                          height: 1.4,
                         ),
                       ),
-                      _buildVerticalDivider(),
-                      GestureDetector(
-                        onTap: () => _openFollowersScreen(false),
-                        child: _buildStatColumn(
-                          context,
-                          'Following',
-                          '${displayUser.followingCount}',
+
+                      if (displayUser.links.isNotEmpty) ...[
+                        const SizedBox(height: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: displayUser.links.map((link) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 6.0),
+                              child: GestureDetector(
+                                onTap: () async {
+                                  final url = Uri.parse(
+                                    link.startsWith('http')
+                                        ? link
+                                        : 'https://$link',
+                                  );
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(
+                                      url,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  } else {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Could not launch $link',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.link,
+                                      size: 14,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        link.replaceFirst(
+                                          RegExp(r'^https?://'),
+                                          '',
+                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              fontSize: 12,
+                                              color: AppColors.pureBlack,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
+                      ],
+
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 16),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatColumn(
+                            context,
+                            'Confessions',
+                            '${_userConfessions.length}',
+                          ),
+                          _buildVerticalDivider(),
+                          GestureDetector(
+                            onTap: () => _openFollowersScreen(true),
+                            child: _buildStatColumn(
+                              context,
+                              'Followers',
+                              '${displayUser.followersCount}',
+                            ),
+                          ),
+                          _buildVerticalDivider(),
+                          GestureDetector(
+                            onTap: () => _openFollowersScreen(false),
+                            child: _buildStatColumn(
+                              context,
+                              'Following',
+                              '${displayUser.followingCount}',
+                            ),
+                          ),
+                        ],
                       ),
+
+                      const SizedBox(height: 18),
+
+                      if (_isMe) ...[
+                        OutlinedButton(
+                          onPressed: _navigateToEditProfile,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12.0),
+                            side: const BorderSide(
+                              color: AppColors.pureBlack,
+                              width: 1.0,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5.0),
+                            ),
+                          ),
+                          child: Text(
+                            'EDIT PROFILE',
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.pureBlack,
+                                  letterSpacing: 1.0,
+                                ),
+                          ),
+                        ),
+                      ] else ...[
+                        ElevatedButton(
+                          onPressed: _toggleFollow,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isFollowingThisUser
+                                ? AppColors.background
+                                : AppColors.pureBlack,
+                            foregroundColor: isFollowingThisUser
+                                ? AppColors.pureBlack
+                                : AppColors.cardBg,
+                            padding: const EdgeInsets.symmetric(vertical: 12.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5.0),
+                              side: isFollowingThisUser
+                                  ? const BorderSide(color: AppColors.divider)
+                                  : BorderSide.none,
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            isFollowingThisUser ? 'UNFOLLOW' : 'FOLLOW',
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: isFollowingThisUser
+                                      ? AppColors.pureBlack
+                                      : AppColors.cardBg,
+                                  letterSpacing: 1.0,
+                                ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
+                ),
 
-                  const SizedBox(height: 18),
+                const SizedBox(height: 24),
 
-                  if (_isMe) ...[
-                    OutlinedButton(
-                      onPressed: _navigateToEditProfile,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        side: const BorderSide(
-                          color: AppColors.pureBlack,
-                          width: 1.0,
+                SectionTitle(
+                  title: _isMe
+                      ? 'Confessions from You ❤️'
+                      : '${displayUser.displayName}\'s Confessions ❤️',
+                ),
+                const SizedBox(height: 14),
+
+                _userConfessions.isEmpty
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'No confessions posted yet.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontStyle: FontStyle.italic,
+                                fontSize: 12,
+                              ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5.0),
-                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _userConfessions.length,
+                        itemBuilder: (context, index) {
+                          final conf = _userConfessions[index];
+                          return ConfessionCard(
+                            confession: conf,
+                            onTap: () => _openDetail(conf),
+                          );
+                        },
                       ),
-                      child: Text(
-                        'EDIT PROFILE',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.pureBlack,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ),
-                  ] else ...[
-                    ElevatedButton(
-                      onPressed: _toggleFollow,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isFollowingThisUser
-                            ? AppColors.background
-                            : AppColors.pureBlack,
-                        foregroundColor: isFollowingThisUser
-                            ? AppColors.pureBlack
-                            : AppColors.cardBg,
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5.0),
-                          side: isFollowingThisUser
-                              ? const BorderSide(color: AppColors.divider)
-                              : BorderSide.none,
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        isFollowingThisUser ? 'UNFOLLOW' : 'FOLLOW',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: isFollowingThisUser
-                              ? AppColors.pureBlack
-                              : AppColors.cardBg,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                const SizedBox(height: 40),
+              ],
             ),
-
-            const SizedBox(height: 24),
-
-            SectionTitle(
-              title: _isMe
-                  ? 'Confessions from You ❤️'
-                  : '${displayUser.displayName}\'s Confessions ❤️',
-            ),
-            const SizedBox(height: 14),
-
-            _userConfessions.isEmpty
-                ? Container(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'No confessions posted yet.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 12,
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _userConfessions.length,
-                    itemBuilder: (context, index) {
-                      final conf = _userConfessions[index];
-                      return ConfessionCard(
-                        confession: conf,
-                        onTap: () => _openDetail(conf),
-                      );
-                    },
-                  ),
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
-  },
-);
   }
 
   Widget _buildStatColumn(BuildContext context, String label, String value) {
