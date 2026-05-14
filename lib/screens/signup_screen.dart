@@ -6,6 +6,7 @@ import '../core/theme/app_colors.dart';
 import '../services/firebase/firebase_auth_service.dart';
 import '../services/firebase/firebase_db_service.dart';
 import '../services/auth_state_service.dart';
+import '../services/subscription_service.dart';
 import 'legal_document_screen.dart';
 import 'main_navigation_shell.dart';
 
@@ -150,6 +151,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
       final sessionUser = FirebaseAuthService.instance.getCurrentSessionUser();
       AuthStateService.instance.setUser(newUser, email: sessionUser?.email ?? email);
+      await SubscriptionService.instance.updateUserId(newUser.id);
 
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(

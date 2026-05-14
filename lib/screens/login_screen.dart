@@ -4,6 +4,7 @@ import '../core/theme/app_colors.dart';
 import '../services/firebase/firebase_auth_service.dart';
 import '../services/firebase/firebase_db_service.dart';
 import '../services/auth_state_service.dart';
+import '../services/subscription_service.dart';
 import 'legal_document_screen.dart';
 import 'signup_screen.dart';
 import 'main_navigation_shell.dart';
@@ -48,6 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (profile == null) throw Exception('Profile not found');
 
       AuthStateService.instance.setUser(profile, email: sessionUser.email);
+      await SubscriptionService.instance.updateUserId(sessionUser.uid);
 
       if (mounted) {
         Navigator.of(context).pushReplacement(

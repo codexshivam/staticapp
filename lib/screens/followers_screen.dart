@@ -3,6 +3,7 @@ import '../core/theme/app_colors.dart';
 import '../models/user.dart';
 import '../widgets/user_list_tile.dart';
 import '../services/firebase/firebase_db_service.dart';
+import '../services/auth_state_service.dart';
 import 'profile_screen.dart';
 
 class FollowersScreen extends StatefulWidget {
@@ -59,12 +60,27 @@ class _FollowersScreenState extends State<FollowersScreen> {
     );
   }
 
-  void _toggleFollowUser(AppUser otherUser, int index, bool isFollowersTab) {
-    final isCurrentlyFollowing = _following.any((u) => u.id == otherUser.id);
+  void _toggleFollowUser(AppUser otherUser, int index, bool isFollowersTab) async {
+    final currentUser = AuthStateService.instance.currentUser;
+    if (currentUser == null) return;
 
-    setState(() {
-      if (isCurrentlyFollowing) {
-        _following.removeWhere((u) => u.id == otherUser.id);
+    final isCurrentlyFollowing = currentUser.followingIds.contains(otherUser.id);
+
+    if (isCurrentlyFollowing) {
+      setState(() {
+        if (widget.user.id == currentUser.id) {
+          _following.removeWhere((u) => u.id == otherUser.id);
+        }
+      });
+      try {
+        await FirebaseDbService.instance.unfollowUser(
+          currentUserId: currentUser.id, targetUserId: otherUser.id);
+        AuthStateService.instance.updateUser(currentUser.copyWith(
+          followingIds: currentUser.followingIds.where((id) => id != otherUser.id).toList(),
+          followingCount: (currentUser.followingCount - 1).clamp(0, 999999),
+        ));
+      } catch (_) {}
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Unfollowed ${otherUser.displayName} ❤️'),
@@ -73,8 +89,22 @@ class _FollowersScreenState extends State<FollowersScreen> {
             backgroundColor: AppColors.pureBlack,
           ),
         );
-      } else {
-        _following.add(otherUser);
+      }
+    } else {
+      setState(() {
+        if (widget.user.id == currentUser.id) {
+          _following.add(otherUser);
+        }
+      });
+      try {
+        await FirebaseDbService.instance.followUser(
+          currentUserId: currentUser.id, targetUserId: otherUser.id);
+        AuthStateService.instance.updateUser(currentUser.copyWith(
+          followingIds: [...currentUser.followingIds, otherUser.id],
+          followingCount: currentUser.followingCount + 1,
+        ));
+      } catch (_) {}
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Followed ${otherUser.displayName}\'s diary ❤️'),
@@ -84,7 +114,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
           ),
         );
       }
-    });
+    }
   }
 
   @override
@@ -198,9 +228,8 @@ class _FollowersScreenState extends State<FollowersScreen> {
                       itemCount: activeList.length,
                       itemBuilder: (context, index) {
                         final u = activeList[index];
-                        final isFollowing = _following.any(
-                          (user) => user.id == u.id,
-                        );
+                        final currentUser = AuthStateService.instance.currentUser;
+                        final isFollowing = currentUser?.followingIds.contains(u.id) ?? false;
 
                         return UserListTile(
                           user: u,
