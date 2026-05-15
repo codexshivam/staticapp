@@ -7,28 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:499104430098:android:88e6aa266a4dd06ea000cb",
+        "mobilesdk_app_id": "1:499104430098:android:caccaa44ef703012a000cb",
         "android_client_info": {
-          "package_name": "com.confessions.app"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAhamltzctHqCjwStn_rWIqvEO6bKiHy9Y"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:499104430098:android:31c9e37b271179e4a000cb",
-        "android_client_info": {
-          "package_name": "shivamyadav.confabmeetings.android"
+          "package_name": "shivam.thestatic.android"
         }
       },
       "oauth_client": [],

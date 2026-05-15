@@ -1,4 +1,4 @@
-package shivamyadav.confabmeetings.android
+package shivam.thestatic.android
 
 import com.ryanheise.audioservice.AudioServiceFragmentActivity
 
