@@ -6,6 +6,7 @@ import '../services/firebase/firebase_db_service.dart';
 import '../services/auth_state_service.dart';
 import 'login_screen.dart';
 import 'main_navigation_shell.dart';
+import '../services/subscription_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -48,6 +49,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
       if (profile != null) {
         AuthStateService.instance.setUser(profile, email: sessionUser.email);
+        await SubscriptionService.instance.updateUserId(sessionUser.uid);
         _navigateTo(const MainNavigationShell());
         return;
       }

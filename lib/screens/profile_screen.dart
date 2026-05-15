@@ -392,21 +392,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             '${_userConfessions.length}',
                           ),
                           _buildVerticalDivider(),
-                          GestureDetector(
+                          InkWell(
                             onTap: () => _openFollowersScreen(true),
-                            child: _buildStatColumn(
-                              context,
-                              'Followers',
-                              '${displayUser.followersCount}',
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              child: _buildStatColumn(
+                                context,
+                                'Followers',
+                                '${displayUser.followersCount}',
+                              ),
                             ),
                           ),
                           _buildVerticalDivider(),
-                          GestureDetector(
+                          InkWell(
                             onTap: () => _openFollowersScreen(false),
-                            child: _buildStatColumn(
-                              context,
-                              'Following',
-                              '${displayUser.followingCount}',
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              child: _buildStatColumn(
+                                context,
+                                'Following',
+                                '${displayUser.followingCount}',
+                              ),
                             ),
                           ),
                         ],

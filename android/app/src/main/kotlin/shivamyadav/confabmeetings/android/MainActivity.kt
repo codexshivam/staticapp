@@ -1,4 +1,4 @@
-package com.confessions.app
+package shivamyadav.confabmeetings.android
 
 import com.ryanheise.audioservice.AudioServiceFragmentActivity
 

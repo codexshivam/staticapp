@@ -19,7 +19,7 @@ void main() async {
 
   try {
     await JustAudioBackground.init(
-      androidNotificationChannelId: 'com.confessions.app.channel.audio',
+      androidNotificationChannelId: 'shivamyadav.confabmeetings.android.channel.audio',
       androidNotificationChannelName: 'Audio Playback',
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,

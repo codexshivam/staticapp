@@ -1,4 +1,4 @@
-# Confessions App — Developer & Publishing Setup Guide
+# TheStatic Platform
 
 Welcome to the official developer and publishing guide for **Confessions**. This document provides end-to-end instructions for configuring the backend infrastructure, local offline persistence, subscription paywalls, observability, and publishing the application to the Google Play Store.
 
@@ -45,13 +45,16 @@ The project uses `flutter_dotenv` to securely inject API keys without hardcoding
 1. Create a `.env` file in the root directory (duplicate `.env.example`):
 ```env
 # RevenueCat Subscription Management Keys
-REVENUECAT_ANDROID_KEY=test_dqUqZKVCRZxyjcGymsxZQGRxHJf
-REVENUECAT_IOS_KEY=test_dqUqZKVCRZxyjcGymsxZQGRxHJf
+REVENUECAT_ANDROID_KEY=
+REVENUECAT_IOS_KEY=
 ```
 
 > **Note**: Firebase configuration is fully managed natively by `lib/firebase_options.dart` generated via `flutterfire configure`.
 
 ---
+
+---
+
 
 ## ☁️ Firebase Infrastructure Setup
 

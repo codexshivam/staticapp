@@ -79,9 +79,7 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
         await Purchases.purchasePackage(_selectedPackage!);
         await SubscriptionService.instance.checkCustomerInfoNow();
       } else {
-        // Fallback simulation for flawless testing
-        await Future.delayed(const Duration(seconds: 1));
-        await SubscriptionService.instance.grantProStatusMock();
+        throw Exception('No subscription plans available at the moment.');
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

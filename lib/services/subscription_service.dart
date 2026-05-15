@@ -21,7 +21,7 @@ class SubscriptionService {
   bool _isPro = false;
   final StreamController<bool> _proStatusController = StreamController<bool>.broadcast();
 
-  static String get _androidKey => dotenv.env['REVENUECAT_ANDROID_KEY'] ?? 'test_dqUqZKVCRZxyjcGymsxZQGRxHJf';
+  static String get _androidKey => dotenv.env['REVENUECAT_ANDROID_KEY'] ?? 'goog_YtVPXoWOhPsIWNsEqvgONKsljnL';
   static String get _iosKey => dotenv.env['REVENUECAT_IOS_KEY'] ?? 'test_dqUqZKVCRZxyjcGymsxZQGRxHJf';
 
   Future<void> initialize({String? userId}) async {
@@ -76,19 +76,6 @@ class SubscriptionService {
 
   Future<void> checkCustomerInfoNow() async {
     await _checkCustomerInfo();
-  }
-
-  Future<void> grantProStatusMock() async {
-    _isPro = true;
-    _proStatusController.add(true);
-    try {
-      final currentUser = AuthStateService.instance.currentUser;
-      if (currentUser != null) {
-        final updated = currentUser.copyWith(isPro: true);
-        AuthStateService.instance.updateUser(updated);
-        await FirebaseDbService.instance.updateUserProfile(updated);
-      }
-    } catch (_) {}
   }
 
   bool get isPro => _isPro;

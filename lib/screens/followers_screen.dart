@@ -77,6 +77,27 @@ class _FollowersScreenState extends State<FollowersScreen> {
     final isCurrentlyFollowing = currentUser.followingIds.contains(otherUser.id);
 
     if (isCurrentlyFollowing) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.cardBg,
+          title: const Text('Unfollow?'),
+          content: Text('Are you sure you want to stop following ${otherUser.displayName}\'s diary?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel', style: TextStyle(color: AppColors.pureBlack)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Unfollow', style: TextStyle(color: AppColors.accentRed, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+
       setState(() {
         if (widget.user.id == currentUser.id) {
           _following.removeWhere((u) => u.id == otherUser.id);
@@ -199,7 +220,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                           borderRadius: BorderRadius.circular(5.0),
                         ),
                         child: Text(
-                          'Followers (${_isLoading ? '...' : _followers.length})',
+                          'Followers (${_isLoading ? widget.user.followersCount : _followers.length})',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -223,7 +244,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                           borderRadius: BorderRadius.circular(5.0),
                         ),
                         child: Text(
-                          'Following (${_isLoading ? '...' : _following.length})',
+                          'Following (${_isLoading ? widget.user.followingCount : _following.length})',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
