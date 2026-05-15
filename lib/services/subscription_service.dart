@@ -21,7 +21,7 @@ class SubscriptionService {
   bool _isPro = false;
   final StreamController<bool> _proStatusController = StreamController<bool>.broadcast();
 
-  static String get _androidKey => dotenv.env['REVENUECAT_ANDROID_KEY'] ?? 'goog_YtVPXoWOhPsIWNsEqvgONKsljnL';
+  static String get _androidKey => dotenv.env['REVENUECAT_ANDROID_KEY'] ?? 'goog_yTGrCFLGYSwwEJkapVcmHHkZYxG';
   static String get _iosKey => dotenv.env['REVENUECAT_IOS_KEY'] ?? 'test_dqUqZKVCRZxyjcGymsxZQGRxHJf';
 
   Future<void> initialize({String? userId}) async {
