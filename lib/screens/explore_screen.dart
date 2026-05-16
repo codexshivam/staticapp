@@ -227,7 +227,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
               SearchField(
                 controller: _searchController,
-                hintText: 'Search confessions or usernames...',
+                hintText: 'Search voices and confessions...',
                 onChanged: (val) {
                   setState(() => _searchQuery = val);
                   _performSearch(val);
@@ -266,13 +266,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 ],
 
                 SectionTitle(
-                  title: 'Matching Confessions',
-                  subtitle: 'Confessions matching "$_searchQuery"',
+                  title: 'Matching Voices & Confessions',
+                  subtitle: 'Matching "$_searchQuery"',
                 ),
                 const SizedBox(height: 12),
                 _filteredConfessions.isEmpty
                     ? _buildEmptyState(
-                        'No confessions match your search. Try another query.',
+                        'No voices or confessions match your search.',
                       )
                     : SizedBox(
                         height: 300,
@@ -317,7 +317,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 const SizedBox(height: 8),
                 const SectionTitle(
                   title: 'Select Prefered Date',
-                  subtitle: 'Browse confessions made on specific date',
+                  subtitle: 'Browse voices and confessions by date',
                 ),
                 const SizedBox(height: 18),
                 Container(
@@ -415,12 +415,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 const SizedBox(height: 26),
 
                 SectionTitle(
-                  title: 'Confessions on Selected Date',
+                  title: 'Voices & Confessions on Selected Date',
                   subtitle: 'Shared on ${_formatDateLabel(_selectedDate)}',
                 ),
                 const SizedBox(height: 14),
                 _filteredConfessions.isEmpty
-                    ? _buildEmptyState('No confessions shared on this day.')
+                    ? _buildEmptyState('No voices or confessions shared on this day.')
                     : SizedBox(
                         height: 300,
                         child: Skeletonizer(

@@ -389,8 +389,9 @@ class AppwriteDbService {
     }
 
     final filtered = all.where((c) {
+      final local = c.createdAt.toLocal();
       final str =
-          '${c.createdAt.year}-${c.createdAt.month.toString().padLeft(2, '0')}-${c.createdAt.day.toString().padLeft(2, '0')}';
+          '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
       return str == dateText;
     }).toList();
 

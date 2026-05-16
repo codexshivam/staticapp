@@ -24,8 +24,6 @@ class _SavedScreenState extends State<SavedScreen> {
   bool _isSelectMode = false;
   final Set<String> _selectedHistoryIds = {};
 
-
-
   @override
   void initState() {
     super.initState();
@@ -37,21 +35,33 @@ class _SavedScreenState extends State<SavedScreen> {
   Future<void> _loadSavedConfessions() async {
     final currentUser = AuthStateService.instance.currentUser;
     if (currentUser == null || currentUser.savedConfessionIds.isEmpty) {
-      if (mounted) setState(() { _savedConfessions = []; });
+      if (mounted)
+        setState(() {
+          _savedConfessions = [];
+        });
       return;
     }
     try {
-      final saved = await AppwriteDbService.instance.getSavedConfessions(currentUser.savedConfessionIds);
+      final saved = await AppwriteDbService.instance.getSavedConfessions(
+        currentUser.savedConfessionIds,
+      );
       if (mounted) {
         setState(() {
           _savedConfessions = saved.isNotEmpty
               ? saved
-              : Confession.mockConfessions.where((c) => currentUser.savedConfessionIds.contains(c.id)).toList();
+              : Confession.mockConfessions
+                    .where((c) => currentUser.savedConfessionIds.contains(c.id))
+                    .toList();
         });
       }
     } catch (_) {
-      final fallback = Confession.mockConfessions.where((c) => currentUser.savedConfessionIds.contains(c.id)).toList();
-      if (mounted) setState(() { _savedConfessions = fallback; });
+      final fallback = Confession.mockConfessions
+          .where((c) => currentUser.savedConfessionIds.contains(c.id))
+          .toList();
+      if (mounted)
+        setState(() {
+          _savedConfessions = fallback;
+        });
     }
   }
 
@@ -86,13 +96,17 @@ class _SavedScreenState extends State<SavedScreen> {
             .copyWith(isSaved: false);
       }
 
-      final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+      final currentUser =
+          AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
       final savedIds = List<String>.from(currentUser.savedConfessionIds);
       savedIds.remove(conf.id);
       final updatedUser = currentUser.copyWith(savedConfessionIds: savedIds);
       if (AuthStateService.instance.currentUser != null) {
         AuthStateService.instance.updateUser(updatedUser);
-        AppwriteDbService.instance.updateSavedConfessions(currentUser.id, savedIds);
+        AppwriteDbService.instance.updateSavedConfessions(
+          currentUser.id,
+          savedIds,
+        );
       } else {
         AppUser.fallbackUser = updatedUser;
       }
@@ -100,7 +114,7 @@ class _SavedScreenState extends State<SavedScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Removed confession from saved'),
+        content: Text('Removed voice from saved'),
         duration: Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.pureBlack,
@@ -287,7 +301,7 @@ class _SavedScreenState extends State<SavedScreen> {
                     indicatorSize: TabBarIndicatorSize.tab,
                     indicatorWeight: 2.0,
                     tabs: const [
-                      Tab(text: 'Saved Confessions'),
+                      Tab(text: 'Saved'),
                       Tab(text: 'History'),
                     ],
                   ),
@@ -296,11 +310,7 @@ class _SavedScreenState extends State<SavedScreen> {
 
                 Expanded(
                   child: TabBarView(
-                    children: [
-                      _buildSavedTab(),
-
-                      _buildHistoryTab(),
-                    ],
+                    children: [_buildSavedTab(), _buildHistoryTab()],
                   ),
                 ),
               ],
@@ -323,10 +333,7 @@ class _SavedScreenState extends State<SavedScreen> {
             child: _savedConfessions.isEmpty
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    children: [
-                      const SizedBox(height: 100),
-                      _buildEmptyState(),
-                    ],
+                    children: [const SizedBox(height: 100), _buildEmptyState()],
                   )
                 : ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -666,7 +673,7 @@ class _SavedScreenState extends State<SavedScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Your saved confessions will appear here',
+              'Your saved voices & confessions will appear here',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 14,
@@ -676,7 +683,7 @@ class _SavedScreenState extends State<SavedScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Browse confessions and bookmark them to listen to them later.',
+              'Browse and bookmark them to listen to them later.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 11,
@@ -714,7 +721,7 @@ class _SavedScreenState extends State<SavedScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Confessions you play will be recorded in your history.',
+              'Voices and confessions you play will be recorded in your history.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 11,

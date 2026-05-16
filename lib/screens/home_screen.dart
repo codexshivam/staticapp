@@ -245,8 +245,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 30),
 
             const SectionTitle(
-              title: 'Recent Confessions ',
-              subtitle: 'Confessions made in the last 24 hours',
+              title: 'Recent Voices & Confessions',
+              subtitle: 'Shared in the last 24 hours',
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -316,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SectionTitle(
               title: 'From People You Follow',
-              subtitle: 'Confessions from people you follow',
+              subtitle: 'Shared from people you follow',
             ),
             const SizedBox(height: 12),
             _loadedFollowing.isEmpty && !_isInitialLoading
@@ -392,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 children: [
                   Text(
-                    'We ❤️ Confessions and You!',
+                    'We ❤️ Voices & Confessions!',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontStyle: FontStyle.italic,
                       fontWeight: FontWeight.w600,
@@ -629,7 +629,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'WELCOME TO CONFESSIONS',
+                'WELCOME TO VOICES & CONFESSIONS',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.background.withOpacity(0.7),
                   fontSize: 10,
@@ -651,7 +651,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            "A safe and non judgemental space where people share their deepest thoughts, secrets, and messages. Tap any voice confession below to start listening.",
+            "A safe and non judgemental space where people share their thoughts, stories, and messages. Tap any voice or confession below to start listening.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColors.background.withOpacity(0.65),
               fontSize: 12,

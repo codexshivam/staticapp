@@ -388,7 +388,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           _buildStatColumn(
                             context,
-                            'Confessions',
+                            'Voices & Confessions',
                             '${_userConfessions.length}',
                           ),
                           _buildVerticalDivider(),
@@ -487,8 +487,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 SectionTitle(
                   title: _isMe
-                      ? 'Confessions from You ❤️'
-                      : '${displayUser.displayName}\'s Confessions ❤️',
+                      ? 'Voices & Confessions from You ❤️'
+                      : '${displayUser.displayName}\'s Voices & Confessions ❤️',
                 ),
                 const SizedBox(height: 14),
 
@@ -497,7 +497,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 40),
                         alignment: Alignment.center,
                         child: Text(
-                          'No confessions posted yet.',
+                          'No voices or confessions posted yet.',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(

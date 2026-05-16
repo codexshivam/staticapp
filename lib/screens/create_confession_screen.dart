@@ -159,7 +159,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
       ];
       final month = monthNames[now.month - 1];
-      title = 'Confession made on ${now.day} $month';
+      title = 'Voice shared on ${now.day} $month';
     }
 
     final currentUser = AuthStateService.instance.currentUser;
@@ -290,7 +290,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
         return Column(
           children: [
             Text(
-              'Share your confession ❤️',
+              'Share your voice or confession ❤️',
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
@@ -298,7 +298,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              "Share what's on your mind. Record a voice confession.",
+              "Share what's on your mind. Record a voice or confession.",
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColors.textSecondary,
@@ -443,7 +443,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Voice Confession Ready ❤️',
+                'Voice or Confession Ready ❤️',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -464,7 +464,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
                 maxLength: 50,
                 style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
-                  labelText: 'Title your confession...',
+                  labelText: 'Title your post...',
                   hintText: 'e.g. A message to my first love...',
                   counterStyle: TextStyle(
                     fontSize: 10,
@@ -547,7 +547,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Your voice confession is now live.',
+              'Your voice/confession is now live.',
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
