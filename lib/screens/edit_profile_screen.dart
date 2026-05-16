@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
-import '../services/firebase/firebase_auth_service.dart';
-import '../services/firebase/firebase_db_service.dart';
+import '../services/appwrite/appwrite_auth_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 import '../services/auth_state_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -71,8 +71,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         links: updatedLinks,
       );
 
-      await FirebaseDbService.instance.updateUserProfile(updatedUser);
-      await FirebaseAuthService.instance.updateName(displayName: name);
+      await AppwriteDbService.instance.updateUserProfile(updatedUser);
+      await AppwriteAuthService.instance.updateName(displayName: name);
 
       AuthStateService.instance.updateUser(updatedUser);
 

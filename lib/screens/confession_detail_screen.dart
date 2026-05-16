@@ -9,8 +9,8 @@ import '../core/theme/app_colors.dart';
 import '../core/navigation/playback_manager.dart';
 import '../models/confession.dart';
 import '../models/comment.dart';
-import '../services/firebase/firebase_db_service.dart';
-import '../services/firebase/firebase_storage_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
+import '../services/cloudflare/r2_storage_service.dart';
 import '../services/auth_state_service.dart';
 import '../models/user.dart';
 import '../widgets/comment_bubble.dart';
@@ -59,7 +59,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
 
   Future<void> _loadComments() async {
     try {
-      final comments = await FirebaseDbService.instance.getComments(
+      final comments = await AppwriteDbService.instance.getComments(
         widget.confession.id,
       );
       comments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -105,7 +105,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
       }
       final updatedUser = currentUser.copyWith(savedConfessionIds: savedIds);
       if (AuthStateService.instance.currentUser != null) {
-        await FirebaseDbService.instance.updateSavedConfessions(
+        await AppwriteDbService.instance.updateSavedConfessions(
           currentUser.id,
           savedIds,
         );
@@ -147,7 +147,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
       if (!_mockSelectedImagePath!.startsWith('http') &&
           !_mockSelectedImagePath!.startsWith('journal_snapshot')) {
         try {
-          finalImageUrl = await FirebaseStorageService.instance
+          finalImageUrl = await R2StorageService.instance
               .uploadCommentImage(_mockSelectedImagePath!);
         } catch (_) {
           finalImageUrl = _mockSelectedImagePath;
@@ -178,8 +178,8 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     }
 
     try {
-      await FirebaseDbService.instance.createComment(newComment);
-      await FirebaseDbService.instance.incrementCommentsCount(
+      await AppwriteDbService.instance.createComment(newComment);
+      await AppwriteDbService.instance.incrementCommentsCount(
         widget.confession.id,
         widget.confession.commentsCount,
       );
@@ -200,10 +200,10 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     );
     try {
       if (comment.imageUrl != null && comment.imageUrl!.startsWith('http')) {
-        await FirebaseStorageService.instance.deleteImageFile(comment.imageUrl!);
+        await R2StorageService.instance.deleteImageFile(comment.imageUrl!);
       }
-      await FirebaseDbService.instance.deleteComment(comment.id);
-      await FirebaseDbService.instance.decrementCommentsCount(widget.confession.id);
+      await AppwriteDbService.instance.deleteComment(comment.id);
+      await AppwriteDbService.instance.decrementCommentsCount(widget.confession.id);
     } catch (_) {}
   }
 
@@ -238,16 +238,16 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
 
     try {
       if (widget.confession.audioUrl != null && widget.confession.audioUrl!.startsWith('http')) {
-        await FirebaseStorageService.instance.deleteAudioFile(widget.confession.audioUrl!);
+        await R2StorageService.instance.deleteAudioFile(widget.confession.audioUrl!);
       }
-      final comments = await FirebaseDbService.instance.getComments(widget.confession.id);
+      final comments = await AppwriteDbService.instance.getComments(widget.confession.id);
       for (final c in comments) {
         if (c.imageUrl != null && c.imageUrl!.startsWith('http')) {
-          await FirebaseStorageService.instance.deleteImageFile(c.imageUrl!);
+          await R2StorageService.instance.deleteImageFile(c.imageUrl!);
         }
-        await FirebaseDbService.instance.deleteComment(c.id);
+        await AppwriteDbService.instance.deleteComment(c.id);
       }
-      await FirebaseDbService.instance.deleteConfession(widget.confession.id);
+      await AppwriteDbService.instance.deleteConfession(widget.confession.id);
     } catch (_) {}
   }
 
@@ -458,7 +458,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
                             const SizedBox(height: 6),
 
                             FutureBuilder<AppUser?>(
-                              future: FirebaseDbService.instance.getUserProfile(
+                              future: AppwriteDbService.instance.getUserProfile(
                                 widget.confession.authorId,
                               ),
                               builder: (context, snapshot) {

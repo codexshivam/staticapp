@@ -6,7 +6,7 @@ import '../core/navigation/playback_manager.dart';
 import '../widgets/section_title.dart';
 import '../widgets/confession_card.dart';
 import '../models/confession.dart';
-import '../services/firebase/firebase_db_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 import '../services/auth_state_service.dart';
 import '../models/user.dart';
 import 'confession_detail_screen.dart';
@@ -50,14 +50,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadInitialData() async {
     try {
-      final confessions = await FirebaseDbService.instance.getConfessions(
+      final confessions = await AppwriteDbService.instance.getConfessions(
         limit: _pageSize,
         offset: 0,
       );
       final currentUser = AuthStateService.instance.currentUser;
       List<Confession> following = [];
       if (currentUser != null && currentUser.followingIds.isNotEmpty) {
-        following = await FirebaseDbService.instance.getFollowingConfessions(
+        following = await AppwriteDbService.instance.getFollowingConfessions(
           currentUser.followingIds,
           limit: _pageSize,
           offset: 0,
@@ -122,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final currentUser = AuthStateService.instance.currentUser;
       List<Confession> more = [];
       if (currentUser != null && currentUser.followingIds.isNotEmpty) {
-        more = await FirebaseDbService.instance.getFollowingConfessions(
+        more = await AppwriteDbService.instance.getFollowingConfessions(
           currentUser.followingIds,
           limit: _pageSize,
           offset: _offsetFollowing,
@@ -145,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isLoadingMore24h || !_hasMore24h) return;
     setState(() => _isLoadingMore24h = true);
     try {
-      final more = await FirebaseDbService.instance.getConfessions(
+      final more = await AppwriteDbService.instance.getConfessions(
         limit: _pageSize,
         offset: _offset24h,
       );
@@ -505,7 +505,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 2),
                 FutureBuilder<AppUser?>(
-                  future: FirebaseDbService.instance.getUserProfile(
+                  future: AppwriteDbService.instance.getUserProfile(
                     conf.authorId,
                   ),
                   builder: (context, snapshot) {

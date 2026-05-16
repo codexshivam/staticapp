@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 import '../models/user.dart';
 import '../widgets/user_list_tile.dart';
-import '../services/firebase/firebase_db_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 import '../services/auth_state_service.dart';
 import 'profile_screen.dart';
 
@@ -40,8 +40,8 @@ class _FollowersScreenState extends State<FollowersScreen> {
     final targetUser = isMe ? currentUser : widget.user;
 
     try {
-      final followers = await FirebaseDbService.instance.getUsersByIds(targetUser.followerIds);
-      final following = await FirebaseDbService.instance.getUsersByIds(targetUser.followingIds);
+      final followers = await AppwriteDbService.instance.getUsersByIds(targetUser.followerIds);
+      final following = await AppwriteDbService.instance.getUsersByIds(targetUser.followingIds);
 
       if (targetUser.followerIds.contains(currentUser.id) && !followers.any((u) => u.id == currentUser.id)) {
         followers.insert(0, currentUser);
@@ -112,7 +112,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
       if (AuthStateService.instance.currentUser != null) {
         AuthStateService.instance.updateUser(updatedUser);
         try {
-          await FirebaseDbService.instance.unfollowUser(
+          await AppwriteDbService.instance.unfollowUser(
             currentUserId: currentUser.id, targetUserId: otherUser.id);
         } catch (_) {}
       } else {
@@ -144,7 +144,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
       if (AuthStateService.instance.currentUser != null) {
         AuthStateService.instance.updateUser(updatedUser);
         try {
-          await FirebaseDbService.instance.followUser(
+          await AppwriteDbService.instance.followUser(
             currentUserId: currentUser.id, targetUserId: otherUser.id);
         } catch (_) {}
       } else {

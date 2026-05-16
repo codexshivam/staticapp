@@ -6,7 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../core/theme/app_colors.dart';
 import '../models/comment.dart';
 import '../models/user.dart';
-import '../services/firebase/firebase_db_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 
 class CommentBubble extends StatelessWidget {
   final Comment comment;
@@ -60,7 +60,7 @@ class CommentBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<AppUser?>(
-      future: FirebaseDbService.instance.getUserProfile(comment.authorId),
+      future: AppwriteDbService.instance.getUserProfile(comment.authorId),
       builder: (context, snapshot) {
         final author = snapshot.data;
         final authorName = author?.displayName ?? 'Anonymous';

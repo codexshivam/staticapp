@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
-import '../services/firebase/firebase_db_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 import '../services/auth_state_service.dart';
 
 class ChangeUsernameScreen extends StatefulWidget {
@@ -79,7 +79,7 @@ class _ChangeUsernameScreenState extends State<ChangeUsernameScreen> {
     _debounce = Timer(const Duration(milliseconds: 600), () async {
       try {
         final handle = '@$text';
-        final available = await FirebaseDbService.instance.checkHandleAvailable(handle);
+        final available = await AppwriteDbService.instance.checkHandleAvailable(handle);
         if (mounted) {
           setState(() {
             _isChecking = false;
@@ -120,7 +120,7 @@ class _ChangeUsernameScreenState extends State<ChangeUsernameScreen> {
       final currentUser = AuthStateService.instance.currentUser;
       if (currentUser != null) {
         final updatedUser = currentUser.copyWith(handle: newHandle);
-        await FirebaseDbService.instance.updateUserProfile(updatedUser);
+        await AppwriteDbService.instance.updateUserProfile(updatedUser);
         AuthStateService.instance.updateUser(updatedUser);
       }
 

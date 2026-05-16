@@ -5,7 +5,7 @@ import '../models/user.dart';
 import '../models/confession.dart';
 import '../widgets/section_title.dart';
 import '../widgets/confession_card.dart';
-import '../services/firebase/firebase_db_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 import '../services/auth_state_service.dart';
 import 'followers_screen.dart';
 import 'confession_detail_screen.dart';
@@ -52,7 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadUserConfessions() async {
     if (_activeUser.id.isEmpty) return;
     try {
-      final confessions = await FirebaseDbService.instance.getConfessionsByUser(
+      final confessions = await AppwriteDbService.instance.getConfessionsByUser(
         _activeUser.id,
       );
       if (mounted) setState(() => _userConfessions = confessions);
@@ -131,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (AuthStateService.instance.currentUser != null) {
         AuthStateService.instance.updateUser(updatedUser);
         try {
-          await FirebaseDbService.instance.followUser(
+          await AppwriteDbService.instance.followUser(
             currentUserId: currentUser.id,
             targetUserId: _activeUser.id,
           );
@@ -149,7 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (AuthStateService.instance.currentUser != null) {
         AuthStateService.instance.updateUser(updatedUser);
         try {
-          await FirebaseDbService.instance.unfollowUser(
+          await AppwriteDbService.instance.unfollowUser(
             currentUserId: currentUser.id,
             targetUserId: _activeUser.id,
           );

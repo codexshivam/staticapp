@@ -5,7 +5,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:intl/intl.dart';
 import '../models/user.dart';
-import 'firebase/firebase_db_service.dart';
+import 'appwrite/appwrite_db_service.dart';
 import 'auth_state_service.dart';
 import 'remote_config_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -59,7 +59,7 @@ class SubscriptionService {
         if (currentUser != null) {
           final updated = currentUser.copyWith(isPro: _isPro);
           AuthStateService.instance.updateUser(updated);
-          await FirebaseDbService.instance.updateUserProfile(updated);
+          await AppwriteDbService.instance.updateUserProfile(updated);
         }
       } catch (_) {}
     }
@@ -142,7 +142,7 @@ class SubscriptionService {
       final currentUser = AuthStateService.instance.currentUser;
       if (currentUser == null) return true;
 
-      AppUser? profile = await FirebaseDbService.instance.getUserProfile(currentUser.id);
+      AppUser? profile = await AppwriteDbService.instance.getUserProfile(currentUser.id);
       profile ??= currentUser;
 
       final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -165,7 +165,7 @@ class SubscriptionService {
       final currentUser = AuthStateService.instance.currentUser;
       if (currentUser == null) return;
 
-      AppUser? profile = await FirebaseDbService.instance.getUserProfile(currentUser.id);
+      AppUser? profile = await AppwriteDbService.instance.getUserProfile(currentUser.id);
       profile ??= currentUser;
 
       final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -173,11 +173,11 @@ class SubscriptionService {
       if (profile.lastPlaybackDate == currentDate) {
         final updated = profile.copyWith(dailyPlaybackCount: profile.dailyPlaybackCount + 1);
         AuthStateService.instance.updateUser(updated);
-        await FirebaseDbService.instance.updateUserProfile(updated);
+        await AppwriteDbService.instance.updateUserProfile(updated);
       } else {
         final updated = profile.copyWith(lastPlaybackDate: currentDate, dailyPlaybackCount: 1);
         AuthStateService.instance.updateUser(updated);
-        await FirebaseDbService.instance.updateUserProfile(updated);
+        await AppwriteDbService.instance.updateUserProfile(updated);
       }
     } catch (e) {
       debugPrint('Error incrementing playback count: $e');

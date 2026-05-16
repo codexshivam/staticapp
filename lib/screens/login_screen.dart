@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import '../core/theme/app_colors.dart';
-import '../services/firebase/firebase_auth_service.dart';
-import '../services/firebase/firebase_db_service.dart';
+import '../services/appwrite/appwrite_auth_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 import '../services/auth_state_service.dart';
 import '../services/subscription_service.dart';
 import 'legal_document_screen.dart';
@@ -41,15 +41,13 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final userCredential = await FirebaseAuthService.instance.signIn(email: email, password: password);
-      final sessionUser = userCredential.user;
-      if (sessionUser == null) throw Exception('Session not found after login');
+      final session = await AppwriteAuthService.instance.signIn(email: email, password: password);
 
-      final profile = await FirebaseDbService.instance.getUserProfile(sessionUser.uid);
+      final profile = await AppwriteDbService.instance.getUserProfile(session.uid);
       if (profile == null) throw Exception('Profile not found');
 
-      AuthStateService.instance.setUser(profile, email: sessionUser.email);
-      await SubscriptionService.instance.updateUserId(sessionUser.uid);
+      AuthStateService.instance.setUser(profile, email: session.email);
+      await SubscriptionService.instance.updateUserId(session.uid);
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -110,9 +108,9 @@ class _LoginScreenState extends State<LoginScreen> {
               if (email.isEmpty) return;
               Navigator.pop(context);
               try {
-                await FirebaseAuthService.instance.triggerPasswordReset(
+                await AppwriteAuthService.instance.triggerPasswordReset(
                   email: email,
-                  redirectUrl: 'https://confessions.app/reset',
+                  redirectUrl: 'https://thestatic.app/reset',
                 );
                 if (mounted) _showSnackBar('Password reset link sent to your email ❤️');
               } catch (e) {

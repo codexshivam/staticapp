@@ -6,8 +6,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../core/theme/app_colors.dart';
 import '../models/confession.dart';
-import '../services/firebase/firebase_db_service.dart';
-import '../services/firebase/firebase_storage_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
+import '../services/cloudflare/r2_storage_service.dart';
 import '../services/auth_state_service.dart';
 
 enum RecordState { idle, recording, recorded, publishing, success }
@@ -188,7 +188,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
           _publishProgress = 0.5;
           _publishingText = 'Uploading audio... ✨';
         });
-        audioUrl = await FirebaseStorageService.instance.uploadConfessionAudio(
+        audioUrl = await R2StorageService.instance.uploadConfessionAudio(
           _recordedFilePath!,
         );
       }
@@ -213,12 +213,12 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
         audioUrl: audioUrl,
       );
 
-      await FirebaseDbService.instance.createConfession(newConf);
+      await AppwriteDbService.instance.createConfession(newConf);
 
       final updatedUser = currentUser.copyWith(
         confessionCount: currentUser.confessionCount + 1,
       );
-      await FirebaseDbService.instance.updateUserProfile(updatedUser);
+      await AppwriteDbService.instance.updateUserProfile(updatedUser);
       AuthStateService.instance.updateUser(updatedUser);
 
       if (mounted) {

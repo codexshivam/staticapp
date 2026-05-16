@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
-import '../services/firebase/firebase_auth_service.dart';
+import '../services/appwrite/appwrite_auth_service.dart';
 
 class ChangeEmailScreen extends StatefulWidget {
   final String currentEmail;
@@ -36,7 +36,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
       final newEmail = _emailController.text.trim();
       final password = _passwordController.text;
 
-      await FirebaseAuthService.instance.updateEmail(
+      await AppwriteAuthService.instance.updateEmail(
         email: newEmail,
         password: password,
       );

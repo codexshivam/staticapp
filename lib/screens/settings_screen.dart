@@ -7,16 +7,14 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/settings_tile.dart';
 import '../models/user.dart';
-import '../services/firebase/firebase_auth_service.dart';
+import '../services/appwrite/appwrite_auth_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 import '../services/auth_state_service.dart';
 import '../services/subscription_service.dart';
 import 'login_screen.dart';
 import 'legal_document_screen.dart';
 import 'change_email_screen.dart';
 import 'change_username_screen.dart';
-
-import 'package:firebase_auth/firebase_auth.dart';
-import '../services/firebase/firebase_db_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -55,24 +53,21 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     super.dispose();
   }
 
+  /// With Appwrite, email changes are immediately committed — no verification flow.
+  /// We reload the profile from the DB to pick up any changes.
   Future<void> _checkEmailStatus() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
     try {
-      await user.reload();
-      final updatedUser = FirebaseAuth.instance.currentUser;
-      if (updatedUser != null && updatedUser.email != null) {
-        final newEmail = updatedUser.email!;
-        final currentSessionUser = AuthStateService.instance.currentUser;
-        if (currentSessionUser != null && currentSessionUser.email != newEmail) {
-          final updatedProfile = currentSessionUser.copyWith(email: newEmail);
-          await FirebaseDbService.instance.updateUserProfile(updatedProfile);
-          AuthStateService.instance.setUser(updatedProfile, email: newEmail);
-          if (mounted) {
-            setState(() {
-              _currentEmail = newEmail;
-            });
-          }
+      final session = await AppwriteAuthService.instance.getCurrentSessionUser();
+      if (session == null) return;
+      final currentSessionUser = AuthStateService.instance.currentUser;
+      if (currentSessionUser != null && session.email != null && currentSessionUser.email != session.email) {
+        final updatedProfile = currentSessionUser.copyWith(email: session.email);
+        await AppwriteDbService.instance.updateUserProfile(updatedProfile);
+        AuthStateService.instance.setUser(updatedProfile, email: session.email);
+        if (mounted) {
+          setState(() {
+            _currentEmail = session.email!;
+          });
         }
       }
     } catch (_) {}
@@ -152,9 +147,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             onPressed: () async {
               Navigator.pop(dialogContext);
               try {
-                await FirebaseAuthService.instance.triggerPasswordReset(
+                await AppwriteAuthService.instance.triggerPasswordReset(
                   email: _currentEmail,
-                  redirectUrl: 'https://confessions.app/reset',
+                  redirectUrl: 'https://thestatic.app/reset',
                 );
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -189,7 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             onPressed: () async {
               Navigator.pop(dialogContext);
               try {
-                await FirebaseAuthService.instance.signOut();
+                await AppwriteAuthService.instance.signOut();
               } catch (_) {}
               AuthStateService.instance.clearUser();
               if (mounted) {

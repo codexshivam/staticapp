@@ -6,7 +6,7 @@ import '../widgets/confession_card.dart';
 import '../models/user.dart';
 import '../models/confession.dart';
 import '../core/navigation/playback_manager.dart';
-import '../services/firebase/firebase_db_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 import '../services/auth_state_service.dart';
 import 'confession_detail_screen.dart';
 
@@ -41,7 +41,7 @@ class _SavedScreenState extends State<SavedScreen> {
       return;
     }
     try {
-      final saved = await FirebaseDbService.instance.getSavedConfessions(currentUser.savedConfessionIds);
+      final saved = await AppwriteDbService.instance.getSavedConfessions(currentUser.savedConfessionIds);
       if (mounted) {
         setState(() {
           _savedConfessions = saved.isNotEmpty
@@ -92,7 +92,7 @@ class _SavedScreenState extends State<SavedScreen> {
       final updatedUser = currentUser.copyWith(savedConfessionIds: savedIds);
       if (AuthStateService.instance.currentUser != null) {
         AuthStateService.instance.updateUser(updatedUser);
-        FirebaseDbService.instance.updateSavedConfessions(currentUser.id, savedIds);
+        AppwriteDbService.instance.updateSavedConfessions(currentUser.id, savedIds);
       } else {
         AppUser.fallbackUser = updatedUser;
       }

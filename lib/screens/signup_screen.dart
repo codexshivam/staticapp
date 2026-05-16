@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import '../core/theme/app_colors.dart';
-import '../services/firebase/firebase_auth_service.dart';
-import '../services/firebase/firebase_db_service.dart';
+import '../services/appwrite/appwrite_auth_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 import '../services/auth_state_service.dart';
 import '../services/subscription_service.dart';
 import 'legal_document_screen.dart';
@@ -88,7 +88,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
       try {
         final handle = '@$text';
-        final available = await FirebaseDbService.instance.checkHandleAvailable(handle);
+        final available = await AppwriteDbService.instance.checkHandleAvailable(handle);
         if (mounted) {
           setState(() {
             _isCheckingUsername = false;
@@ -139,7 +139,7 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final newUser = await FirebaseAuthService.instance.signUp(
+      final newUser = await AppwriteAuthService.instance.signUp(
         email: email,
         password: password,
         displayName: username,
@@ -149,8 +149,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (newUser == null) throw Exception('Account creation failed');
 
-      final sessionUser = FirebaseAuthService.instance.getCurrentSessionUser();
-      AuthStateService.instance.setUser(newUser, email: sessionUser?.email ?? email);
+      // After signUp, the session is already created inside AppwriteAuthService.
+      AuthStateService.instance.setUser(newUser, email: email);
       await SubscriptionService.instance.updateUserId(newUser.id);
 
       if (mounted) {

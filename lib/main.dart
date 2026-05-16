@@ -11,7 +11,7 @@ import 'services/notification_service.dart';
 import 'services/subscription_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/remote_config_service.dart';
-import 'services/firebase/firebase_db_service.dart';
+import 'services/appwrite/appwrite_client.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,7 +36,7 @@ void main() async {
     await NotificationService.instance.initialize();
     await SubscriptionService.instance.initialize();
     await RemoteConfigService.instance.initialize();
-    await FirebaseDbService.instance.initialize();
+    AppwriteClient.instance.initialize();
 
     FlutterError.onError = (errorDetails) {
       FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);

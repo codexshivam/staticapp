@@ -9,7 +9,7 @@ import '../widgets/confession_card.dart';
 import '../widgets/user_list_tile.dart';
 import '../models/confession.dart';
 import '../models/user.dart';
-import '../services/firebase/firebase_db_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 import 'confession_detail_screen.dart';
 import 'profile_screen.dart';
 
@@ -59,7 +59,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final result = await FirebaseDbService.instance.getConfessionsByDate(date);
+      final result = await AppwriteDbService.instance.getConfessionsByDate(date);
       if (mounted) {
         setState(() {
           _displayedConfessions = result;
@@ -81,8 +81,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
     setState(() => _isLoading = true);
     try {
-      final confessions = await FirebaseDbService.instance.searchConfessions(query);
-      final users = await FirebaseDbService.instance.searchUsers(query);
+      final confessions = await AppwriteDbService.instance.searchConfessions(query);
+      final users = await AppwriteDbService.instance.searchUsers(query);
       if (mounted) setState(() { _displayedConfessions = confessions; _displayedUsers = users; _isLoading = false; });
     } catch (_) {
       final q = query.toLowerCase();

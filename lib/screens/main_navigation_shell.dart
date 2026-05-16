@@ -8,9 +8,9 @@ import 'saved_screen.dart';
 import 'profile_screen.dart';
 import 'create_confession_screen.dart';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import '../services/appwrite/appwrite_auth_service.dart';
 import '../services/auth_state_service.dart';
-import '../services/firebase/firebase_db_service.dart';
+import '../services/appwrite/appwrite_db_service.dart';
 
 class MainNavigationShell extends StatefulWidget {
   final int initialTab;
@@ -45,19 +45,16 @@ class _MainNavigationShellState extends State<MainNavigationShell> with WidgetsB
   }
 
   Future<void> _checkEmailStatus() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
     try {
-      await user.reload();
-      final updatedUser = FirebaseAuth.instance.currentUser;
-      if (updatedUser != null && updatedUser.email != null) {
-        final newEmail = updatedUser.email!;
-        final currentSessionUser = AuthStateService.instance.currentUser;
-        if (currentSessionUser != null && currentSessionUser.email != newEmail) {
-          final updatedProfile = currentSessionUser.copyWith(email: newEmail);
-          await FirebaseDbService.instance.updateUserProfile(updatedProfile);
-          AuthStateService.instance.setUser(updatedProfile, email: newEmail);
-        }
+      final session = await AppwriteAuthService.instance.getCurrentSessionUser();
+      if (session == null) return;
+      final currentSessionUser = AuthStateService.instance.currentUser;
+      if (currentSessionUser != null &&
+          session.email != null &&
+          currentSessionUser.email != session.email) {
+        final updatedProfile = currentSessionUser.copyWith(email: session.email);
+        await AppwriteDbService.instance.updateUserProfile(updatedProfile);
+        AuthStateService.instance.setUser(updatedProfile, email: session.email);
       }
     } catch (_) {}
   }
