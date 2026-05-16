@@ -55,7 +55,11 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
             '${dir.path}/conf_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
         await _audioRecorder.start(
-          const RecordConfig(encoder: AudioEncoder.aacLc),
+          const RecordConfig(
+            encoder: AudioEncoder.aacLc,
+            bitRate: 64000,
+            numChannels: 1,
+          ),
           path: path,
         );
 
