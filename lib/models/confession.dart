@@ -41,7 +41,41 @@ class Confession {
     return [];
   }
 
-  static List<Confession> mockConfessions = [];
+  static List<Confession> mockConfessions = [
+    Confession(
+      id: 'c1',
+      title: 'Voice from Yesterday',
+      authorId: 'u1',
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      durationString: '0:30',
+      durationSeconds: 30,
+      waveformData: [0.1, 0.5, 0.3, 0.7, 0.2],
+      commentsCount: 2,
+      isSaved: false,
+    ),
+    Confession(
+      id: 'c2',
+      title: 'Voice from 2 Days Ago',
+      authorId: 'u2',
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      durationString: '0:45',
+      durationSeconds: 45,
+      waveformData: [0.2, 0.6, 0.4, 0.8, 0.3],
+      commentsCount: 5,
+      isSaved: false,
+    ),
+    Confession(
+      id: 'c3',
+      title: 'Voice from Today',
+      authorId: 'u3',
+      createdAt: DateTime.now(),
+      durationString: '1:00',
+      durationSeconds: 60,
+      waveformData: [0.3, 0.7, 0.5, 0.9, 0.4],
+      commentsCount: 0,
+      isSaved: false,
+    ),
+  ];
 
   Confession copyWith({
     String? id,

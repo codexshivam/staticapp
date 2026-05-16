@@ -57,7 +57,7 @@ class SettingsTile extends StatelessWidget {
                 child: Text(
                   subtitle!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary.withOpacity(0.8),
+                    color: AppColors.textSecondary.withValues(alpha: 0.8),
                     fontSize: 12,
                   ),
                 ),
@@ -66,7 +66,7 @@ class SettingsTile extends StatelessWidget {
         trailing: trailing ??
             Icon(
               Icons.chevron_right,
-              color: isDestructive ? AppColors.accentRed.withOpacity(0.5) : AppColors.textSecondary,
+              color: isDestructive ? AppColors.accentRed.withValues(alpha: 0.5) : AppColors.textSecondary,
               size: 18,
             ),
       ),

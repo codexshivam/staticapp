@@ -35,9 +35,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _loadUserState() {
-    final currentUser = AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
+    final currentUser =
+        AuthStateService.instance.currentUser ?? AppUser.fallbackUser;
     var user = widget.user ?? currentUser;
-    if (user.id != currentUser.id && currentUser.followingIds.contains(user.id)) {
+    if (user.id != currentUser.id &&
+        currentUser.followingIds.contains(user.id)) {
       if (!user.followerIds.contains(currentUser.id)) {
         user = user.copyWith(
           followerIds: [...user.followerIds, currentUser.id],
@@ -388,7 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           _buildStatColumn(
                             context,
-                            'Voices & Confessions',
+                            'Uploads',
                             '${_userConfessions.length}',
                           ),
                           _buildVerticalDivider(),
@@ -396,7 +398,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onTap: () => _openFollowersScreen(true),
                             borderRadius: BorderRadius.circular(8),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                               child: _buildStatColumn(
                                 context,
                                 'Followers',
@@ -409,7 +414,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onTap: () => _openFollowersScreen(false),
                             borderRadius: BorderRadius.circular(8),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                               child: _buildStatColumn(
                                 context,
                                 'Following',
@@ -487,8 +495,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 SectionTitle(
                   title: _isMe
-                      ? 'Voices & Confessions from You ❤️'
-                      : '${displayUser.displayName}\'s Voices & Confessions ❤️',
+                      ? 'Voices from You ❤️'
+                      : '${displayUser.displayName}\'s Voices ❤️',
                 ),
                 const SizedBox(height: 14),
 
@@ -497,7 +505,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 40),
                         alignment: Alignment.center,
                         child: Text(
-                          'No voices or confessions posted yet.',
+                          'No voices posted yet.',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(

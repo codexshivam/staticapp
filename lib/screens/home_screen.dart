@@ -38,10 +38,13 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _hasMore24h = true;
   bool _hasMoreFollowing = true;
   bool _isInitialLoading = true;
+  int _lastConfessionCount = 0;
 
   @override
   void initState() {
     super.initState();
+    _lastConfessionCount = AuthStateService.instance.currentUser?.confessionCount ?? 0;
+    AuthStateService.instance.addListener(_onAuthChange);
     _loadInitialData();
     _mainScrollController.addListener(_onMainScroll);
     _horizontalScrollController.addListener(_onHorizontalScroll);
@@ -93,10 +96,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    AuthStateService.instance.removeListener(_onAuthChange);
     _mainScrollController.dispose();
     _horizontalScrollController.dispose();
     _followingScrollController.dispose();
     super.dispose();
+  }
+
+  void _onAuthChange() {
+    if (!mounted) return;
+    final count = AuthStateService.instance.currentUser?.confessionCount ?? 0;
+    if (count > _lastConfessionCount) {
+      _lastConfessionCount = count;
+      _loadInitialData();
+    }
   }
 
   void _onMainScroll() {}
@@ -396,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontStyle: FontStyle.italic,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary.withOpacity(0.8),
+                      color: AppColors.textSecondary.withValues(alpha: 0.8),
                       fontSize: 17,
                       letterSpacing: 0.5,
                     ),
@@ -462,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           isPlaying ? 'Now Playing...' : 'Last Played',
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                color: AppColors.background.withOpacity(0.7),
+                                color: AppColors.background.withValues(alpha: 0.7),
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.8,
@@ -476,7 +489,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: Text(
@@ -516,7 +529,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return Text(
                       'by $authorName • $authorHandle',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.background.withOpacity(0.6),
+                        color: AppColors.background.withValues(alpha: 0.6),
                         fontSize: 12,
                       ),
                     );
@@ -557,7 +570,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               height: 3,
                               child: LinearProgressIndicator(
                                 value: progress,
-                                backgroundColor: Colors.white.withOpacity(0.15),
+                                backgroundColor: Colors.white.withValues(alpha: 0.15),
                                 valueColor: const AlwaysStoppedAnimation<Color>(
                                   Colors.white,
                                 ),
@@ -629,9 +642,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'WELCOME TO VOICES & CONFESSIONS',
+                'WELCOME TO STATIC APP',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.background.withOpacity(0.7),
+                  color: AppColors.background.withValues(alpha: 0.7),
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.0,
@@ -653,7 +666,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             "A safe and non judgemental space where people share their thoughts, stories, and messages. Tap any voice or confession below to start listening.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.background.withOpacity(0.65),
+              color: AppColors.background.withValues(alpha: 0.65),
               fontSize: 12,
               height: 1.4,
             ),
@@ -668,7 +681,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.cardBg.withOpacity(0.5),
+        color: AppColors.cardBg.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(5.0),
         border: Border.all(color: AppColors.divider),
       ),
@@ -691,7 +704,7 @@ class _HomeScreenState extends State<HomeScreen> {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontSize: 12,
-              color: AppColors.textSecondary.withOpacity(0.8),
+              color: AppColors.textSecondary.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -713,7 +726,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: data[index] * 30,
               margin: const EdgeInsets.symmetric(horizontal: 1.0),
               decoration: BoxDecoration(
-                color: isFilled ? Colors.white : Colors.white.withOpacity(0.15),
+                color: isFilled ? Colors.white : Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(1.0),
               ),
             ),

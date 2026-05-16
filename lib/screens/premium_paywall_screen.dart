@@ -175,7 +175,7 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
@@ -203,148 +203,159 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.pureBlack),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 12.0,
+          : Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.white, AppColors.background.withValues(alpha: 0.5)],
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: AppColors.pureBlack,
-                        borderRadius: BorderRadius.circular(20.0),
-                      ),
-                      child: const Icon(
-                        Feather.award,
-                        color: Colors.amber,
-                        size: 40,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Unlock TheStatic Pro',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.pureBlack,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Elevate your listening experience with limitless access to all confessions.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 36),
-
-                  // Feature Checklist
-                  _buildFeatureRow(
-                    Feather.heart,
-                    'Support Us',
-                    'Directly support the journey us on building and maintaining this platform.',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFeatureRow(
-                    Feather.shield,
-                    'Zero Intrusive Ads',
-                    'Enjoy a clean, focused, and beautifully crafted authentic audio experience with absolutely no ads.',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFeatureRow(
-                    Feather.zap,
-                    'Fund Future Innovation',
-                    'Help fuel the creation of new features, better audio rendering, and advanced privacy controls.',
-                  ),
-
-                  const SizedBox(height: 36),
-                  const Text(
-                    'Choose Your Plan',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.pureBlack,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Packages Grid/List
-                  if (_packages.isNotEmpty)
-                    ..._packages.map((pkg) => _buildLivePackageCard(pkg))
-                  else
-                    ..._mockPackages.map((mpkg) => _buildMockPackageCard(mpkg)),
-
-                  const SizedBox(height: 32),
-                  ElevatedButton(
-                    onPressed: _isPurchasing ? null : _handlePurchase,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.pureBlack,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 18.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      elevation: 4,
-                      shadowColor: AppColors.pureBlack.withValues(alpha: 0.3),
-                    ),
-                    child: _isPurchasing
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            'Continue & Subscribe',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 12.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundColor: Colors.transparent,
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/logo.png',
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
                           ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Subscriptions renew automatically. Cancel anytime in your App Store settings prior to renewal.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Center(
-                    child: GestureDetector(
-                      onTap: _launchRefundPolicy,
-                      child: const Text(
-                        'Refund & Cancellation Policy',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.pureBlack,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Support TheStatic Platform',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.pureBlack,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Your support helps us make the app bigger, more helpful, and maintain a clean, ad-free experience.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+
+                    // Feature Checklist
+                    _buildFeatureRow(
+                      Feather.heart,
+                      'Help Us Grow',
+                      'Your contribution helps us expand the platform and reach more voices.',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildFeatureRow(
+                      Feather.shield,
+                      'Keep It Clean',
+                      'Help us keep the app free of intrusive ads and maintain a premium, focused experience.',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildFeatureRow(
+                      Feather.zap,
+                      'Fund Innovation',
+                      'Support the development of new features and better audio technology.',
+                    ),
+
+                    const SizedBox(height: 36),
+                    const Text(
+                      'Choose Your Plan',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.pureBlack,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Packages Grid/List
+                    if (_packages.isNotEmpty)
+                      ..._packages.map((pkg) => _buildLivePackageCard(pkg))
+                    else
+                      ..._mockPackages.map(
+                        (mpkg) => _buildMockPackageCard(mpkg),
+                      ),
+
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: _isPurchasing ? null : _handlePurchase,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.pureBlack,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 18.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        elevation: 4,
+                        shadowColor: AppColors.pureBlack.withValues(alpha: 0.3),
+                      ),
+                      child: _isPurchasing
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              'Continue & Subscribe',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Subscriptions renew automatically. Cancel anytime in your App Store settings prior to renewal.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: GestureDetector(
+                        onTap: _launchRefundPolicy,
+                        child: const Text(
+                          'Refund & Cancellation Policy',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.pureBlack,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
             ),
     );
@@ -354,21 +365,7 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            color: AppColors.cardBg,
-            borderRadius: BorderRadius.circular(10.0),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.shadow,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Icon(icon, color: AppColors.pureBlack, size: 22),
-        ),
+        Icon(icon, color: AppColors.pureBlack, size: 20),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -409,15 +406,15 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
           color: AppColors.cardBg,
           borderRadius: BorderRadius.circular(14.0),
           border: Border.all(
-            color: isSelected ? AppColors.pureBlack : Colors.grey.shade300,
-            width: isSelected ? 2.0 : 1.0,
+            color: isSelected ? AppColors.pureBlack : Colors.grey.shade200,
+            width: isSelected ? 1.5 : 1.0,
           ),
           boxShadow: isSelected
               ? [
-                  const BoxShadow(
-                    color: AppColors.shadow,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
+                  BoxShadow(
+                    color: AppColors.pureBlack.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ]
               : [],
@@ -480,15 +477,15 @@ class _PremiumPaywallScreenState extends State<PremiumPaywallScreen> {
           color: AppColors.cardBg,
           borderRadius: BorderRadius.circular(14.0),
           border: Border.all(
-            color: isSelected ? AppColors.pureBlack : Colors.grey.shade300,
-            width: isSelected ? 2.0 : 1.0,
+            color: isSelected ? AppColors.pureBlack : Colors.grey.shade200,
+            width: isSelected ? 1.5 : 1.0,
           ),
           boxShadow: isSelected
               ? [
-                  const BoxShadow(
-                    color: AppColors.shadow,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
+                  BoxShadow(
+                    color: AppColors.pureBlack.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ]
               : [],

@@ -52,14 +52,14 @@ Widget _privacyPolicyContent(BuildContext context) {
           'the static ("we", "us", "our") is committed to protecting your personal information. This Privacy Policy explains what data we collect, how we use it, and your rights as a user.'),
       _section(context, '1. Information We Collect', [
         _bullet(context, 'Account Data', 'Your name, handle, and email address when you register.'),
-        _bullet(context, 'Audio Voices & Confessions', 'Voice recordings you choose to upload or record within the app.'),
+        _bullet(context, 'Audio Voices', 'Voice recordings you choose to upload or record within the app.'),
         _bullet(context, 'Usage Data', 'App interactions, playback history, and device identifiers collected via Firebase Analytics.'),
         _bullet(context, 'Crash Reports', 'Anonymized crash logs collected by Firebase Crashlytics to improve reliability.'),
         _bullet(context, 'Payment Data', 'Subscription purchases are handled entirely by RevenueCat and the App Store / Google Play. We never store your payment card information.'),
       ]),
       _section(context, '2. How We Use Your Information', [
         _point(context, 'To provide and improve the app experience.'),
-        _point(context, 'To send push notifications about activity on your voices and confessions.'),
+        _point(context, 'To send push notifications about activity on your voices.'),
         _point(context, 'To manage your subscription status via RevenueCat.'),
         _point(context, 'To analyze usage patterns and fix bugs.'),
         _point(context, 'We never sell your personal data to third parties.'),

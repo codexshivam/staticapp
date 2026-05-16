@@ -35,10 +35,11 @@ class _SavedScreenState extends State<SavedScreen> {
   Future<void> _loadSavedConfessions() async {
     final currentUser = AuthStateService.instance.currentUser;
     if (currentUser == null || currentUser.savedConfessionIds.isEmpty) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _savedConfessions = [];
         });
+      }
       return;
     }
     try {
@@ -58,10 +59,11 @@ class _SavedScreenState extends State<SavedScreen> {
       final fallback = Confession.mockConfessions
           .where((c) => currentUser.savedConfessionIds.contains(c.id))
           .toList();
-      if (mounted)
+      if (mounted) {
         setState(() {
           _savedConfessions = fallback;
         });
+      }
     }
   }
 
@@ -349,7 +351,7 @@ class _SavedScreenState extends State<SavedScreen> {
                           padding: const EdgeInsets.only(right: 20),
                           margin: const EdgeInsets.only(bottom: 14),
                           decoration: BoxDecoration(
-                            color: AppColors.accentRed.withOpacity(0.15),
+                            color: AppColors.accentRed.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(5),
                           ),
                           child: const Icon(
@@ -464,7 +466,7 @@ class _SavedScreenState extends State<SavedScreen> {
                                 alignment: Alignment.centerRight,
                                 padding: const EdgeInsets.only(right: 20),
                                 decoration: BoxDecoration(
-                                  color: AppColors.accentRed.withOpacity(0.15),
+                                  color: AppColors.accentRed.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(5),
                                 ),
                                 child: const Icon(
@@ -673,7 +675,7 @@ class _SavedScreenState extends State<SavedScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Your saved voices & confessions will appear here',
+              'Your saved voices will appear here',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 14,
@@ -687,7 +689,7 @@ class _SavedScreenState extends State<SavedScreen> {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 11,
-                color: AppColors.textSecondary.withOpacity(0.6),
+                color: AppColors.textSecondary.withValues(alpha: 0.6),
                 height: 1.4,
               ),
             ),
@@ -721,11 +723,11 @@ class _SavedScreenState extends State<SavedScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Voices and confessions you play will be recorded in your history.',
+              'Voices you play will be recorded in your history.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 11,
-                color: AppColors.textSecondary.withOpacity(0.6),
+                color: AppColors.textSecondary.withValues(alpha: 0.6),
                 height: 1.4,
               ),
             ),

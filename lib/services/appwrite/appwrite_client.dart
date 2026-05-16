@@ -9,6 +9,7 @@ class AppwriteClient {
   late final Client client;
   late final Account account;
   late final Databases databases;
+  late final TablesDB tablesDb;
 
   void initialize() {
     final endpoint =
@@ -22,6 +23,7 @@ class AppwriteClient {
 
     account = Account(client);
     databases = Databases(client);
+    tablesDb = TablesDB(client);
   }
 
   /// Appwrite Database ID

@@ -155,8 +155,18 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
     if (title.isEmpty) {
       final now = DateTime.now();
       final monthNames = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       final month = monthNames[now.month - 1];
       title = 'Voice shared on ${now.day} $month';
@@ -252,7 +262,11 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.pureBlack, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.pureBlack,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -290,7 +304,7 @@ class _CreateConfessionScreenState extends State<CreateConfessionScreen> {
         return Column(
           children: [
             Text(
-              'Share your voice or confession ❤️',
+              'Share your voice ❤️',
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,

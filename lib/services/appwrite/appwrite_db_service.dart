@@ -10,7 +10,8 @@ class AppwriteDbService {
   static final AppwriteDbService instance = AppwriteDbService._();
   AppwriteDbService._();
 
-  Databases get _db => AppwriteClient.instance.databases;
+
+  TablesDB get _tablesDb => AppwriteClient.instance.tablesDb;
   String get _dbId => AppwriteClient.databaseId;
 
   final Map<String, AppUser> _userCache = {};
@@ -41,10 +42,10 @@ class AppwriteDbService {
     return [];
   }
 
-  AppUser _docToUser(aw_models.Document doc) {
-    final d = doc.data;
+  AppUser _docToUser(aw_models.Row row) {
+    final d = row.data;
     return AppUser(
-      id: doc.$id,
+      id: row.$id,
       displayName: d['displayName'] ?? '',
       email: d['email'] ?? '',
       handle: d['handle'] ?? '',
@@ -63,13 +64,13 @@ class AppwriteDbService {
     );
   }
 
-  Confession _docToConfession(aw_models.Document doc) {
-    final d = doc.data;
+  Confession _docToConfession(aw_models.Row row) {
+    final d = row.data;
     return Confession(
-      id: doc.$id,
+      id: row.$id,
       title: d['title'] ?? '',
       authorId: d['authorId'] ?? '',
-      createdAt: DateTime.parse(doc.$createdAt),
+      createdAt: DateTime.parse(row.$createdAt),
       durationString: d['durationString'] ?? '',
       durationSeconds: d['durationSeconds'] ?? 0,
       waveformData: List<double>.from(
@@ -81,23 +82,23 @@ class AppwriteDbService {
     );
   }
 
-  Comment _docToComment(aw_models.Document doc) {
-    final d = doc.data;
+  Comment _docToComment(aw_models.Row row) {
+    final d = row.data;
     return Comment(
-      id: doc.$id,
+      id: row.$id,
       confessionId: d['confessionId'] ?? '',
       authorId: d['authorId'] ?? '',
       content: d['content'] ?? '',
-      createdAt: DateTime.parse(doc.$createdAt),
+      createdAt: DateTime.parse(row.$createdAt),
       imageUrl: d['imageUrl'],
     );
   }
 
   Future<void> createUserProfile(AppUser user) async {
-    await _db.createDocument(
+    await _tablesDb.createRow(
       databaseId: _dbId,
-      collectionId: AppwriteClient.usersCollection,
-      documentId: user.id,
+      tableId: AppwriteClient.usersCollection,
+      rowId: user.id,
       data: {
         ...user.toJson(),
         'links': user.links,
@@ -113,10 +114,10 @@ class AppwriteDbService {
     if (_userCache.containsKey(userId)) return _userCache[userId];
 
     try {
-      final doc = await _db.getDocument(
+      final doc = await _tablesDb.getRow(
         databaseId: _dbId,
-        collectionId: AppwriteClient.usersCollection,
-        documentId: userId,
+        tableId: AppwriteClient.usersCollection,
+        rowId: userId,
       );
       final user = _docToUser(doc);
       _userCache[userId] = user;
@@ -127,10 +128,10 @@ class AppwriteDbService {
   }
 
   Future<void> updateUserProfile(AppUser user) async {
-    await _db.updateDocument(
+    await _tablesDb.updateRow(
       databaseId: _dbId,
-      collectionId: AppwriteClient.usersCollection,
-      documentId: user.id,
+      tableId: AppwriteClient.usersCollection,
+      rowId: user.id,
       data: {
         ...user.toJson(),
         'links': user.links,
@@ -144,12 +145,12 @@ class AppwriteDbService {
 
   Future<bool> checkHandleAvailable(String handle) async {
     try {
-      final result = await _db.listDocuments(
+      final result = await _tablesDb.listRows(
         databaseId: _dbId,
-        collectionId: AppwriteClient.usersCollection,
+        tableId: AppwriteClient.usersCollection,
         queries: [Query.equal('handle', handle), Query.limit(1)],
       );
-      return result.documents.isEmpty;
+      return result.rows.isEmpty;
     } catch (_) {
       return true;
     }
@@ -158,16 +159,56 @@ class AppwriteDbService {
   Future<List<AppUser>> searchUsers(String query, {int limit = 20}) async {
     if (query.trim().isEmpty) return [];
     try {
-      final result = await _db.listDocuments(
+      final result1 = await _tablesDb.listRows(
         databaseId: _dbId,
-        collectionId: AppwriteClient.usersCollection,
+        tableId: AppwriteClient.usersCollection,
         queries: [Query.search('displayName', query), Query.limit(limit)],
       );
-      final users = result.documents.map(_docToUser).toList();
-      for (final u in users) {
+      final result2 = await _tablesDb.listRows(
+        databaseId: _dbId,
+        tableId: AppwriteClient.usersCollection,
+        queries: [Query.search('handle', query), Query.limit(limit)],
+      );
+      
+      final users1 = result1.rows.map(_docToUser).toList();
+      final users2 = result2.rows.map(_docToUser).toList();
+      
+      final Map<String, AppUser> combined = {};
+      for (final u in users1) {
+        combined[u.id] = u;
+      }
+      for (final u in users2) {
+        combined[u.id] = u;
+      }
+      
+      final users = combined.values.take(limit).toList();
+      if (users.isNotEmpty) {
+        for (final u in users) {
+          _userCache[u.id] = u;
+        }
+        return users;
+      }
+      
+      // Fallback: Fetch last 100 users and filter client-side for substring match
+      final fallbackResult = await _tablesDb.listRows(
+        databaseId: _dbId,
+        tableId: AppwriteClient.usersCollection,
+        queries: [
+          Query.limit(100),
+        ],
+      );
+      
+      final q = query.toLowerCase();
+      final filtered = fallbackResult.rows
+          .map(_docToUser)
+          .where((u) => u.displayName.toLowerCase().contains(q) || u.handle.toLowerCase().contains(q))
+          .toList();
+          
+      final fallbackUsers = filtered.take(limit).toList();
+      for (final u in fallbackUsers) {
         _userCache[u.id] = u;
       }
-      return users;
+      return fallbackUsers;
     } catch (_) {
       return [];
     }
@@ -190,12 +231,12 @@ class AppwriteDbService {
     for (var i = 0; i < missing.length; i += 100) {
       final chunk = missing.sublist(i, (i + 100).clamp(0, missing.length));
       try {
-        final result = await _db.listDocuments(
+        final result = await _tablesDb.listRows(
           databaseId: _dbId,
-          collectionId: AppwriteClient.usersCollection,
+          tableId: AppwriteClient.usersCollection,
           queries: [Query.equal('\$id', chunk), Query.limit(100)],
         );
-        for (final doc in result.documents) {
+        for (final doc in result.rows) {
           final u = _docToUser(doc);
           _userCache[u.id] = u;
           fetched.add(u);
@@ -209,10 +250,10 @@ class AppwriteDbService {
     String userId,
     List<String> savedIds,
   ) async {
-    await _db.updateDocument(
+    await _tablesDb.updateRow(
       databaseId: _dbId,
-      collectionId: AppwriteClient.usersCollection,
-      documentId: userId,
+      tableId: AppwriteClient.usersCollection,
+      rowId: userId,
       data: {'savedConfessionIds': savedIds},
     );
     if (_userCache.containsKey(userId)) {
@@ -235,19 +276,19 @@ class AppwriteDbService {
     final updatedFollowers = [...target.followerIds, currentUserId];
 
     await Future.wait([
-      _db.updateDocument(
+      _tablesDb.updateRow(
         databaseId: _dbId,
-        collectionId: AppwriteClient.usersCollection,
-        documentId: currentUserId,
+        tableId: AppwriteClient.usersCollection,
+        rowId: currentUserId,
         data: {
           'followingIds': updatedFollowing,
           'followingCount': current.followingCount + 1,
         },
       ),
-      _db.updateDocument(
+      _tablesDb.updateRow(
         databaseId: _dbId,
-        collectionId: AppwriteClient.usersCollection,
-        documentId: targetUserId,
+        tableId: AppwriteClient.usersCollection,
+        rowId: targetUserId,
         data: {
           'followerIds': updatedFollowers,
           'followersCount': target.followersCount + 1,
@@ -281,19 +322,19 @@ class AppwriteDbService {
         .toList();
 
     await Future.wait([
-      _db.updateDocument(
+      _tablesDb.updateRow(
         databaseId: _dbId,
-        collectionId: AppwriteClient.usersCollection,
-        documentId: currentUserId,
+        tableId: AppwriteClient.usersCollection,
+        rowId: currentUserId,
         data: {
           'followingIds': updatedFollowing,
           'followingCount': (current.followingCount - 1).clamp(0, 99999),
         },
       ),
-      _db.updateDocument(
+      _tablesDb.updateRow(
         databaseId: _dbId,
-        collectionId: AppwriteClient.usersCollection,
-        documentId: targetUserId,
+        tableId: AppwriteClient.usersCollection,
+        rowId: targetUserId,
         data: {
           'followerIds': updatedFollowers,
           'followersCount': (target.followersCount - 1).clamp(0, 99999),
@@ -312,10 +353,10 @@ class AppwriteDbService {
   }
 
   Future<void> createConfession(Confession confession) async {
-    await _db.createDocument(
+    await _tablesDb.createRow(
       databaseId: _dbId,
-      collectionId: AppwriteClient.confessionsCollection,
-      documentId: confession.id,
+      tableId: AppwriteClient.confessionsCollection,
+      rowId: confession.id,
       data: {
         'title': confession.title,
         'authorId': confession.authorId,
@@ -340,12 +381,12 @@ class AppwriteDbService {
     }
 
     try {
-      final result = await _db.listDocuments(
+      final result = await _tablesDb.listRows(
         databaseId: _dbId,
-        collectionId: AppwriteClient.confessionsCollection,
+        tableId: AppwriteClient.confessionsCollection,
         queries: [Query.orderDesc('\$createdAt'), Query.limit(limit + offset)],
       );
-      final all = result.documents.map(_docToConfession).toList();
+      final all = result.rows.map(_docToConfession).toList();
       _feedCache = all;
       _feedCachedAt = DateTime.now();
       if (offset >= all.length) return [];
@@ -361,16 +402,16 @@ class AppwriteDbService {
   }) async {
     if (userId.isEmpty) return [];
     try {
-      final result = await _db.listDocuments(
+      final result = await _tablesDb.listRows(
         databaseId: _dbId,
-        collectionId: AppwriteClient.confessionsCollection,
+        tableId: AppwriteClient.confessionsCollection,
         queries: [
           Query.equal('authorId', userId),
           Query.orderDesc('\$createdAt'),
           Query.limit(limit),
         ],
       );
-      return result.documents.map(_docToConfession).toList();
+      return result.rows.map(_docToConfession).toList();
     } catch (_) {
       return [];
     }
@@ -405,16 +446,37 @@ class AppwriteDbService {
   }) async {
     if (query.trim().isEmpty) return getConfessions(limit: limit);
     try {
-      final result = await _db.listDocuments(
+      // Try Appwrite full-text search first
+      final result = await _tablesDb.listRows(
         databaseId: _dbId,
-        collectionId: AppwriteClient.confessionsCollection,
+        tableId: AppwriteClient.confessionsCollection,
         queries: [
           Query.search('title', query),
-          Query.orderDesc('\$createdAt'),
           Query.limit(limit),
         ],
       );
-      return result.documents.map(_docToConfession).toList();
+      
+      if (result.rows.isNotEmpty) {
+        return result.rows.map(_docToConfession).toList();
+      }
+      
+      // Fallback: Fetch last 100 and filter client-side for substring match
+      final fallbackResult = await _tablesDb.listRows(
+        databaseId: _dbId,
+        tableId: AppwriteClient.confessionsCollection,
+        queries: [
+          Query.orderDesc('\$createdAt'),
+          Query.limit(100),
+        ],
+      );
+      
+      final q = query.toLowerCase();
+      final filtered = fallbackResult.rows
+          .map(_docToConfession)
+          .where((c) => c.title.toLowerCase().contains(q))
+          .toList();
+          
+      return filtered.take(limit).toList();
     } catch (_) {
       return [];
     }
@@ -426,12 +488,12 @@ class AppwriteDbService {
     for (var i = 0; i < ids.length; i += 100) {
       final chunk = ids.sublist(i, (i + 100).clamp(0, ids.length));
       try {
-        final result = await _db.listDocuments(
+        final result = await _tablesDb.listRows(
           databaseId: _dbId,
-          collectionId: AppwriteClient.confessionsCollection,
+          tableId: AppwriteClient.confessionsCollection,
           queries: [Query.equal('\$id', chunk), Query.limit(100)],
         );
-        results.addAll(result.documents.map(_docToConfession));
+        results.addAll(result.rows.map(_docToConfession));
       } catch (_) {}
     }
     return results;
@@ -448,16 +510,16 @@ class AppwriteDbService {
     for (var i = 0; i < authorIds.length; i += 100) {
       final chunk = authorIds.sublist(i, (i + 100).clamp(0, authorIds.length));
       try {
-        final result = await _db.listDocuments(
+        final result = await _tablesDb.listRows(
           databaseId: _dbId,
-          collectionId: AppwriteClient.confessionsCollection,
+          tableId: AppwriteClient.confessionsCollection,
           queries: [
             Query.equal('authorId', chunk),
             Query.orderDesc('\$createdAt'),
             Query.limit(limit + offset),
           ],
         );
-        results.addAll(result.documents.map(_docToConfession));
+        results.addAll(result.rows.map(_docToConfession));
       } catch (_) {}
     }
 
@@ -470,45 +532,45 @@ class AppwriteDbService {
     String confessionId,
     int currentCount,
   ) async {
-    await _db.updateDocument(
+    await _tablesDb.updateRow(
       databaseId: _dbId,
-      collectionId: AppwriteClient.confessionsCollection,
-      documentId: confessionId,
+      tableId: AppwriteClient.confessionsCollection,
+      rowId: confessionId,
       data: {'commentsCount': currentCount + 1},
     );
   }
 
   Future<void> decrementCommentsCount(String confessionId) async {
     try {
-      final doc = await _db.getDocument(
+      final doc = await _tablesDb.getRow(
         databaseId: _dbId,
-        collectionId: AppwriteClient.confessionsCollection,
-        documentId: confessionId,
+        tableId: AppwriteClient.confessionsCollection,
+        rowId: confessionId,
       );
       final count = (doc.data['commentsCount'] as int? ?? 1);
-      await _db.updateDocument(
+      await _tablesDb.updateRow(
         databaseId: _dbId,
-        collectionId: AppwriteClient.confessionsCollection,
-        documentId: confessionId,
+        tableId: AppwriteClient.confessionsCollection,
+        rowId: confessionId,
         data: {'commentsCount': (count - 1).clamp(0, 99999)},
       );
     } catch (_) {}
   }
 
   Future<void> deleteConfession(String id) async {
-    await _db.deleteDocument(
+    await _tablesDb.deleteRow(
       databaseId: _dbId,
-      collectionId: AppwriteClient.confessionsCollection,
-      documentId: id,
+      tableId: AppwriteClient.confessionsCollection,
+      rowId: id,
     );
     _invalidateFeedCache();
   }
 
   Future<void> createComment(Comment comment) async {
-    await _db.createDocument(
+    await _tablesDb.createRow(
       databaseId: _dbId,
-      collectionId: AppwriteClient.commentsCollection,
-      documentId: comment.id,
+      tableId: AppwriteClient.commentsCollection,
+      rowId: comment.id,
       data: {
         'confessionId': comment.confessionId,
         'authorId': comment.authorId,
@@ -519,25 +581,25 @@ class AppwriteDbService {
   }
 
   Future<void> deleteComment(String id) async {
-    await _db.deleteDocument(
+    await _tablesDb.deleteRow(
       databaseId: _dbId,
-      collectionId: AppwriteClient.commentsCollection,
-      documentId: id,
+      tableId: AppwriteClient.commentsCollection,
+      rowId: id,
     );
   }
 
   Future<List<Comment>> getComments(String confessionId) async {
     try {
-      final result = await _db.listDocuments(
+      final result = await _tablesDb.listRows(
         databaseId: _dbId,
-        collectionId: AppwriteClient.commentsCollection,
+        tableId: AppwriteClient.commentsCollection,
         queries: [
           Query.equal('confessionId', confessionId),
           Query.orderAsc('\$createdAt'),
           Query.limit(200),
         ],
       );
-      return result.documents.map(_docToComment).toList();
+      return result.rows.map(_docToComment).toList();
     } catch (_) {
       return [];
     }

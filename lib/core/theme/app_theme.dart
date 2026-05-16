@@ -94,7 +94,7 @@ class AppTheme {
         fillColor: AppColors.cardBg,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         hintStyle: GoogleFonts.playfairDisplay(
-          color: AppColors.textSecondary.withOpacity(0.7),
+          color: AppColors.textSecondary.withValues(alpha: 0.7),
           fontSize: 14,
           letterSpacing: 0.5,
         ),

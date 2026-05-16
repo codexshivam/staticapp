@@ -15,6 +15,7 @@ import 'login_screen.dart';
 import 'legal_document_screen.dart';
 import 'change_email_screen.dart';
 import 'change_username_screen.dart';
+import 'change_password_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -23,7 +24,8 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
+class _SettingsScreenState extends State<SettingsScreen>
+    with WidgetsBindingObserver {
   late String _currentHandle;
   late String _currentEmail;
   bool _isPro = false;
@@ -33,7 +35,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     super.initState();
     final currentUser = AuthStateService.instance.currentUser;
     _currentHandle = currentUser?.handle ?? '@unknown';
-    _currentEmail = AuthStateService.instance.sessionEmail ?? 'unknown@email.com';
+    _currentEmail =
+        AuthStateService.instance.sessionEmail ?? 'unknown@email.com';
     _setupRemoteConfig();
     _loadProStatus();
     WidgetsBinding.instance.addObserver(this);
@@ -57,11 +60,16 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   /// We reload the profile from the DB to pick up any changes.
   Future<void> _checkEmailStatus() async {
     try {
-      final session = await AppwriteAuthService.instance.getCurrentSessionUser();
+      final session = await AppwriteAuthService.instance
+          .getCurrentSessionUser();
       if (session == null) return;
       final currentSessionUser = AuthStateService.instance.currentUser;
-      if (currentSessionUser != null && session.email != null && currentSessionUser.email != session.email) {
-        final updatedProfile = currentSessionUser.copyWith(email: session.email);
+      if (currentSessionUser != null &&
+          session.email != null &&
+          currentSessionUser.email != session.email) {
+        final updatedProfile = currentSessionUser.copyWith(
+          email: session.email,
+        );
         await AppwriteDbService.instance.updateUserProfile(updatedProfile);
         AuthStateService.instance.setUser(updatedProfile, email: session.email);
         if (mounted) {
@@ -97,13 +105,15 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   Future<void> _setupRemoteConfig() async {
     try {
       final remoteConfig = FirebaseRemoteConfig.instance;
-      await remoteConfig.setConfigSettings(RemoteConfigSettings(
-        fetchTimeout: const Duration(minutes: 1),
-        minimumFetchInterval: const Duration(hours: 1),
-      ));
+      await remoteConfig.setConfigSettings(
+        RemoteConfigSettings(
+          fetchTimeout: const Duration(minutes: 1),
+          minimumFetchInterval: const Duration(hours: 1),
+        ),
+      );
       await remoteConfig.setDefaults(const {
         "privacy_policy_url": "https://codexshivam.github.io/privacy",
-        "terms_of_service_url": "https://codexshivam.github.io/terms"
+        "terms_of_service_url": "https://codexshivam.github.io/terms",
       });
       await remoteConfig.fetchAndActivate();
     } catch (e) {
@@ -114,7 +124,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   void _editHandle() async {
     final result = await Navigator.of(context).push<String>(
       MaterialPageRoute(
-        builder: (context) => ChangeUsernameScreen(currentHandle: _currentHandle),
+        builder: (context) =>
+            ChangeUsernameScreen(currentHandle: _currentHandle),
       ),
     );
     if (result != null && result.isNotEmpty) {
@@ -133,41 +144,14 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 
   void _changePassword() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Change Password'),
-        content: const Text('We will send a password reset link to your email address.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              try {
-                await AppwriteAuthService.instance.triggerPasswordReset(
-                  email: _currentEmail,
-                  redirectUrl: 'https://thestatic.app/reset',
-                );
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Password reset link sent! Check your inbox ❤️'), backgroundColor: AppColors.pureBlack, behavior: SnackBarBehavior.floating));
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating));
-                }
-              }
-            },
-            child: const Text('Send Link'),
-          )
-        ],
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const ChangePasswordScreen(),
       ),
     );
   }
+
+
 
   void _handleLogout() {
     showDialog(
@@ -190,18 +174,22 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               if (mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                        FadeTransition(opacity: animation, child: child),
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        const LoginScreen(),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) =>
+                            FadeTransition(opacity: animation, child: child),
                     transitionDuration: const Duration(milliseconds: 500),
                   ),
                   (route) => false,
                 );
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.accentRed),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accentRed,
+            ),
             child: const Text('Log out'),
-          )
+          ),
         ],
       ),
     );
@@ -215,7 +203,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.pureBlack, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.pureBlack,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -281,7 +273,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 color: AppColors.cardBg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: _isPro ? AppColors.accentRed.withValues(alpha: 0.5) : AppColors.divider,
+                  color: _isPro
+                      ? AppColors.accentRed.withValues(alpha: 0.5)
+                      : AppColors.divider,
                 ),
               ),
               child: Row(
@@ -295,8 +289,12 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      _isPro ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                      color: _isPro ? AppColors.accentRed : AppColors.textSecondary,
+                      _isPro
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: _isPro
+                          ? AppColors.accentRed
+                          : AppColors.textSecondary,
                       size: 20,
                     ),
                   ),
@@ -307,18 +305,16 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       children: [
                         Text(
                           _isPro ? 'Supporter' : 'Listener',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           _isPro
                               ? 'Thank you for supporting us! ❤️'
-                              : 'Support the platform to get a badge',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                              : 'Support the platform',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -330,19 +326,28 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                             ? 'https://apps.apple.com/account/subscriptions'
                             : 'https://play.google.com/store/account/subscriptions';
                         try {
-                          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                          await launchUrl(
+                            Uri.parse(url),
+                            mode: LaunchMode.externalApplication,
+                          );
                         } catch (e) {
                           debugPrint('Could not launch subscription URL: $e');
                         }
                       } else {
-                        final result = await SubscriptionService.instance.showPaywall();
+                        final result = await SubscriptionService.instance
+                            .showPaywall();
                         if (result == PaywallResult.purchased && mounted) {
-                          setState(() => _isPro = SubscriptionService.instance.isPro);
+                          setState(
+                            () => _isPro = SubscriptionService.instance.isPro,
+                          );
                         }
                       }
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.pureBlack,
                         borderRadius: BorderRadius.circular(20),
@@ -399,3 +404,4 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     );
   }
 }
+

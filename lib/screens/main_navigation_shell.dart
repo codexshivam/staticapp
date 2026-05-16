@@ -102,7 +102,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> with WidgetsB
           filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.cardBg.withOpacity(0.65),
+              color: AppColors.cardBg.withValues(alpha: 0.65),
               border: const Border(
                 top: BorderSide(color: Color(0x0F000000), width: 0.5),
               ),

@@ -59,17 +59,30 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final result = await AppwriteDbService.instance.getConfessionsByDate(date);
+      final result = await AppwriteDbService.instance.getConfessionsByDate(
+        date,
+      );
       if (mounted) {
         setState(() {
-          _displayedConfessions = result;
-          _dateCache[date] = result;
+          _displayedConfessions = result.isNotEmpty
+              ? result
+              : Confession.mockConfessions
+                    .where((c) => _formatDateString(c.createdAt) == date)
+                    .toList();
+          _dateCache[date] = _displayedConfessions;
           _isLoading = false;
         });
       }
     } catch (_) {
-      final fallback = Confession.mockConfessions.where((c) => _formatDateString(c.createdAt) == date).toList();
-      if (mounted) setState(() { _displayedConfessions = fallback; _isLoading = false; });
+      final fallback = Confession.mockConfessions
+          .where((c) => _formatDateString(c.createdAt) == date)
+          .toList();
+      if (mounted) {
+        setState(() {
+          _displayedConfessions = fallback;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -77,18 +90,50 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (query.isEmpty) {
       _loadConfessionsForDate(_selectedDate);
       setState(() => _displayedUsers = []);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_dateScrollController.hasClients) {
+          _dateScrollController.animateTo(
+            _dateScrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
       return;
     }
     setState(() => _isLoading = true);
     try {
-      final confessions = await AppwriteDbService.instance.searchConfessions(query);
+      final confessions = await AppwriteDbService.instance.searchConfessions(
+        query,
+      );
       final users = await AppwriteDbService.instance.searchUsers(query);
-      if (mounted) setState(() { _displayedConfessions = confessions; _displayedUsers = users; _isLoading = false; });
+
+      if (mounted) {
+        setState(() {
+          _displayedConfessions = confessions;
+          _displayedUsers = users;
+          _isLoading = false;
+        });
+      }
     } catch (_) {
       final q = query.toLowerCase();
-      final fallback = Confession.mockConfessions.where((c) =>
-        c.title.toLowerCase().contains(q)).toList();
-      if (mounted) setState(() { _displayedConfessions = fallback; _isLoading = false; });
+      final fallbackConfessions = Confession.mockConfessions
+          .where((c) => c.title.toLowerCase().contains(q))
+          .toList();
+      final fallbackUsers = AppUser.mockUsers
+          .where(
+            (u) =>
+                u.displayName.toLowerCase().contains(q) ||
+                u.handle.toLowerCase().contains(q),
+          )
+          .toList();
+      if (mounted) {
+        setState(() {
+          _displayedConfessions = fallbackConfessions;
+          _displayedUsers = fallbackUsers;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -118,22 +163,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   List<Map<String, String>> _generateCalendarDays() {
     final List<Map<String, String>> days = [];
-    final start = DateTime(2026, 5, 10);
     final now = DateTime.now();
-    final anchor = DateTime(2026, 5, 12);
-
-    final endDate = now.isAfter(anchor) ? now : anchor;
+    final start = now.subtract(const Duration(days: 6)); // Last 7 days
     final labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-    for (int i = 0; ; i++) {
+    for (int i = 0; i < 7; i++) {
       final date = start.add(Duration(days: i));
-      if (date.isAfter(endDate)) {
-        break;
-      }
-
       final yyyymmdd = _formatDateString(date);
       final label = labels[date.weekday % 7];
-
       days.add({'date': yyyymmdd, 'label': label, 'num': '${date.day}'});
     }
 
@@ -141,21 +178,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _pickDate() async {
-    final initialDate =
-        DateTime.tryParse(_selectedDate) ?? DateTime(2026, 5, 12);
+    final initialDate = DateTime.tryParse(_selectedDate) ?? DateTime.now();
     final now = DateTime.now();
-    final anchor = DateTime(2026, 5, 12);
-    final lastDate = now.isAfter(anchor) ? now : anchor;
+    final firstDate = now.subtract(const Duration(days: 6));
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: initialDate.isAfter(lastDate)
-          ? lastDate
-          : (initialDate.isBefore(DateTime(2026, 5, 10))
-                ? DateTime(2026, 5, 10)
-                : initialDate),
-      firstDate: DateTime(2026, 5, 10),
-      lastDate: lastDate,
+      initialDate: initialDate.isAfter(now)
+          ? now
+          : (initialDate.isBefore(firstDate) ? firstDate : initialDate),
+      firstDate: firstDate,
+      lastDate: now,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -190,7 +223,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
-  List<Confession> get _filteredConfessions => _isLoading && _displayedConfessions.isEmpty
+  List<Confession> get _filteredConfessions =>
+      _isLoading && _displayedConfessions.isEmpty
       ? Confession.generateManyMockConfessions(8, forFollowing: false)
       : _displayedConfessions;
   List<AppUser> get _filteredUsers => _displayedUsers;
@@ -227,7 +261,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
               SearchField(
                 controller: _searchController,
-                hintText: 'Search voices and confessions...',
+                hintText: 'Search voices and users',
                 onChanged: (val) {
                   setState(() => _searchQuery = val);
                   _performSearch(val);
@@ -266,7 +300,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 ],
 
                 SectionTitle(
-                  title: 'Matching Voices & Confessions',
+                  title: 'Matching Voices',
                   subtitle: 'Matching "$_searchQuery"',
                 ),
                 const SizedBox(height: 12),
@@ -285,7 +319,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           ),
                           child: Builder(
                             builder: (context) {
-                              final chunks = _chunkList(_filteredConfessions, 4);
+                              final chunks = _chunkList(
+                                _filteredConfessions,
+                                4,
+                              );
                               return ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: chunks.length,
@@ -295,9 +332,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   final chunk = chunks[index];
                                   return SizedBox(
                                     width:
-                                        MediaQuery.of(context).size.width * 0.85,
+                                        MediaQuery.of(context).size.width *
+                                        0.85,
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
                                       children: chunk.map((conf) {
                                         return ConfessionCard(
                                           confession: conf,
@@ -317,7 +356,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 const SizedBox(height: 8),
                 const SectionTitle(
                   title: 'Select Prefered Date',
-                  subtitle: 'Browse voices and confessions by date',
+                  subtitle: 'Browse voices by date',
                 ),
                 const SizedBox(height: 18),
                 Container(
@@ -415,12 +454,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 const SizedBox(height: 26),
 
                 SectionTitle(
-                  title: 'Voices & Confessions on Selected Date',
+                  title: 'Voices on Selected Date',
                   subtitle: 'Shared on ${_formatDateLabel(_selectedDate)}',
                 ),
                 const SizedBox(height: 14),
                 _filteredConfessions.isEmpty
-                    ? _buildEmptyState('No voices or confessions shared on this day.')
+                    ? _buildEmptyState(
+                        'No voices or confessions shared on this day.',
+                      )
                     : SizedBox(
                         height: 300,
                         child: Skeletonizer(
@@ -432,7 +473,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           ),
                           child: Builder(
                             builder: (context) {
-                              final chunks = _chunkList(_filteredConfessions, 4);
+                              final chunks = _chunkList(
+                                _filteredConfessions,
+                                4,
+                              );
                               return ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: chunks.length,
@@ -442,9 +486,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   final chunk = chunks[index];
                                   return SizedBox(
                                     width:
-                                        MediaQuery.of(context).size.width * 0.85,
+                                        MediaQuery.of(context).size.width *
+                                        0.85,
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
                                       children: chunk.map((conf) {
                                         return ConfessionCard(
                                           confession: conf,
@@ -473,7 +519,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.cardBg.withOpacity(0.5),
+        color: AppColors.cardBg.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(5.0),
         border: Border.all(color: AppColors.divider),
       ),

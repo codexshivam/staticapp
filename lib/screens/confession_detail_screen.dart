@@ -882,7 +882,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
               decoration: BoxDecoration(
                 color: isFilled
                     ? AppColors.pureBlack
-                    : AppColors.textSecondary.withOpacity(0.15),
+                    : AppColors.textSecondary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(1.0),
               ),
             ),
