@@ -43,9 +43,9 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
-              'A verification link has been sent to $newEmail. Please click the link in your email to verify and update your login credentials! ❤️',
+              'Email address updated successfully! ❤️',
             ),
             backgroundColor: AppColors.pureBlack,
             behavior: SnackBarBehavior.floating,

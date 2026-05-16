@@ -41,8 +41,6 @@ class AppwriteDbService {
     return [];
   }
 
-  String _encodeList(List<String> list) => jsonEncode(list);
-
   AppUser _docToUser(aw_models.Document doc) {
     final d = doc.data;
     return AppUser(
@@ -102,10 +100,10 @@ class AppwriteDbService {
       documentId: user.id,
       data: {
         ...user.toJson(),
-        'links': _encodeList(user.links),
-        'savedConfessionIds': _encodeList(user.savedConfessionIds),
-        'followingIds': _encodeList(user.followingIds),
-        'followerIds': _encodeList(user.followerIds),
+        'links': user.links,
+        'savedConfessionIds': user.savedConfessionIds,
+        'followingIds': user.followingIds,
+        'followerIds': user.followerIds,
       },
     );
     _userCache[user.id] = user;
@@ -135,10 +133,10 @@ class AppwriteDbService {
       documentId: user.id,
       data: {
         ...user.toJson(),
-        'links': _encodeList(user.links),
-        'savedConfessionIds': _encodeList(user.savedConfessionIds),
-        'followingIds': _encodeList(user.followingIds),
-        'followerIds': _encodeList(user.followerIds),
+        'links': user.links,
+        'savedConfessionIds': user.savedConfessionIds,
+        'followingIds': user.followingIds,
+        'followerIds': user.followerIds,
       },
     );
     _userCache[user.id] = user;
@@ -215,7 +213,7 @@ class AppwriteDbService {
       databaseId: _dbId,
       collectionId: AppwriteClient.usersCollection,
       documentId: userId,
-      data: {'savedConfessionIds': _encodeList(savedIds)},
+      data: {'savedConfessionIds': savedIds},
     );
     if (_userCache.containsKey(userId)) {
       _userCache[userId] = _userCache[userId]!.copyWith(
@@ -242,7 +240,7 @@ class AppwriteDbService {
         collectionId: AppwriteClient.usersCollection,
         documentId: currentUserId,
         data: {
-          'followingIds': _encodeList(updatedFollowing),
+          'followingIds': updatedFollowing,
           'followingCount': current.followingCount + 1,
         },
       ),
@@ -251,7 +249,7 @@ class AppwriteDbService {
         collectionId: AppwriteClient.usersCollection,
         documentId: targetUserId,
         data: {
-          'followerIds': _encodeList(updatedFollowers),
+          'followerIds': updatedFollowers,
           'followersCount': target.followersCount + 1,
         },
       ),
@@ -288,7 +286,7 @@ class AppwriteDbService {
         collectionId: AppwriteClient.usersCollection,
         documentId: currentUserId,
         data: {
-          'followingIds': _encodeList(updatedFollowing),
+          'followingIds': updatedFollowing,
           'followingCount': (current.followingCount - 1).clamp(0, 99999),
         },
       ),
@@ -297,7 +295,7 @@ class AppwriteDbService {
         collectionId: AppwriteClient.usersCollection,
         documentId: targetUserId,
         data: {
-          'followerIds': _encodeList(updatedFollowers),
+          'followerIds': updatedFollowers,
           'followersCount': (target.followersCount - 1).clamp(0, 99999),
         },
       ),
@@ -323,9 +321,7 @@ class AppwriteDbService {
         'authorId': confession.authorId,
         'durationString': confession.durationString,
         'durationSeconds': confession.durationSeconds,
-        'waveformData': _encodeList(
-          confession.waveformData.map((e) => e.toString()).toList(),
-        ),
+        'waveformData': confession.waveformData,
         'commentsCount': confession.commentsCount,
         'audioUrl': confession.audioUrl,
       },

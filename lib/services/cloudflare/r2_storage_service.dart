@@ -50,7 +50,7 @@ class R2StorageService {
 
   void _checkConfigured() {
     if (!isConfigured) {
-      throw R2Exception('R2 storage not configured.');
+      throw R2Exception('Storage not configured.');
     }
   }
 
@@ -190,10 +190,10 @@ class R2StorageService {
         return 'No internet connection.';
       case DioExceptionType.badResponse:
         final status = e.response?.statusCode;
-        if (status == 403) return 'Access denied. Check R2 credentials.';
-        if (status == 404) return 'R2 bucket not found. Check configuration.';
-        if (status != null && status >= 500) return 'R2 service unavailable. Try later.';
-        return 'R2 error (HTTP $status).';
+        if (status == 403) return 'Access denied.';
+        if (status == 404) return 'Storage bucket not found.';
+        if (status != null && status >= 500) return 'Service unavailable. Try later.';
+        return 'Upload error (HTTP $status).';
       default:
         return e.message ?? 'Unknown upload error.';
     }

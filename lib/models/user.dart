@@ -26,7 +26,7 @@ class AppUser {
     required this.followingCount,
     required this.confessionCount,
     required this.upiId,
-    required this.links,
+    this.links = const [],
     this.lastPlaybackDate = '',
     this.dailyPlaybackCount = 0,
     this.savedConfessionIds = const [],
