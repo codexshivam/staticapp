@@ -73,7 +73,7 @@ class AppwriteDbService {
       durationString: d['durationString'] ?? '',
       durationSeconds: d['durationSeconds'] ?? 0,
       waveformData: List<double>.from(
-        (_decodeList(d['waveformData'])).map((e) => double.tryParse(e) ?? 0.0),
+        (d['waveformData'] ?? []).map((e) => (e as num).toDouble()),
       ),
       commentsCount: d['commentsCount'] ?? 0,
       isSaved: false,

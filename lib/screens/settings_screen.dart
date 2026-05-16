@@ -295,7 +295,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      _isPro ? Icons.verified_rounded : Icons.star_border_rounded,
+                      _isPro ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                       color: _isPro ? AppColors.accentRed : AppColors.textSecondary,
                       size: 20,
                     ),
@@ -306,7 +306,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isPro ? 'the static Pro' : 'Free Plan',
+                          _isPro ? 'Supporter' : 'Listener',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -314,8 +314,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                         const SizedBox(height: 2),
                         Text(
                           _isPro
-                              ? 'Your subscription is active'
-                              : 'Upgrade to unlock all features',
+                              ? 'Thank you for supporting us! ❤️'
+                              : 'Support the platform to get a badge',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppColors.textSecondary,
                           ),
@@ -348,7 +348,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        _isPro ? 'MANAGE' : 'UPGRADE',
+                        _isPro ? 'THANKS' : 'SUPPORT',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
