@@ -254,7 +254,12 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
   Future<void> _pickImage() async {
     try {
       final picker = ImagePicker();
-      final result = await picker.pickImage(source: ImageSource.gallery);
+      final result = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 70,
+      );
       if (result != null) {
         setState(() {
           _mockSelectedImagePath = result.path;

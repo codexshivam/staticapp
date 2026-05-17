@@ -6,6 +6,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:dio/dio.dart';
 import '../../models/confession.dart';
 import '../../services/database_service.dart';
 import '../../services/subscription_service.dart';
@@ -167,11 +168,9 @@ class PlaybackManager extends ChangeNotifier {
               if (file.existsSync()) {
                 cachedFilePath = file.path;
               } else {
-                final request = await HttpClient().getUrl(Uri.parse(confession.audioUrl!));
-                final response = await request.close();
+                final dio = Dio();
+                final response = await dio.download(confession.audioUrl!, file.path);
                 if (response.statusCode == 200) {
-                  final bytes = await consolidateHttpClientResponseBytes(response);
-                  await file.writeAsBytes(bytes);
                   cachedFilePath = file.path;
                 }
               }
