@@ -60,11 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) setState(() => _userConfessions = confessions);
     } catch (_) {
       if (mounted) {
-        setState(
-          () => _userConfessions = Confession.mockConfessions
-              .where((c) => c.authorId == _activeUser.id)
-              .toList(),
-        );
+        setState(() => _userConfessions = []);
       }
     }
   }

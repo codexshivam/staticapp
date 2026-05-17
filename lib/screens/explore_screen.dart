@@ -64,22 +64,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
       );
       if (mounted) {
         setState(() {
-          _displayedConfessions = result.isNotEmpty
-              ? result
-              : Confession.mockConfessions
-                    .where((c) => _formatDateString(c.createdAt) == date)
-                    .toList();
-          _dateCache[date] = _displayedConfessions;
+          _displayedConfessions = result;
+          _dateCache[date] = result;
           _isLoading = false;
         });
       }
     } catch (_) {
-      final fallback = Confession.mockConfessions
-          .where((c) => _formatDateString(c.createdAt) == date)
-          .toList();
       if (mounted) {
         setState(() {
-          _displayedConfessions = fallback;
+          _displayedConfessions = [];
           _isLoading = false;
         });
       }
@@ -116,21 +109,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
         });
       }
     } catch (_) {
-      final q = query.toLowerCase();
-      final fallbackConfessions = Confession.mockConfessions
-          .where((c) => c.title.toLowerCase().contains(q))
-          .toList();
-      final fallbackUsers = AppUser.mockUsers
-          .where(
-            (u) =>
-                u.displayName.toLowerCase().contains(q) ||
-                u.handle.toLowerCase().contains(q),
-          )
-          .toList();
       if (mounted) {
         setState(() {
-          _displayedConfessions = fallbackConfessions;
-          _displayedUsers = fallbackUsers;
+          _displayedConfessions = [];
+          _displayedUsers = [];
           _isLoading = false;
         });
       }
@@ -180,7 +162,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Future<void> _pickDate() async {
     final initialDate = DateTime.tryParse(_selectedDate) ?? DateTime.now();
     final now = DateTime.now();
-    final firstDate = now.subtract(const Duration(days: 6));
+    final firstDate = DateTime(2026, 5, 10);
 
     final picked = await showDatePicker(
       context: context,

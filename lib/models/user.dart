@@ -51,41 +51,7 @@ class AppUser {
     isPro: false,
   );
 
-  static List<AppUser> mockUsers = [
-    const AppUser(
-      id: 'u1',
-      displayName: 'Shivam Yadav',
-      handle: 'shivam',
-      email: 'shivam@test.com',
-      bio: '',
-      followersCount: 0,
-      followingCount: 0,
-      confessionCount: 0,
-      upiId: '',
-    ),
-    const AppUser(
-      id: 'u2',
-      displayName: 'John Doe',
-      handle: 'johndoe',
-      email: 'john@test.com',
-      bio: '',
-      followersCount: 0,
-      followingCount: 0,
-      confessionCount: 0,
-      upiId: '',
-    ),
-    const AppUser(
-      id: 'u3',
-      displayName: 'Jane Smith',
-      handle: 'janesmith',
-      email: 'janesmith@test.com',
-      bio: '',
-      followersCount: 0,
-      followingCount: 0,
-      confessionCount: 0,
-      upiId: '',
-    ),
-  ];
+  static List<AppUser> mockUsers = [];
 
   String get initials {
     if (displayName.isEmpty) return '??';

@@ -48,20 +48,13 @@ class _SavedScreenState extends State<SavedScreen> {
       );
       if (mounted) {
         setState(() {
-          _savedConfessions = saved.isNotEmpty
-              ? saved
-              : Confession.mockConfessions
-                    .where((c) => currentUser.savedConfessionIds.contains(c.id))
-                    .toList();
+          _savedConfessions = saved;
         });
       }
     } catch (_) {
-      final fallback = Confession.mockConfessions
-          .where((c) => currentUser.savedConfessionIds.contains(c.id))
-          .toList();
       if (mounted) {
         setState(() {
-          _savedConfessions = fallback;
+          _savedConfessions = [];
         });
       }
     }
