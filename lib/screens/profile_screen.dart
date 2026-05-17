@@ -65,12 +65,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _openDetail(Confession confession) {
-    Navigator.of(context).push(
+  Future<void> _openDetail(Confession confession) async {
+    final deleted = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => ConfessionDetailScreen(confession: confession),
       ),
     );
+    
+    if (deleted == true) {
+      setState(() {
+        _userConfessions.removeWhere((c) => c.id == confession.id);
+      });
+    }
   }
 
   void _openFollowersScreen(bool showFollowers) {

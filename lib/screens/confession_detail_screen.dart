@@ -233,7 +233,7 @@ class _ConfessionDetailScreenState extends State<ConfessionDetailScreen> {
     if (confirmed != true) return;
 
     if (mounted) {
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     }
 
     try {

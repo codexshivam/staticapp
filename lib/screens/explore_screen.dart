@@ -211,12 +211,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
       : _displayedConfessions;
   List<AppUser> get _filteredUsers => _displayedUsers;
 
-  void _openDetail(Confession confession) {
-    Navigator.of(context).push(
+  Future<void> _openDetail(Confession confession) async {
+    final deleted = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => ConfessionDetailScreen(confession: confession),
       ),
     );
+    
+    if (deleted == true) {
+      setState(() {
+        _displayedConfessions.removeWhere((c) => c.id == confession.id);
+        _dateCache.remove(_selectedDate);
+      });
+    }
   }
 
   @override

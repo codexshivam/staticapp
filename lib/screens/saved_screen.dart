@@ -70,12 +70,18 @@ class _SavedScreenState extends State<SavedScreen> {
     if (mounted) setState(() {});
   }
 
-  void _openDetail(Confession confession) {
-    Navigator.of(context).push(
+  Future<void> _openDetail(Confession confession) async {
+    final deleted = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => ConfessionDetailScreen(confession: confession),
       ),
     );
+    
+    if (deleted == true) {
+      setState(() {
+        _savedConfessions.removeWhere((c) => c.id == confession.id);
+      });
+    }
   }
 
   void _unsaveConfession(int index, Confession conf) {

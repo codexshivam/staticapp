@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as aw_models;
 import '../../models/user.dart';
@@ -567,17 +568,22 @@ class AppwriteDbService {
   }
 
   Future<void> createComment(Comment comment) async {
-    await _tablesDb.createRow(
-      databaseId: _dbId,
-      tableId: AppwriteClient.commentsCollection,
-      rowId: comment.id,
-      data: {
-        'confessionId': comment.confessionId,
-        'authorId': comment.authorId,
-        'content': comment.content,
-        'imageUrl': comment.imageUrl,
-      },
-    );
+    try {
+      await _tablesDb.createRow(
+        databaseId: _dbId,
+        tableId: AppwriteClient.commentsCollection,
+        rowId: comment.id,
+        data: {
+          'confessionId': comment.confessionId,
+          'authorId': comment.authorId,
+          'content': comment.content,
+          'imageUrl': comment.imageUrl,
+        },
+      );
+    } catch (e) {
+      debugPrint('Error creating comment: $e');
+      rethrow;
+    }
   }
 
   Future<void> deleteComment(String id) async {
@@ -600,7 +606,8 @@ class AppwriteDbService {
         ],
       );
       return result.rows.map(_docToComment).toList();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error getting comments: $e');
       return [];
     }
   }

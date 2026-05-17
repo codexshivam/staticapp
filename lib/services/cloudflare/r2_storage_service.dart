@@ -127,10 +127,29 @@ class R2StorageService {
 
   Future<void> deleteFile(String fileUrl) async {
     _checkConfigured();
-    if (_publicUrl == null || !fileUrl.startsWith(_publicUrl!)) return;
+    if (_publicUrl == null || _publicUrl!.isEmpty) {
+      debugPrint('[R2] Cannot delete: R2_PUBLIC_URL is not set.');
+      return;
+    }
     
-    final path = fileUrl.replaceFirst('$_publicUrl!/', '');
-    if (path.isEmpty) return;
+    if (!fileUrl.startsWith(_publicUrl!)) {
+      debugPrint('[R2] Cannot delete: URL does not start with R2_PUBLIC_URL.');
+      debugPrint('[R2] URL: $fileUrl');
+      debugPrint('[R2] Public URL: $_publicUrl');
+      return;
+    }
+    
+    // Safer path extraction
+    final uri = Uri.parse(fileUrl);
+    String path = uri.path;
+    if (path.startsWith('/')) {
+      path = path.substring(1);
+    }
+    
+    if (path.isEmpty) {
+      debugPrint('[R2] Cannot delete: Extracted path is empty.');
+      return;
+    }
 
     try {
       final url = '$_endpoint/$_bucketName/$path';
@@ -149,12 +168,21 @@ class R2StorageService {
         payloadHash: payloadHash,
       );
 
-      await _dio!.delete(url,
+      final response = await _dio!.delete(url,
         options: Options(
           headers: headers,
         ),
       );
-    } catch (_) {}
+      
+      debugPrint('[R2] File deleted successfully: $path (Status: ${response.statusCode})');
+    } on DioException catch (e) {
+      debugPrint('[R2] Delete failed for $path: ${_dioErrorMessage(e)}');
+      if (e.response != null) {
+        debugPrint('[R2] Response body: ${e.response?.data}');
+      }
+    } catch (e) {
+      debugPrint('[R2] Delete failed for $path: $e');
+    }
   }
 
   Future<void> deleteAudioFile(String fileUrl) => deleteFile(fileUrl);

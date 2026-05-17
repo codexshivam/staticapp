@@ -175,8 +175,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _openDetail(BuildContext context, Confession confession) {
-    Navigator.of(context).push(
+  Future<void> _openDetail(BuildContext context, Confession confession) async {
+    final deleted = await Navigator.of(context).push<bool>(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
             ConfessionDetailScreen(confession: confession),
@@ -196,6 +196,13 @@ class _HomeScreenState extends State<HomeScreen> {
         transitionDuration: const Duration(milliseconds: 500),
       ),
     );
+    
+    if (deleted == true) {
+      setState(() {
+        _loaded24Hours.removeWhere((c) => c.id == confession.id);
+        _loadedFollowing.removeWhere((c) => c.id == confession.id);
+      });
+    }
   }
 
   List<List<Confession>> _chunkList(List<Confession> list, int chunkSize) {
