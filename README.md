@@ -1,4 +1,4 @@
-# TheStatic Platform
+# Static App for Android Devices
 
 Static is a sanctuary for the unsaid. A space where late-night confessions find their voice, where emotions become stories, and where being vulnerable is never alone.
 
